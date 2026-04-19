@@ -27,16 +27,21 @@ export default function Quiz() {
 
   // 🔥 LOAD QUESTIONS (AB SAHI JAGAH)
   useEffect(() => {
-    const subject = localStorage.getItem("selectedSubject");
-    const topic = localStorage.getItem("selectedTopic");
-    const subtopic = localStorage.getItem("selectedSubtopic");
+  const subject = localStorage.getItem("selectedSubject");
+  const topic = localStorage.getItem("selectedTopic");
+  const subtopic = localStorage.getItem("selectedSubtopic");
 
-    const q = getRandomQuestions(subject!, topic!, subtopic!);
+  fetch(`${API}/questions/${subject}/${topic}/${subtopic}`)
+    .then(res => res.json())
+    .then(data => {
+      console.log("API QUESTIONS:", data);
 
-    console.log("LOADED QUESTIONS:", q);
-
-    setQuestions(q);
-  }, []);
+      // 🔥 random pick 7
+      const shuffled = [...data].sort(() => 0.5 - Math.random());
+      setQuestions(shuffled.slice(0, 7));
+    })
+    .catch(err => console.error(err));
+}, []);
 
   // 🔥 SAFETY CHECK
   if (questions.length === 0) {
