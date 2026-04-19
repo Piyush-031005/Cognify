@@ -5,26 +5,227 @@
         {
           "id": 1,
           "prompt": "A body moving with constant velocity has...",
-          "options": [
-            "Zero acceleration",
-            "Constant acceleration",
-            "Increasing velocity",
-            "Decreasing velocity"
-          ],
+          "options": ["Zero acceleration", "Constant acceleration", "Increasing velocity", "Decreasing velocity"],
           "correctIndex": 0,
           "type": "conceptual"
         },
         {
           "id": 2,
           "prompt": "If displacement is zero, what can we say?",
-          "options": [
-            "Distance is zero",
-            "Distance may not be zero",
-            "Velocity is zero",
-            "Acceleration is zero"
-          ],
+          "options": ["Distance is zero", "Distance may not be zero", "Velocity is zero", "Acceleration is zero"],
           "correctIndex": 1,
           "type": "trick"
+        },
+        {
+          "id": 3,
+          "prompt": "Acceleration is defined as?",
+          "options": ["Change in velocity", "Change in speed", "Distance/time", "Force/mass"],
+          "correctIndex": 0,
+          "type": "conceptual"
+        },
+        {
+          "id": 4,
+          "prompt": "Unit of velocity?",
+          "options": ["m/s", "m/s²", "kg", "N"],
+          "correctIndex": 0,
+          "type": "basic"
+        },
+        {
+          "id": 5,
+          "prompt": "If velocity is constant, displacement is?",
+          "options": ["Zero", "Uniform", "Infinite", "Decreasing"],
+          "correctIndex": 1,
+          "type": "conceptual"
+        }
+      ],
+      "motion": [
+        {
+          "id": 6,
+          "prompt": "What is speed?",
+          "options": ["Distance/time", "Displacement/time", "Force/mass", "Work/time"],
+          "correctIndex": 0,
+          "type": "basic"
+        },
+        {
+          "id": 7,
+          "prompt": "Uniform motion means?",
+          "options": ["Constant speed", "Changing speed", "Zero speed", "Infinite speed"],
+          "correctIndex": 0,
+          "type": "conceptual"
+        },
+        {
+          "id": 8,
+          "prompt": "Non-uniform motion means?",
+          "options": ["Constant speed", "Changing speed", "Zero speed", "Fixed speed"],
+          "correctIndex": 1,
+          "type": "conceptual"
+        },
+        {
+          "id": 9,
+          "prompt": "Distance is?",
+          "options": ["Scalar", "Vector", "Force", "Energy"],
+          "correctIndex": 0,
+          "type": "basic"
+        },
+        {
+          "id": 10,
+          "prompt": "Displacement is?",
+          "options": ["Scalar", "Vector", "Energy", "Power"],
+          "correctIndex": 1,
+          "type": "basic"
+        }
+      ],
+      "laws": [
+        {
+          "id": 11,
+          "prompt": "Newton’s first law is about?",
+          "options": ["Inertia", "Force", "Energy", "Momentum"],
+          "correctIndex": 0,
+          "type": "conceptual"
+        },
+        {
+          "id": 12,
+          "prompt": "Force = ?",
+          "options": ["ma", "mv", "m/v", "a/m"],
+          "correctIndex": 0,
+          "type": "basic"
+        },
+        {
+          "id": 13,
+          "prompt": "Unit of force?",
+          "options": ["Newton", "Joule", "Watt", "Pascal"],
+          "correctIndex": 0,
+          "type": "basic"
+        },
+        {
+          "id": 14,
+          "prompt": "Action-reaction pairs belong to?",
+          "options": ["1st law", "2nd law", "3rd law", "None"],
+          "correctIndex": 2,
+          "type": "conceptual"
+        },
+        {
+          "id": 15,
+          "prompt": "Inertia depends on?",
+          "options": ["Mass", "Speed", "Force", "Energy"],
+          "correctIndex": 0,
+          "type": "conceptual"
+        }
+      ]
+    }
+  },
+
+  "math": {
+    "algebra": {
+      "linear": [
+        {
+          "id": 16,
+          "prompt": "Solution of 2x = 10?",
+          "options": ["5", "10", "2", "0"],
+          "correctIndex": 0,
+          "type": "basic"
+        },
+        {
+          "id": 17,
+          "prompt": "Equation of line?",
+          "options": ["y = mx + c", "a² + b²", "x² + y²", "None"],
+          "correctIndex": 0,
+          "type": "conceptual"
+        },
+        {
+          "id": 18,
+          "prompt": "Slope represents?",
+          "options": ["Steepness", "Length", "Area", "Volume"],
+          "correctIndex": 0,
+          "type": "conceptual"
+        },
+        {
+          "id": 19,
+          "prompt": "If m=0, line is?",
+          "options": ["Horizontal", "Vertical", "Diagonal", "Curve"],
+          "correctIndex": 0,
+          "type": "basic"
+        },
+        {
+          "id": 20,
+          "prompt": "If slope undefined?",
+          "options": ["Vertical line", "Horizontal line", "Point", "Circle"],
+          "correctIndex": 0,
+          "type": "conceptual"
+        }
+      ],
+      "quadratic": [
+        {
+          "id": 21,
+          "prompt": "General form?",
+          "options": ["ax²+bx+c", "ax+b", "x²+y²", "None"],
+          "correctIndex": 0,
+          "type": "basic"
+        },
+        {
+          "id": 22,
+          "prompt": "Discriminant?",
+          "options": ["b²-4ac", "a²+b²", "2ab", "None"],
+          "correctIndex": 0,
+          "type": "conceptual"
+        },
+        {
+          "id": 23,
+          "prompt": "Roots are real when?",
+          "options": ["D≥0", "D<0", "D=1", "None"],
+          "correctIndex": 0,
+          "type": "conceptual"
+        },
+        {
+          "id": 24,
+          "prompt": "If D=0?",
+          "options": ["Equal roots", "Distinct", "Imaginary", "None"],
+          "correctIndex": 0,
+          "type": "conceptual"
+        },
+        {
+          "id": 25,
+          "prompt": "If D<0?",
+          "options": ["Imaginary", "Real", "Equal", "Zero"],
+          "correctIndex": 0,
+          "type": "conceptual"
+        }
+      ],
+      "basics": [
+        {
+          "id": 26,
+          "prompt": "Value of 2+2?",
+          "options": ["4", "2", "3", "5"],
+          "correctIndex": 0,
+          "type": "basic"
+        },
+        {
+          "id": 27,
+          "prompt": "Value of 5×3?",
+          "options": ["15", "10", "20", "5"],
+          "correctIndex": 0,
+          "type": "basic"
+        },
+        {
+          "id": 28,
+          "prompt": "Square of 4?",
+          "options": ["16", "8", "12", "4"],
+          "correctIndex": 0,
+          "type": "basic"
+        },
+        {
+          "id": 29,
+          "prompt": "Cube of 2?",
+          "options": ["8", "6", "4", "2"],
+          "correctIndex": 0,
+          "type": "basic"
+        },
+        {
+          "id": 30,
+          "prompt": "Value of 10/2?",
+          "options": ["5", "2", "10", "0"],
+          "correctIndex": 0,
+          "type": "basic"
         }
       ]
     }
