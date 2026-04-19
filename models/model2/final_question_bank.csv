@@ -1,0 +1,291 @@
+id,subject,topic,concept,type,format,difficulty,question,optionA,optionB,optionC,optionD,answer,expected_time,concept_group
+1,DSA,Stack,LIFO,basic,mcq,1,Which principle does stack follow?,FIFO,LIFO,Random,,B,6.0,operations
+2,DSA,Stack,Overflow,conceptual,true_false,2,Stack overflow occurs when stack is full,,,,,True,,
+3,DSA,Stack,Underflow,conceptual,true_false,2,Stack underflow occurs when pop is applied on empty stack,,,,,True,,
+4,DSA,Stack,Operation,application,mcq,2,Which operation removes element from stack?,Push,Pop,Insert,Append,B,,
+5,DSA,Stack,Operation,application,mcq,2,Which operation adds element to stack?,Pop,Push,Delete,Access,B,,
+6,DSA,Stack,Usage,conceptual,mcq,2,Which data structure is used in recursion?,Queue,Stack,Tree,Graph,B,,
+7,DSA,Stack,Application,tricky,mcq,3,Undo operation in editors is implemented using?,Queue,Stack,Heap,Tree,B,,
+8,DSA,Stack,Expression,application,mcq,3,Which data structure is used for expression evaluation?,Queue,Stack,Array,Graph,B,,
+9,DSA,Stack,Structure,conceptual,true_false,2,Stack can be implemented using arrays,,,,,True,,
+10,DSA,Stack,Structure,conceptual,true_false,2,Stack can be implemented using linked lists,,,,,True,,
+11,DSA,Stack,LIFO principle,conceptual,mcq,2,LIFO principle is used in which situation?,Stack,Queue,Tree,Graph,A,8.0,LIFO principle
+12,DSA,Stack,LIFO principle,conceptual,mcq,2,LIFO principle is used in which situation?,Stack,Queue,Tree,Graph,A,8.0,LIFO principle
+13,DSA,Stack,LIFO principle,conceptual,mcq,2,LIFO principle is mainly associated with which structure?,Stack,Queue,Tree,Graph,A,8.0,LIFO principle
+14,DSA,Stack,LIFO principle,conceptual,mcq,2,Which concept is related to LIFO principle?,Stack,Queue,Tree,Graph,A,8.0,LIFO principle
+15,DSA,Stack,LIFO principle,conceptual,mcq,2,LIFO principle is used in which situation?,Stack,Queue,Tree,Graph,A,8.0,LIFO principle
+16,DSA,Stack,LIFO principle,conceptual,mcq,2,LIFO principle is mainly associated with which structure?,Stack,Queue,Tree,Graph,A,8.0,LIFO principle
+17,DSA,Stack,LIFO principle,conceptual,mcq,2,Which statement describes LIFO principle?,Stack,Queue,Tree,Graph,A,8.0,LIFO principle
+18,DSA,Stack,LIFO principle,conceptual,mcq,2,Which concept is related to LIFO principle?,Stack,Queue,Tree,Graph,A,8.0,LIFO principle
+19,DSA,Stack,LIFO principle,conceptual,mcq,2,Which concept is related to LIFO principle?,Stack,Queue,Tree,Graph,A,8.0,LIFO principle
+20,DSA,Stack,LIFO principle,conceptual,mcq,2,Which concept is related to LIFO principle?,Stack,Queue,Tree,Graph,A,8.0,LIFO principle
+21,DSA,Stack,LIFO principle,conceptual,mcq,2,Which statement describes LIFO principle?,Stack,Queue,Tree,Graph,A,8.0,LIFO principle
+22,DSA,Stack,LIFO principle,conceptual,mcq,2,LIFO principle is mainly associated with which structure?,Stack,Queue,Tree,Graph,A,8.0,LIFO principle
+23,DSA,Stack,LIFO principle,conceptual,mcq,2,LIFO principle is used in which situation?,Stack,Queue,Tree,Graph,A,8.0,LIFO principle
+24,DSA,Stack,LIFO principle,conceptual,mcq,2,LIFO principle is used in which situation?,Stack,Queue,Tree,Graph,A,8.0,LIFO principle
+25,DSA,Stack,LIFO principle,conceptual,mcq,2,Which concept is related to LIFO principle?,Stack,Queue,Tree,Graph,A,8.0,LIFO principle
+26,DSA,Stack,LIFO principle,conceptual,mcq,2,LIFO principle is mainly associated with which structure?,Stack,Queue,Tree,Graph,A,8.0,LIFO principle
+27,DSA,Stack,LIFO principle,conceptual,mcq,2,LIFO principle is used in which situation?,Stack,Queue,Tree,Graph,A,8.0,LIFO principle
+28,DSA,Stack,LIFO principle,conceptual,mcq,2,LIFO principle is mainly associated with which structure?,Stack,Queue,Tree,Graph,A,8.0,LIFO principle
+29,DSA,Stack,LIFO principle,conceptual,mcq,2,Which concept is related to LIFO principle?,Stack,Queue,Tree,Graph,A,8.0,LIFO principle
+30,DSA,Stack,LIFO principle,conceptual,mcq,2,LIFO principle is used in which situation?,Stack,Queue,Tree,Graph,A,8.0,LIFO principle
+31,DSA,Stack,push operation,conceptual,mcq,2,Which concept is related to push operation?,Stack,Queue,Tree,Graph,A,8.0,push operation
+32,DSA,Stack,push operation,conceptual,mcq,2,Which concept is related to push operation?,Stack,Queue,Tree,Graph,A,8.0,push operation
+33,DSA,Stack,push operation,conceptual,mcq,2,push operation is used in which situation?,Stack,Queue,Tree,Graph,A,8.0,push operation
+34,DSA,Stack,push operation,conceptual,mcq,2,Which concept is related to push operation?,Stack,Queue,Tree,Graph,A,8.0,push operation
+35,DSA,Stack,push operation,conceptual,mcq,2,push operation is used in which situation?,Stack,Queue,Tree,Graph,A,8.0,push operation
+36,DSA,Stack,push operation,conceptual,mcq,2,Which concept is related to push operation?,Stack,Queue,Tree,Graph,A,8.0,push operation
+37,DSA,Stack,push operation,conceptual,mcq,2,push operation is mainly associated with which structure?,Stack,Queue,Tree,Graph,A,8.0,push operation
+38,DSA,Stack,push operation,conceptual,mcq,2,push operation is mainly associated with which structure?,Stack,Queue,Tree,Graph,A,8.0,push operation
+39,DSA,Stack,push operation,conceptual,mcq,2,push operation is used in which situation?,Stack,Queue,Tree,Graph,A,8.0,push operation
+40,DSA,Stack,push operation,conceptual,mcq,2,push operation is mainly associated with which structure?,Stack,Queue,Tree,Graph,A,8.0,push operation
+41,DSA,Stack,push operation,conceptual,mcq,2,Which concept is related to push operation?,Stack,Queue,Tree,Graph,A,8.0,push operation
+42,DSA,Stack,push operation,conceptual,mcq,2,Which concept is related to push operation?,Stack,Queue,Tree,Graph,A,8.0,push operation
+43,DSA,Stack,push operation,conceptual,mcq,2,Which concept is related to push operation?,Stack,Queue,Tree,Graph,A,8.0,push operation
+44,DSA,Stack,push operation,conceptual,mcq,2,push operation is mainly associated with which structure?,Stack,Queue,Tree,Graph,A,8.0,push operation
+45,DSA,Stack,push operation,conceptual,mcq,2,Which statement describes push operation?,Stack,Queue,Tree,Graph,A,8.0,push operation
+46,DSA,Stack,push operation,conceptual,mcq,2,push operation is used in which situation?,Stack,Queue,Tree,Graph,A,8.0,push operation
+47,DSA,Stack,push operation,conceptual,mcq,2,push operation is used in which situation?,Stack,Queue,Tree,Graph,A,8.0,push operation
+48,DSA,Stack,push operation,conceptual,mcq,2,Which statement describes push operation?,Stack,Queue,Tree,Graph,A,8.0,push operation
+49,DSA,Stack,push operation,conceptual,mcq,2,push operation is used in which situation?,Stack,Queue,Tree,Graph,A,8.0,push operation
+50,DSA,Stack,push operation,conceptual,mcq,2,Which statement describes push operation?,Stack,Queue,Tree,Graph,A,8.0,push operation
+51,DSA,Stack,pop operation,conceptual,mcq,2,Which concept is related to pop operation?,Stack,Queue,Tree,Graph,A,8.0,pop operation
+52,DSA,Stack,pop operation,conceptual,mcq,2,Which concept is related to pop operation?,Stack,Queue,Tree,Graph,A,8.0,pop operation
+53,DSA,Stack,pop operation,conceptual,mcq,2,Which statement describes pop operation?,Stack,Queue,Tree,Graph,A,8.0,pop operation
+54,DSA,Stack,pop operation,conceptual,mcq,2,pop operation is mainly associated with which structure?,Stack,Queue,Tree,Graph,A,8.0,pop operation
+55,DSA,Stack,pop operation,conceptual,mcq,2,Which statement describes pop operation?,Stack,Queue,Tree,Graph,A,8.0,pop operation
+56,DSA,Stack,pop operation,conceptual,mcq,2,Which concept is related to pop operation?,Stack,Queue,Tree,Graph,A,8.0,pop operation
+57,DSA,Stack,pop operation,conceptual,mcq,2,Which statement describes pop operation?,Stack,Queue,Tree,Graph,A,8.0,pop operation
+58,DSA,Stack,pop operation,conceptual,mcq,2,Which concept is related to pop operation?,Stack,Queue,Tree,Graph,A,8.0,pop operation
+59,DSA,Stack,pop operation,conceptual,mcq,2,pop operation is mainly associated with which structure?,Stack,Queue,Tree,Graph,A,8.0,pop operation
+60,DSA,Stack,pop operation,conceptual,mcq,2,pop operation is used in which situation?,Stack,Queue,Tree,Graph,A,8.0,pop operation
+61,DSA,Stack,pop operation,conceptual,mcq,2,Which statement describes pop operation?,Stack,Queue,Tree,Graph,A,8.0,pop operation
+62,DSA,Stack,pop operation,conceptual,mcq,2,pop operation is used in which situation?,Stack,Queue,Tree,Graph,A,8.0,pop operation
+63,DSA,Stack,pop operation,conceptual,mcq,2,Which concept is related to pop operation?,Stack,Queue,Tree,Graph,A,8.0,pop operation
+64,DSA,Stack,pop operation,conceptual,mcq,2,pop operation is used in which situation?,Stack,Queue,Tree,Graph,A,8.0,pop operation
+65,DSA,Stack,pop operation,conceptual,mcq,2,Which statement describes pop operation?,Stack,Queue,Tree,Graph,A,8.0,pop operation
+66,DSA,Stack,pop operation,conceptual,mcq,2,Which concept is related to pop operation?,Stack,Queue,Tree,Graph,A,8.0,pop operation
+67,DSA,Stack,pop operation,conceptual,mcq,2,pop operation is mainly associated with which structure?,Stack,Queue,Tree,Graph,A,8.0,pop operation
+68,DSA,Stack,pop operation,conceptual,mcq,2,Which concept is related to pop operation?,Stack,Queue,Tree,Graph,A,8.0,pop operation
+69,DSA,Stack,pop operation,conceptual,mcq,2,Which concept is related to pop operation?,Stack,Queue,Tree,Graph,A,8.0,pop operation
+70,DSA,Stack,pop operation,conceptual,mcq,2,Which statement describes pop operation?,Stack,Queue,Tree,Graph,A,8.0,pop operation
+71,DSA,Stack,overflow,conceptual,mcq,2,overflow is used in which situation?,Stack,Queue,Tree,Graph,A,8.0,overflow
+72,DSA,Stack,overflow,conceptual,mcq,2,overflow is mainly associated with which structure?,Stack,Queue,Tree,Graph,A,8.0,overflow
+73,DSA,Stack,overflow,conceptual,mcq,2,Which concept is related to overflow?,Stack,Queue,Tree,Graph,A,8.0,overflow
+74,DSA,Stack,overflow,conceptual,mcq,2,Which statement describes overflow?,Stack,Queue,Tree,Graph,A,8.0,overflow
+75,DSA,Stack,overflow,conceptual,mcq,2,Which concept is related to overflow?,Stack,Queue,Tree,Graph,A,8.0,overflow
+76,DSA,Stack,overflow,conceptual,mcq,2,overflow is mainly associated with which structure?,Stack,Queue,Tree,Graph,A,8.0,overflow
+77,DSA,Stack,overflow,conceptual,mcq,2,overflow is mainly associated with which structure?,Stack,Queue,Tree,Graph,A,8.0,overflow
+78,DSA,Stack,overflow,conceptual,mcq,2,overflow is mainly associated with which structure?,Stack,Queue,Tree,Graph,A,8.0,overflow
+79,DSA,Stack,overflow,conceptual,mcq,2,Which concept is related to overflow?,Stack,Queue,Tree,Graph,A,8.0,overflow
+80,DSA,Stack,overflow,conceptual,mcq,2,Which concept is related to overflow?,Stack,Queue,Tree,Graph,A,8.0,overflow
+81,DSA,Stack,overflow,conceptual,mcq,2,overflow is mainly associated with which structure?,Stack,Queue,Tree,Graph,A,8.0,overflow
+82,DSA,Stack,overflow,conceptual,mcq,2,overflow is mainly associated with which structure?,Stack,Queue,Tree,Graph,A,8.0,overflow
+83,DSA,Stack,overflow,conceptual,mcq,2,Which concept is related to overflow?,Stack,Queue,Tree,Graph,A,8.0,overflow
+84,DSA,Stack,overflow,conceptual,mcq,2,Which concept is related to overflow?,Stack,Queue,Tree,Graph,A,8.0,overflow
+85,DSA,Stack,overflow,conceptual,mcq,2,overflow is mainly associated with which structure?,Stack,Queue,Tree,Graph,A,8.0,overflow
+86,DSA,Stack,overflow,conceptual,mcq,2,overflow is mainly associated with which structure?,Stack,Queue,Tree,Graph,A,8.0,overflow
+87,DSA,Stack,overflow,conceptual,mcq,2,Which concept is related to overflow?,Stack,Queue,Tree,Graph,A,8.0,overflow
+88,DSA,Stack,overflow,conceptual,mcq,2,Which concept is related to overflow?,Stack,Queue,Tree,Graph,A,8.0,overflow
+89,DSA,Stack,overflow,conceptual,mcq,2,Which statement describes overflow?,Stack,Queue,Tree,Graph,A,8.0,overflow
+90,DSA,Stack,overflow,conceptual,mcq,2,Which concept is related to overflow?,Stack,Queue,Tree,Graph,A,8.0,overflow
+91,DSA,Stack,underflow,conceptual,mcq,2,underflow is mainly associated with which structure?,Stack,Queue,Tree,Graph,A,8.0,underflow
+92,DSA,Stack,underflow,conceptual,mcq,2,Which concept is related to underflow?,Stack,Queue,Tree,Graph,A,8.0,underflow
+93,DSA,Stack,underflow,conceptual,mcq,2,underflow is used in which situation?,Stack,Queue,Tree,Graph,A,8.0,underflow
+94,DSA,Stack,underflow,conceptual,mcq,2,underflow is used in which situation?,Stack,Queue,Tree,Graph,A,8.0,underflow
+95,DSA,Stack,underflow,conceptual,mcq,2,underflow is used in which situation?,Stack,Queue,Tree,Graph,A,8.0,underflow
+96,DSA,Stack,underflow,conceptual,mcq,2,Which statement describes underflow?,Stack,Queue,Tree,Graph,A,8.0,underflow
+97,DSA,Stack,underflow,conceptual,mcq,2,Which statement describes underflow?,Stack,Queue,Tree,Graph,A,8.0,underflow
+98,DSA,Stack,underflow,conceptual,mcq,2,Which statement describes underflow?,Stack,Queue,Tree,Graph,A,8.0,underflow
+99,DSA,Stack,underflow,conceptual,mcq,2,underflow is used in which situation?,Stack,Queue,Tree,Graph,A,8.0,underflow
+100,DSA,Stack,underflow,conceptual,mcq,2,Which concept is related to underflow?,Stack,Queue,Tree,Graph,A,8.0,underflow
+101,DSA,Stack,underflow,conceptual,mcq,2,Which statement describes underflow?,Stack,Queue,Tree,Graph,A,8.0,underflow
+102,DSA,Stack,underflow,conceptual,mcq,2,underflow is mainly associated with which structure?,Stack,Queue,Tree,Graph,A,8.0,underflow
+103,DSA,Stack,underflow,conceptual,mcq,2,Which concept is related to underflow?,Stack,Queue,Tree,Graph,A,8.0,underflow
+104,DSA,Stack,underflow,conceptual,mcq,2,Which statement describes underflow?,Stack,Queue,Tree,Graph,A,8.0,underflow
+105,DSA,Stack,underflow,conceptual,mcq,2,Which statement describes underflow?,Stack,Queue,Tree,Graph,A,8.0,underflow
+106,DSA,Stack,underflow,conceptual,mcq,2,underflow is mainly associated with which structure?,Stack,Queue,Tree,Graph,A,8.0,underflow
+107,DSA,Stack,underflow,conceptual,mcq,2,Which concept is related to underflow?,Stack,Queue,Tree,Graph,A,8.0,underflow
+108,DSA,Stack,underflow,conceptual,mcq,2,Which statement describes underflow?,Stack,Queue,Tree,Graph,A,8.0,underflow
+109,DSA,Stack,underflow,conceptual,mcq,2,underflow is mainly associated with which structure?,Stack,Queue,Tree,Graph,A,8.0,underflow
+110,DSA,Stack,underflow,conceptual,mcq,2,Which statement describes underflow?,Stack,Queue,Tree,Graph,A,8.0,underflow
+111,DSA,Stack,recursion usage,conceptual,mcq,2,Which statement describes recursion usage?,Stack,Queue,Tree,Graph,A,8.0,recursion usage
+112,DSA,Stack,recursion usage,conceptual,mcq,2,recursion usage is used in which situation?,Stack,Queue,Tree,Graph,A,8.0,recursion usage
+113,DSA,Stack,recursion usage,conceptual,mcq,2,Which concept is related to recursion usage?,Stack,Queue,Tree,Graph,A,8.0,recursion usage
+114,DSA,Stack,recursion usage,conceptual,mcq,2,recursion usage is used in which situation?,Stack,Queue,Tree,Graph,A,8.0,recursion usage
+115,DSA,Stack,recursion usage,conceptual,mcq,2,Which concept is related to recursion usage?,Stack,Queue,Tree,Graph,A,8.0,recursion usage
+116,DSA,Stack,recursion usage,conceptual,mcq,2,recursion usage is mainly associated with which structure?,Stack,Queue,Tree,Graph,A,8.0,recursion usage
+117,DSA,Stack,recursion usage,conceptual,mcq,2,recursion usage is used in which situation?,Stack,Queue,Tree,Graph,A,8.0,recursion usage
+118,DSA,Stack,recursion usage,conceptual,mcq,2,recursion usage is used in which situation?,Stack,Queue,Tree,Graph,A,8.0,recursion usage
+119,DSA,Stack,recursion usage,conceptual,mcq,2,Which statement describes recursion usage?,Stack,Queue,Tree,Graph,A,8.0,recursion usage
+120,DSA,Stack,recursion usage,conceptual,mcq,2,recursion usage is mainly associated with which structure?,Stack,Queue,Tree,Graph,A,8.0,recursion usage
+121,DSA,Stack,recursion usage,conceptual,mcq,2,recursion usage is mainly associated with which structure?,Stack,Queue,Tree,Graph,A,8.0,recursion usage
+122,DSA,Stack,recursion usage,conceptual,mcq,2,Which concept is related to recursion usage?,Stack,Queue,Tree,Graph,A,8.0,recursion usage
+123,DSA,Stack,recursion usage,conceptual,mcq,2,recursion usage is used in which situation?,Stack,Queue,Tree,Graph,A,8.0,recursion usage
+124,DSA,Stack,recursion usage,conceptual,mcq,2,Which statement describes recursion usage?,Stack,Queue,Tree,Graph,A,8.0,recursion usage
+125,DSA,Stack,recursion usage,conceptual,mcq,2,Which statement describes recursion usage?,Stack,Queue,Tree,Graph,A,8.0,recursion usage
+126,DSA,Stack,recursion usage,conceptual,mcq,2,recursion usage is mainly associated with which structure?,Stack,Queue,Tree,Graph,A,8.0,recursion usage
+127,DSA,Stack,recursion usage,conceptual,mcq,2,Which concept is related to recursion usage?,Stack,Queue,Tree,Graph,A,8.0,recursion usage
+128,DSA,Stack,recursion usage,conceptual,mcq,2,recursion usage is used in which situation?,Stack,Queue,Tree,Graph,A,8.0,recursion usage
+129,DSA,Stack,recursion usage,conceptual,mcq,2,Which concept is related to recursion usage?,Stack,Queue,Tree,Graph,A,8.0,recursion usage
+130,DSA,Stack,recursion usage,conceptual,mcq,2,Which concept is related to recursion usage?,Stack,Queue,Tree,Graph,A,8.0,recursion usage
+131,DSA,Stack,expression evaluation,conceptual,mcq,2,expression evaluation is used in which situation?,Stack,Queue,Tree,Graph,A,8.0,expression evaluation
+132,DSA,Stack,expression evaluation,conceptual,mcq,2,Which statement describes expression evaluation?,Stack,Queue,Tree,Graph,A,8.0,expression evaluation
+133,DSA,Stack,expression evaluation,conceptual,mcq,2,Which statement describes expression evaluation?,Stack,Queue,Tree,Graph,A,8.0,expression evaluation
+134,DSA,Stack,expression evaluation,conceptual,mcq,2,Which concept is related to expression evaluation?,Stack,Queue,Tree,Graph,A,8.0,expression evaluation
+135,DSA,Stack,expression evaluation,conceptual,mcq,2,Which concept is related to expression evaluation?,Stack,Queue,Tree,Graph,A,8.0,expression evaluation
+136,DSA,Stack,expression evaluation,conceptual,mcq,2,Which concept is related to expression evaluation?,Stack,Queue,Tree,Graph,A,8.0,expression evaluation
+137,DSA,Stack,expression evaluation,conceptual,mcq,2,expression evaluation is mainly associated with which structure?,Stack,Queue,Tree,Graph,A,8.0,expression evaluation
+138,DSA,Stack,expression evaluation,conceptual,mcq,2,Which statement describes expression evaluation?,Stack,Queue,Tree,Graph,A,8.0,expression evaluation
+139,DSA,Stack,expression evaluation,conceptual,mcq,2,Which statement describes expression evaluation?,Stack,Queue,Tree,Graph,A,8.0,expression evaluation
+140,DSA,Stack,expression evaluation,conceptual,mcq,2,expression evaluation is used in which situation?,Stack,Queue,Tree,Graph,A,8.0,expression evaluation
+141,DSA,Stack,expression evaluation,conceptual,mcq,2,expression evaluation is mainly associated with which structure?,Stack,Queue,Tree,Graph,A,8.0,expression evaluation
+142,DSA,Stack,expression evaluation,conceptual,mcq,2,expression evaluation is mainly associated with which structure?,Stack,Queue,Tree,Graph,A,8.0,expression evaluation
+143,DSA,Stack,expression evaluation,conceptual,mcq,2,expression evaluation is used in which situation?,Stack,Queue,Tree,Graph,A,8.0,expression evaluation
+144,DSA,Stack,expression evaluation,conceptual,mcq,2,Which statement describes expression evaluation?,Stack,Queue,Tree,Graph,A,8.0,expression evaluation
+145,DSA,Stack,expression evaluation,conceptual,mcq,2,Which statement describes expression evaluation?,Stack,Queue,Tree,Graph,A,8.0,expression evaluation
+146,DSA,Stack,expression evaluation,conceptual,mcq,2,Which concept is related to expression evaluation?,Stack,Queue,Tree,Graph,A,8.0,expression evaluation
+147,DSA,Stack,expression evaluation,conceptual,mcq,2,Which concept is related to expression evaluation?,Stack,Queue,Tree,Graph,A,8.0,expression evaluation
+148,DSA,Stack,expression evaluation,conceptual,mcq,2,Which concept is related to expression evaluation?,Stack,Queue,Tree,Graph,A,8.0,expression evaluation
+149,DSA,Stack,expression evaluation,conceptual,mcq,2,expression evaluation is mainly associated with which structure?,Stack,Queue,Tree,Graph,A,8.0,expression evaluation
+150,DSA,Stack,expression evaluation,conceptual,mcq,2,Which concept is related to expression evaluation?,Stack,Queue,Tree,Graph,A,8.0,expression evaluation
+151,DSA,Stack,undo operations,conceptual,mcq,2,Which statement describes undo operations?,Stack,Queue,Tree,Graph,A,8.0,undo operations
+152,DSA,Stack,undo operations,conceptual,mcq,2,Which concept is related to undo operations?,Stack,Queue,Tree,Graph,A,8.0,undo operations
+153,DSA,Stack,undo operations,conceptual,mcq,2,undo operations is mainly associated with which structure?,Stack,Queue,Tree,Graph,A,8.0,undo operations
+154,DSA,Stack,undo operations,conceptual,mcq,2,Which concept is related to undo operations?,Stack,Queue,Tree,Graph,A,8.0,undo operations
+155,DSA,Stack,undo operations,conceptual,mcq,2,Which concept is related to undo operations?,Stack,Queue,Tree,Graph,A,8.0,undo operations
+156,DSA,Stack,undo operations,conceptual,mcq,2,undo operations is mainly associated with which structure?,Stack,Queue,Tree,Graph,A,8.0,undo operations
+157,DSA,Stack,undo operations,conceptual,mcq,2,undo operations is used in which situation?,Stack,Queue,Tree,Graph,A,8.0,undo operations
+158,DSA,Stack,undo operations,conceptual,mcq,2,undo operations is mainly associated with which structure?,Stack,Queue,Tree,Graph,A,8.0,undo operations
+159,DSA,Stack,undo operations,conceptual,mcq,2,Which concept is related to undo operations?,Stack,Queue,Tree,Graph,A,8.0,undo operations
+160,DSA,Stack,undo operations,conceptual,mcq,2,undo operations is used in which situation?,Stack,Queue,Tree,Graph,A,8.0,undo operations
+161,DSA,Stack,undo operations,conceptual,mcq,2,undo operations is mainly associated with which structure?,Stack,Queue,Tree,Graph,A,8.0,undo operations
+162,DSA,Stack,undo operations,conceptual,mcq,2,undo operations is mainly associated with which structure?,Stack,Queue,Tree,Graph,A,8.0,undo operations
+163,DSA,Stack,undo operations,conceptual,mcq,2,Which statement describes undo operations?,Stack,Queue,Tree,Graph,A,8.0,undo operations
+164,DSA,Stack,undo operations,conceptual,mcq,2,undo operations is used in which situation?,Stack,Queue,Tree,Graph,A,8.0,undo operations
+165,DSA,Stack,undo operations,conceptual,mcq,2,Which statement describes undo operations?,Stack,Queue,Tree,Graph,A,8.0,undo operations
+166,DSA,Stack,undo operations,conceptual,mcq,2,Which statement describes undo operations?,Stack,Queue,Tree,Graph,A,8.0,undo operations
+167,DSA,Stack,undo operations,conceptual,mcq,2,undo operations is mainly associated with which structure?,Stack,Queue,Tree,Graph,A,8.0,undo operations
+168,DSA,Stack,undo operations,conceptual,mcq,2,Which concept is related to undo operations?,Stack,Queue,Tree,Graph,A,8.0,undo operations
+169,DSA,Stack,undo operations,conceptual,mcq,2,undo operations is used in which situation?,Stack,Queue,Tree,Graph,A,8.0,undo operations
+170,DSA,Stack,undo operations,conceptual,mcq,2,undo operations is mainly associated with which structure?,Stack,Queue,Tree,Graph,A,8.0,undo operations
+171,DSA,Queue,FIFO principle,conceptual,mcq,2,FIFO principle is mainly associated with which structure?,Stack,Queue,Tree,Graph,B,8.0,FIFO principle
+172,DSA,Queue,FIFO principle,conceptual,mcq,2,FIFO principle is used in which situation?,Stack,Queue,Tree,Graph,B,8.0,FIFO principle
+173,DSA,Queue,FIFO principle,conceptual,mcq,2,Which concept is related to FIFO principle?,Stack,Queue,Tree,Graph,B,8.0,FIFO principle
+174,DSA,Queue,FIFO principle,conceptual,mcq,2,Which statement describes FIFO principle?,Stack,Queue,Tree,Graph,B,8.0,FIFO principle
+175,DSA,Queue,FIFO principle,conceptual,mcq,2,Which statement describes FIFO principle?,Stack,Queue,Tree,Graph,B,8.0,FIFO principle
+176,DSA,Queue,FIFO principle,conceptual,mcq,2,FIFO principle is mainly associated with which structure?,Stack,Queue,Tree,Graph,B,8.0,FIFO principle
+177,DSA,Queue,FIFO principle,conceptual,mcq,2,Which statement describes FIFO principle?,Stack,Queue,Tree,Graph,B,8.0,FIFO principle
+178,DSA,Queue,FIFO principle,conceptual,mcq,2,Which concept is related to FIFO principle?,Stack,Queue,Tree,Graph,B,8.0,FIFO principle
+179,DSA,Queue,FIFO principle,conceptual,mcq,2,Which statement describes FIFO principle?,Stack,Queue,Tree,Graph,B,8.0,FIFO principle
+180,DSA,Queue,FIFO principle,conceptual,mcq,2,Which concept is related to FIFO principle?,Stack,Queue,Tree,Graph,B,8.0,FIFO principle
+181,DSA,Queue,FIFO principle,conceptual,mcq,2,Which concept is related to FIFO principle?,Stack,Queue,Tree,Graph,B,8.0,FIFO principle
+182,DSA,Queue,FIFO principle,conceptual,mcq,2,Which concept is related to FIFO principle?,Stack,Queue,Tree,Graph,B,8.0,FIFO principle
+183,DSA,Queue,FIFO principle,conceptual,mcq,2,Which statement describes FIFO principle?,Stack,Queue,Tree,Graph,B,8.0,FIFO principle
+184,DSA,Queue,FIFO principle,conceptual,mcq,2,Which statement describes FIFO principle?,Stack,Queue,Tree,Graph,B,8.0,FIFO principle
+185,DSA,Queue,FIFO principle,conceptual,mcq,2,FIFO principle is used in which situation?,Stack,Queue,Tree,Graph,B,8.0,FIFO principle
+186,DSA,Queue,FIFO principle,conceptual,mcq,2,Which concept is related to FIFO principle?,Stack,Queue,Tree,Graph,B,8.0,FIFO principle
+187,DSA,Queue,FIFO principle,conceptual,mcq,2,Which statement describes FIFO principle?,Stack,Queue,Tree,Graph,B,8.0,FIFO principle
+188,DSA,Queue,FIFO principle,conceptual,mcq,2,Which concept is related to FIFO principle?,Stack,Queue,Tree,Graph,B,8.0,FIFO principle
+189,DSA,Queue,FIFO principle,conceptual,mcq,2,FIFO principle is mainly associated with which structure?,Stack,Queue,Tree,Graph,B,8.0,FIFO principle
+190,DSA,Queue,FIFO principle,conceptual,mcq,2,FIFO principle is mainly associated with which structure?,Stack,Queue,Tree,Graph,B,8.0,FIFO principle
+191,DSA,Queue,enqueue operation,conceptual,mcq,2,Which concept is related to enqueue operation?,Stack,Queue,Tree,Graph,B,8.0,enqueue operation
+192,DSA,Queue,enqueue operation,conceptual,mcq,2,enqueue operation is used in which situation?,Stack,Queue,Tree,Graph,B,8.0,enqueue operation
+193,DSA,Queue,enqueue operation,conceptual,mcq,2,Which concept is related to enqueue operation?,Stack,Queue,Tree,Graph,B,8.0,enqueue operation
+194,DSA,Queue,enqueue operation,conceptual,mcq,2,Which statement describes enqueue operation?,Stack,Queue,Tree,Graph,B,8.0,enqueue operation
+195,DSA,Queue,enqueue operation,conceptual,mcq,2,Which statement describes enqueue operation?,Stack,Queue,Tree,Graph,B,8.0,enqueue operation
+196,DSA,Queue,enqueue operation,conceptual,mcq,2,Which statement describes enqueue operation?,Stack,Queue,Tree,Graph,B,8.0,enqueue operation
+197,DSA,Queue,enqueue operation,conceptual,mcq,2,enqueue operation is mainly associated with which structure?,Stack,Queue,Tree,Graph,B,8.0,enqueue operation
+198,DSA,Queue,enqueue operation,conceptual,mcq,2,Which statement describes enqueue operation?,Stack,Queue,Tree,Graph,B,8.0,enqueue operation
+199,DSA,Queue,enqueue operation,conceptual,mcq,2,Which statement describes enqueue operation?,Stack,Queue,Tree,Graph,B,8.0,enqueue operation
+200,DSA,Queue,enqueue operation,conceptual,mcq,2,Which concept is related to enqueue operation?,Stack,Queue,Tree,Graph,B,8.0,enqueue operation
+201,DSA,Queue,enqueue operation,conceptual,mcq,2,enqueue operation is used in which situation?,Stack,Queue,Tree,Graph,B,8.0,enqueue operation
+202,DSA,Queue,enqueue operation,conceptual,mcq,2,enqueue operation is used in which situation?,Stack,Queue,Tree,Graph,B,8.0,enqueue operation
+203,DSA,Queue,enqueue operation,conceptual,mcq,2,Which statement describes enqueue operation?,Stack,Queue,Tree,Graph,B,8.0,enqueue operation
+204,DSA,Queue,enqueue operation,conceptual,mcq,2,enqueue operation is used in which situation?,Stack,Queue,Tree,Graph,B,8.0,enqueue operation
+205,DSA,Queue,enqueue operation,conceptual,mcq,2,Which statement describes enqueue operation?,Stack,Queue,Tree,Graph,B,8.0,enqueue operation
+206,DSA,Queue,enqueue operation,conceptual,mcq,2,enqueue operation is mainly associated with which structure?,Stack,Queue,Tree,Graph,B,8.0,enqueue operation
+207,DSA,Queue,enqueue operation,conceptual,mcq,2,Which concept is related to enqueue operation?,Stack,Queue,Tree,Graph,B,8.0,enqueue operation
+208,DSA,Queue,enqueue operation,conceptual,mcq,2,enqueue operation is used in which situation?,Stack,Queue,Tree,Graph,B,8.0,enqueue operation
+209,DSA,Queue,enqueue operation,conceptual,mcq,2,Which statement describes enqueue operation?,Stack,Queue,Tree,Graph,B,8.0,enqueue operation
+210,DSA,Queue,enqueue operation,conceptual,mcq,2,Which concept is related to enqueue operation?,Stack,Queue,Tree,Graph,B,8.0,enqueue operation
+211,DSA,Queue,dequeue operation,conceptual,mcq,2,Which statement describes dequeue operation?,Stack,Queue,Tree,Graph,B,8.0,dequeue operation
+212,DSA,Queue,dequeue operation,conceptual,mcq,2,dequeue operation is used in which situation?,Stack,Queue,Tree,Graph,B,8.0,dequeue operation
+213,DSA,Queue,dequeue operation,conceptual,mcq,2,Which concept is related to dequeue operation?,Stack,Queue,Tree,Graph,B,8.0,dequeue operation
+214,DSA,Queue,dequeue operation,conceptual,mcq,2,Which concept is related to dequeue operation?,Stack,Queue,Tree,Graph,B,8.0,dequeue operation
+215,DSA,Queue,dequeue operation,conceptual,mcq,2,Which statement describes dequeue operation?,Stack,Queue,Tree,Graph,B,8.0,dequeue operation
+216,DSA,Queue,dequeue operation,conceptual,mcq,2,dequeue operation is mainly associated with which structure?,Stack,Queue,Tree,Graph,B,8.0,dequeue operation
+217,DSA,Queue,dequeue operation,conceptual,mcq,2,Which statement describes dequeue operation?,Stack,Queue,Tree,Graph,B,8.0,dequeue operation
+218,DSA,Queue,dequeue operation,conceptual,mcq,2,dequeue operation is mainly associated with which structure?,Stack,Queue,Tree,Graph,B,8.0,dequeue operation
+219,DSA,Queue,dequeue operation,conceptual,mcq,2,Which concept is related to dequeue operation?,Stack,Queue,Tree,Graph,B,8.0,dequeue operation
+220,DSA,Queue,dequeue operation,conceptual,mcq,2,dequeue operation is used in which situation?,Stack,Queue,Tree,Graph,B,8.0,dequeue operation
+221,DSA,Queue,dequeue operation,conceptual,mcq,2,dequeue operation is mainly associated with which structure?,Stack,Queue,Tree,Graph,B,8.0,dequeue operation
+222,DSA,Queue,dequeue operation,conceptual,mcq,2,Which concept is related to dequeue operation?,Stack,Queue,Tree,Graph,B,8.0,dequeue operation
+223,DSA,Queue,dequeue operation,conceptual,mcq,2,dequeue operation is used in which situation?,Stack,Queue,Tree,Graph,B,8.0,dequeue operation
+224,DSA,Queue,dequeue operation,conceptual,mcq,2,dequeue operation is mainly associated with which structure?,Stack,Queue,Tree,Graph,B,8.0,dequeue operation
+225,DSA,Queue,dequeue operation,conceptual,mcq,2,dequeue operation is mainly associated with which structure?,Stack,Queue,Tree,Graph,B,8.0,dequeue operation
+226,DSA,Queue,dequeue operation,conceptual,mcq,2,Which statement describes dequeue operation?,Stack,Queue,Tree,Graph,B,8.0,dequeue operation
+227,DSA,Queue,dequeue operation,conceptual,mcq,2,Which concept is related to dequeue operation?,Stack,Queue,Tree,Graph,B,8.0,dequeue operation
+228,DSA,Queue,dequeue operation,conceptual,mcq,2,dequeue operation is mainly associated with which structure?,Stack,Queue,Tree,Graph,B,8.0,dequeue operation
+229,DSA,Queue,dequeue operation,conceptual,mcq,2,Which statement describes dequeue operation?,Stack,Queue,Tree,Graph,B,8.0,dequeue operation
+230,DSA,Queue,dequeue operation,conceptual,mcq,2,dequeue operation is used in which situation?,Stack,Queue,Tree,Graph,B,8.0,dequeue operation
+231,DSA,Queue,circular queue,conceptual,mcq,2,Which statement describes circular queue?,Stack,Queue,Tree,Graph,B,8.0,circular queue
+232,DSA,Queue,circular queue,conceptual,mcq,2,circular queue is used in which situation?,Stack,Queue,Tree,Graph,B,8.0,circular queue
+233,DSA,Queue,circular queue,conceptual,mcq,2,Which concept is related to circular queue?,Stack,Queue,Tree,Graph,B,8.0,circular queue
+234,DSA,Queue,circular queue,conceptual,mcq,2,circular queue is used in which situation?,Stack,Queue,Tree,Graph,B,8.0,circular queue
+235,DSA,Queue,circular queue,conceptual,mcq,2,circular queue is used in which situation?,Stack,Queue,Tree,Graph,B,8.0,circular queue
+236,DSA,Queue,circular queue,conceptual,mcq,2,circular queue is mainly associated with which structure?,Stack,Queue,Tree,Graph,B,8.0,circular queue
+237,DSA,Queue,circular queue,conceptual,mcq,2,Which concept is related to circular queue?,Stack,Queue,Tree,Graph,B,8.0,circular queue
+238,DSA,Queue,circular queue,conceptual,mcq,2,Which concept is related to circular queue?,Stack,Queue,Tree,Graph,B,8.0,circular queue
+239,DSA,Queue,circular queue,conceptual,mcq,2,circular queue is mainly associated with which structure?,Stack,Queue,Tree,Graph,B,8.0,circular queue
+240,DSA,Queue,circular queue,conceptual,mcq,2,circular queue is mainly associated with which structure?,Stack,Queue,Tree,Graph,B,8.0,circular queue
+241,DSA,Queue,circular queue,conceptual,mcq,2,Which statement describes circular queue?,Stack,Queue,Tree,Graph,B,8.0,circular queue
+242,DSA,Queue,circular queue,conceptual,mcq,2,Which statement describes circular queue?,Stack,Queue,Tree,Graph,B,8.0,circular queue
+243,DSA,Queue,circular queue,conceptual,mcq,2,circular queue is used in which situation?,Stack,Queue,Tree,Graph,B,8.0,circular queue
+244,DSA,Queue,circular queue,conceptual,mcq,2,circular queue is used in which situation?,Stack,Queue,Tree,Graph,B,8.0,circular queue
+245,DSA,Queue,circular queue,conceptual,mcq,2,circular queue is mainly associated with which structure?,Stack,Queue,Tree,Graph,B,8.0,circular queue
+246,DSA,Queue,circular queue,conceptual,mcq,2,Which concept is related to circular queue?,Stack,Queue,Tree,Graph,B,8.0,circular queue
+247,DSA,Queue,circular queue,conceptual,mcq,2,circular queue is used in which situation?,Stack,Queue,Tree,Graph,B,8.0,circular queue
+248,DSA,Queue,circular queue,conceptual,mcq,2,circular queue is used in which situation?,Stack,Queue,Tree,Graph,B,8.0,circular queue
+249,DSA,Queue,circular queue,conceptual,mcq,2,circular queue is used in which situation?,Stack,Queue,Tree,Graph,B,8.0,circular queue
+250,DSA,Queue,circular queue,conceptual,mcq,2,Which concept is related to circular queue?,Stack,Queue,Tree,Graph,B,8.0,circular queue
+251,DSA,Queue,priority queue,conceptual,mcq,2,Which statement describes priority queue?,Stack,Queue,Tree,Graph,B,8.0,priority queue
+252,DSA,Queue,priority queue,conceptual,mcq,2,priority queue is mainly associated with which structure?,Stack,Queue,Tree,Graph,B,8.0,priority queue
+253,DSA,Queue,priority queue,conceptual,mcq,2,Which statement describes priority queue?,Stack,Queue,Tree,Graph,B,8.0,priority queue
+254,DSA,Queue,priority queue,conceptual,mcq,2,priority queue is used in which situation?,Stack,Queue,Tree,Graph,B,8.0,priority queue
+255,DSA,Queue,priority queue,conceptual,mcq,2,Which concept is related to priority queue?,Stack,Queue,Tree,Graph,B,8.0,priority queue
+256,DSA,Queue,priority queue,conceptual,mcq,2,Which concept is related to priority queue?,Stack,Queue,Tree,Graph,B,8.0,priority queue
+257,DSA,Queue,priority queue,conceptual,mcq,2,priority queue is mainly associated with which structure?,Stack,Queue,Tree,Graph,B,8.0,priority queue
+258,DSA,Queue,priority queue,conceptual,mcq,2,priority queue is mainly associated with which structure?,Stack,Queue,Tree,Graph,B,8.0,priority queue
+259,DSA,Queue,priority queue,conceptual,mcq,2,priority queue is mainly associated with which structure?,Stack,Queue,Tree,Graph,B,8.0,priority queue
+260,DSA,Queue,priority queue,conceptual,mcq,2,Which concept is related to priority queue?,Stack,Queue,Tree,Graph,B,8.0,priority queue
+261,DSA,Queue,priority queue,conceptual,mcq,2,Which statement describes priority queue?,Stack,Queue,Tree,Graph,B,8.0,priority queue
+262,DSA,Queue,priority queue,conceptual,mcq,2,priority queue is mainly associated with which structure?,Stack,Queue,Tree,Graph,B,8.0,priority queue
+263,DSA,Queue,priority queue,conceptual,mcq,2,priority queue is used in which situation?,Stack,Queue,Tree,Graph,B,8.0,priority queue
+264,DSA,Queue,priority queue,conceptual,mcq,2,priority queue is used in which situation?,Stack,Queue,Tree,Graph,B,8.0,priority queue
+265,DSA,Queue,priority queue,conceptual,mcq,2,Which concept is related to priority queue?,Stack,Queue,Tree,Graph,B,8.0,priority queue
+266,DSA,Queue,priority queue,conceptual,mcq,2,priority queue is used in which situation?,Stack,Queue,Tree,Graph,B,8.0,priority queue
+267,DSA,Queue,priority queue,conceptual,mcq,2,Which statement describes priority queue?,Stack,Queue,Tree,Graph,B,8.0,priority queue
+268,DSA,Queue,priority queue,conceptual,mcq,2,Which concept is related to priority queue?,Stack,Queue,Tree,Graph,B,8.0,priority queue
+269,DSA,Queue,priority queue,conceptual,mcq,2,priority queue is mainly associated with which structure?,Stack,Queue,Tree,Graph,B,8.0,priority queue
+270,DSA,Queue,priority queue,conceptual,mcq,2,priority queue is used in which situation?,Stack,Queue,Tree,Graph,B,8.0,priority queue
+271,DSA,Queue,BFS usage,conceptual,mcq,2,Which concept is related to BFS usage?,Stack,Queue,Tree,Graph,B,8.0,BFS usage
+272,DSA,Queue,BFS usage,conceptual,mcq,2,BFS usage is used in which situation?,Stack,Queue,Tree,Graph,B,8.0,BFS usage
+273,DSA,Queue,BFS usage,conceptual,mcq,2,Which concept is related to BFS usage?,Stack,Queue,Tree,Graph,B,8.0,BFS usage
+274,DSA,Queue,BFS usage,conceptual,mcq,2,Which statement describes BFS usage?,Stack,Queue,Tree,Graph,B,8.0,BFS usage
+275,DSA,Queue,BFS usage,conceptual,mcq,2,Which statement describes BFS usage?,Stack,Queue,Tree,Graph,B,8.0,BFS usage
+276,DSA,Queue,BFS usage,conceptual,mcq,2,Which statement describes BFS usage?,Stack,Queue,Tree,Graph,B,8.0,BFS usage
+277,DSA,Queue,BFS usage,conceptual,mcq,2,BFS usage is used in which situation?,Stack,Queue,Tree,Graph,B,8.0,BFS usage
+278,DSA,Queue,BFS usage,conceptual,mcq,2,BFS usage is mainly associated with which structure?,Stack,Queue,Tree,Graph,B,8.0,BFS usage
+279,DSA,Queue,BFS usage,conceptual,mcq,2,BFS usage is mainly associated with which structure?,Stack,Queue,Tree,Graph,B,8.0,BFS usage
+280,DSA,Queue,BFS usage,conceptual,mcq,2,Which concept is related to BFS usage?,Stack,Queue,Tree,Graph,B,8.0,BFS usage
+281,DSA,Queue,BFS usage,conceptual,mcq,2,Which concept is related to BFS usage?,Stack,Queue,Tree,Graph,B,8.0,BFS usage
+282,DSA,Queue,BFS usage,conceptual,mcq,2,Which concept is related to BFS usage?,Stack,Queue,Tree,Graph,B,8.0,BFS usage
+283,DSA,Queue,BFS usage,conceptual,mcq,2,Which concept is related to BFS usage?,Stack,Queue,Tree,Graph,B,8.0,BFS usage
+284,DSA,Queue,BFS usage,conceptual,mcq,2,Which statement describes BFS usage?,Stack,Queue,Tree,Graph,B,8.0,BFS usage
+285,DSA,Queue,BFS usage,conceptual,mcq,2,Which concept is related to BFS usage?,Stack,Queue,Tree,Graph,B,8.0,BFS usage
+286,DSA,Queue,BFS usage,conceptual,mcq,2,Which concept is related to BFS usage?,Stack,Queue,Tree,Graph,B,8.0,BFS usage
+287,DSA,Queue,BFS usage,conceptual,mcq,2,BFS usage is used in which situation?,Stack,Queue,Tree,Graph,B,8.0,BFS usage
+288,DSA,Queue,BFS usage,conceptual,mcq,2,Which statement describes BFS usage?,Stack,Queue,Tree,Graph,B,8.0,BFS usage
+289,DSA,Queue,BFS usage,conceptual,mcq,2,BFS usage is mainly associated with which structure?,Stack,Queue,Tree,Graph,B,8.0,BFS usage
+290,DSA,Queue,BFS usage,conceptual,mcq,2,BFS usage is mainly associated with which structure?,Stack,Queue,Tree,Graph,B,8.0,BFS usage

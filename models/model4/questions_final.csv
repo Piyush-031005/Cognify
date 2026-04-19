@@ -1,0 +1,74 @@
+subject,topic,type,question,A,B,C,D,answer
+
+DSA,Stack,basic,What is push operation?,Insert element,Delete element,Search element,Traverse,A
+DSA,Stack,basic,What is pop operation?,Remove top element,Add element,Search element,Traverse,A
+DSA,Stack,conceptual,Why is stack used in undo operations?,LIFO behavior,FIFO behavior,Random access,Sorting,A
+DSA,Stack,application,Push 2 4 6 then pop once top?,4,6,2,0,A
+DSA,Stack,tricky,Can stack be implemented using array?,Yes,No,Only linked list,Only queue,A
+
+DSA,Queue,basic,What is dequeue?,Remove element,Add element,Search element,Sort element,A
+DSA,Queue,conceptual,Queue is used in?,Scheduling,Sorting,Searching,Recursion,A
+DSA,Queue,application,Enqueue 5 6 7 then dequeue result?,6,7,5,8,A
+DSA,Queue,tricky,Circular queue avoids?,Overflow,Underflow,Sorting,Searching,A
+
+DSA,Trees,basic,Number of edges in tree with N nodes?,N-1,N+1,N,N^2,A
+DSA,Trees,conceptual,Complete binary tree means?,All levels filled except last,Only root exists,Only leaves filled,Random nodes,A
+DSA,Trees,application,Postorder traversal ends with?,Root,Leaf,Left node,Right node,A
+DSA,Trees,tricky,Heap is?,Complete binary tree,Balanced tree,Skew tree,Graph,A
+
+DSA,Linked List,basic,Singly linked list stores?,Next pointer,Previous pointer,Array index,Hash value,A
+DSA,Linked List,conceptual,Why linked list is dynamic?,No fixed size,Fixed size,Contiguous memory,Sorted data,A
+DSA,Linked List,application,Search in linked list complexity?,O(n),O(log n),O(1),O(n^2),A
+DSA,Linked List,tricky,Reverse linked list uses?,Pointers,Arrays,Stacks,Queues,A
+
+
+AI,Machine Learning,basic,What is dataset?,Collection of data,Single value,Algorithm,Function,A
+AI,Machine Learning,conceptual,Why normalization is used?,Scale data,Reduce data,Delete data,Store data,A
+AI,Machine Learning,application,If data is noisy what happens?,Accuracy drops,Accuracy increases,No change,Data deleted,A
+AI,Machine Learning,tricky,Regularization prevents?,Overfitting,Underfitting,Noise,Sorting,A
+AI,Machine Learning,basic,What is supervised learning?,Uses labeled data,Uses no data,Clustering only,Random process,A
+AI,Machine Learning,conceptual,Why use validation set?,Tune model,Train model,Test model,Store data,A
+AI,Machine Learning,application,Which algorithm is used for classification?,KNN,Linear regression,PCA,Clustering,A
+AI,Machine Learning,tricky,High bias means?,Underfitting,Overfitting,Perfect model,Noise,A
+
+AI,Neural Networks,basic,Input layer purpose?,Receive data,Process data,Output result,Store data,A
+AI,Neural Networks,conceptual,Hidden layers do?,Feature extraction,Store data,Sort data,Delete data,A
+AI,Neural Networks,application,Weights updated using?,Backpropagation,Sorting,Searching,Traversal,A
+AI,Neural Networks,tricky,Gradient descent minimizes?,Loss,Accuracy,Data size,Epochs,A
+
+AI,Deep Learning,basic,CNN is used for?,Images,Text,Audio,Numbers,A
+AI,Deep Learning,conceptual,RNN is used for?,Sequential data,Images,Sorting,Graphs,A
+AI,Deep Learning,application,More layers means?,More complexity,Less data,Less accuracy,No change,A
+AI,Deep Learning,tricky,Overfitting solved by?,Dropout,Sorting,Searching,Loop,A
+
+
+DAA,Complexity,basic,Time complexity of insertion sort?,O(n^2),O(n),O(log n),O(1),A
+DAA,Complexity,conceptual,Space complexity means?,Memory usage,Time usage,CPU usage,Disk usage,A
+DAA,Complexity,application,Merge sort complexity?,O(n log n),O(n^2),O(n),O(log n),A
+DAA,Complexity,tricky,Constant time means?,O(1),O(n),O(log n),O(n^2),A
+
+DAA,Dynamic Programming,basic,DP uses?,Memoization,Sorting,Searching,Traversal,A
+DAA,Dynamic Programming,conceptual,Optimal substructure means?,Optimal solution built from subproblems,Random solution,Greedy choice,Sorting,A
+DAA,Dynamic Programming,application,Knapsack uses?,DP,Greedy,DFS,BFS,A
+DAA,Dynamic Programming,tricky,Tabulation means?,Bottom-up,Top-down,Recursive,Sorting,A
+
+DAA,Greedy,basic,Greedy approach means?,Local optimal choice,Global search,Random choice,Sorting,A
+DAA,Greedy,conceptual,Greedy fails when?,No optimal substructure,Too many nodes,Sorted data,Loop,A
+DAA,Greedy,application,Fractional knapsack uses?,Greedy,DP,DFS,BFS,A
+DAA,Greedy,tricky,Dijkstra algorithm uses?,Greedy,DP,Backtracking,Divide conquer,A
+
+
+Fullstack,React,basic,JSX stands for?,JavaScript XML,Java Syntax Extension,JSON XML,JavaScript Example,A
+Fullstack,React,conceptual,Component based means?,Reusable UI,Single UI,Static UI,Backend UI,A
+Fullstack,React,application,useState is used for?,State management,Routing,Styling,Database,A
+Fullstack,React,tricky,useEffect is used for?,Side effects,Rendering,Styling,Loop,A
+
+Fullstack,NodeJS,basic,NPM stands for?,Node Package Manager,Network Package Module,Node Process Manager,New Package Model,A
+Fullstack,NodeJS,conceptual,Non blocking means?,Asynchronous execution,Synchronous execution,Parallel loops,Sorting,A
+Fullstack,NodeJS,application,API means?,Application Programming Interface,Advanced Program Input,Array Processing Index,Auto Process Interface,A
+Fullstack,NodeJS,tricky,Callback is used for?,Async handling,Sorting,Looping,Recursion,A
+
+Fullstack,Database,basic,SQL stands for?,Structured Query Language,Simple Query Language,System Query Logic,Structured Queue Language,A
+Fullstack,Database,conceptual,Foreign key means?,Reference to another table,Primary key,Index value,Unique value,A
+Fullstack,Database,application,SELECT command does?,Fetch data,Delete data,Insert data,Update data,A
+Fullstack,Database,tricky,JOIN is used for?,Combine tables,Delete tables,Sort tables,Index tables,A

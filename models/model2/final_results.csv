@@ -1,0 +1,7 @@
+user_id,question_id,subject,topic,answer_correct,confidence,time_taken,confidence_error,speed_score,fake_confidence,guess_flag,understanding_score
+U1,1,DSA,Stack,1,4,7.0,0,2.26,0,0,65
+U1,2,DSA,Stack,0,5,14.0,5,1.13,1,0,25
+U1,1,DSA,Stack,0,4,40.73,4,0.3884114903019887,1,0,25
+U1,2,DSA,Stack,0,4,9.45,4,1.674074074074074,1,0,25
+U1,3,DSA,Stack,0,5,15.14,5,1.044914134742404,1,0,25
+U1,4,DSA,Stack,0,5,8.6,5,1.8395348837209304,1,0,25
