@@ -3,31 +3,49 @@ import { Navigate, useNavigate } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
 import InsideLayout from "../components/InsideLayout";
 import { Button } from "@/components/ui/button";
-import { QUESTIONS } from "../lib/questions";
+import { getRandomQuestions } from "../data/questionBank";
 import { getCurrentUser, saveReport, type QuestionAnalytics } from "@/lib/storage";
 
 export default function Quiz() {
-  const API = import.meta.env.VITE_API_URL; 
-  const [questions, setQuestions] = useState([]);
-useEffect(() => {
-  setQuestions(QUESTIONS);
-}, []);
-  const user = getCurrentUser();
-  const navigate = useNavigate();
+  const API = import.meta.env.VITE_API_URL;
 
+  // 🔥 STATE SABSE PEHLE
+  const [questions, setQuestions] = useState<any[]>([]);
   const [idx, setIdx] = useState(0);
   const [selected, setSelected] = useState<number | null>(null);
   const [analytics, setAnalytics] = useState<QuestionAnalytics[]>([]);
   const [processing, setProcessing] = useState(false);
   const [reflection, setReflection] = useState("");
 
-  const q = questions[idx] || null;
-  const total = questions.length;
+  const user = getCurrentUser();
+  const navigate = useNavigate();
 
   const startedAt = useRef<number>(Date.now());
   const lastInteract = useRef<number>(Date.now());
   const idleAccum = useRef<number>(0);
   const changes = useRef<number>(0);
+
+  // 🔥 LOAD QUESTIONS (AB SAHI JAGAH)
+  useEffect(() => {
+    const subject = localStorage.getItem("selectedSubject");
+    const topic = localStorage.getItem("selectedTopic");
+    const subtopic = localStorage.getItem("selectedSubtopic");
+
+    const q = getRandomQuestions(subject!, topic!, subtopic!);
+
+    console.log("LOADED QUESTIONS:", q);
+
+    setQuestions(q);
+  }, []);
+
+  // 🔥 SAFETY CHECK
+  if (questions.length === 0) {
+    return <div>No questions found for this topic</div>;
+  }
+
+  // 🔥 CURRENT QUESTION
+  const q = questions[idx];
+  const total = questions.length;
 
   useEffect(() => {
     startedAt.current = Date.now();
@@ -92,7 +110,7 @@ useEffect(() => {
         backspace_count: 0,
         skipped: false,
 
-        reflection: reflection
+        reflection: reflection || "No reflection"
       })
     });
 
