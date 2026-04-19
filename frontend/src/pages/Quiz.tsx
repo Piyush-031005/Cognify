@@ -4,21 +4,17 @@ import { AnimatePresence, motion } from "framer-motion";
 import InsideLayout from "../components/InsideLayout";
 import { Button } from "@/components/ui/button";
 import { getCurrentUser, saveReport, type QuestionAnalytics } from "@/lib/storage";
-const [questions, setQuestions] = useState([]);
 
+export default function Quiz() {
+  const API = import.meta.env.VITE_API_URL; 
+  const [questions, setQuestions] = useState([]);
 useEffect(() => {
   const subject = localStorage.getItem("selectedSubject");
   const topic = localStorage.getItem("selectedTopic");
-
-  fetch(`http://127.0.0.1:5000/questions/${subject}/${topic}`)
+  fetch(`${API}/questions/${subject}/${topic}`)
     .then(res => res.json())
     .then(setQuestions);
 }, []);
-
-
-const API = import.meta.env.VITE_API_URL; 
-
-export default function Quiz() {
   const user = getCurrentUser();
   const navigate = useNavigate();
 
