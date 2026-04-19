@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { getCurrentUser, saveReport, type QuestionAnalytics } from "@/lib/storage";
 
 export default function Quiz() {
-  const API = import.meta.env.VITE_API_URL;
+  const API = "https://cognify-jkzy.onrender.com";
 
   // 🔥 STATE SABSE PEHLE
   const [questions, setQuestions] = useState<any[]>([]);
@@ -37,6 +37,7 @@ console.log("SUBTOPIC:", subtopic);
     .then(res => res.json())
     .then(data => {
       console.log("API QUESTIONS:", data);
+      setQuestions(data);
 
       // 🔥 random pick 7
       const shuffled = [...data].sort(() => 0.5 - Math.random());
