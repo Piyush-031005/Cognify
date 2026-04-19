@@ -26,12 +26,12 @@ export default function Topics() {
       {topics.map(t => (
         <button
           key={t}
-          onClick={() => {
+onClick={() => {
   localStorage.setItem("selectedSubject", subject || "");
   localStorage.setItem("selectedTopic", t);
 
-  // TEMP: abhi subtopic same hi maan le
-  localStorage.setItem("selectedSubtopic", t);
+  // 🔥 FIX
+  localStorage.setItem("selectedSubtopic", "kinematics");
 
   navigate("/quiz");
 }}
