@@ -27,16 +27,8 @@ export default function Topics() {
         <button
           key={t}
 onClick={() => {
-  // ✅ SUBJECT fix (force)
-  localStorage.setItem("selectedSubject", "physics");
-
-  // ✅ topic (correct)
   localStorage.setItem("selectedTopic", t);
-
-  // ✅ subtopic (IMPORTANT)
-  localStorage.setItem("selectedSubtopic", "kinematics");
-
-  navigate("/quiz");
+  navigate("/subtopics");  
 }}
         >
           {t}
