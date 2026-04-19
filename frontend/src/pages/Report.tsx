@@ -107,25 +107,20 @@ export default function Report() {
         {/* Timeline */}
         <Section icon={<Activity className="h-4 w-4" />} title="Question timeline" subtitle="Your moment-by-moment cognition">
           <div className="space-y-2">
-            {report.perQuestion.map((p, i) => {
-              const q = QUESTIONS.find(x => x.id === p.questionId);
-              const tone =
-                p.idleTimeMs > 4000 ? "Hesitation spike" :
-                p.changedAnswerCount > 0 ? "Reconsidered" :
-                p.responseTimeMs < 5000 && p.correct ? "Confident" :
-                p.correct ? "Steady" : "Unsure";
-              return (
-                <div key={i} className="flex items-center gap-4 rounded-2xl border border-foreground/20 bg-card px-4 py-3">
-                  <div className="font-display text-sm w-12 font-bold">Q{i + 1}</div>
-                  <div className="flex-1 text-sm truncate">{q?.prompt}</div>
-                  <div className={`text-xs font-semibold px-2.5 py-1 ${
-                    tone === "Confident" ? "bg-primary text-primary-foreground" :
-                    tone === "Hesitation spike" ? "bg-foreground text-background" :
-                    "border border-foreground/30"
-                  }`}>{tone}</div>
-                </div>
-              );
-            })}
+          {report.perQuestion.map((p, i) => {
+        const tone =
+    p.idleTimeMs > 4000 ? "Hesitation spike" :
+    p.changedAnswerCount > 0 ? "Reconsidered" :
+    p.responseTimeMs < 5000 && p.correct ? "Confident" :
+    p.correct ? "Steady" : "Unsure";
+
+    return (
+      <div key={i}>
+      <div>{p.question}</div>   {/* 🔥 DIRECT USE */}
+      <div>{tone}</div>
+    </div>
+  );
+})}
           </div>
         </Section>
 

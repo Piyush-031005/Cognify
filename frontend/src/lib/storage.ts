@@ -13,6 +13,7 @@ export type CognifyUser = {
 
 export type QuestionAnalytics = {
   questionId: number;
+  question: string;
   selected: string | null;
   correct: boolean;
   responseTimeMs: number;

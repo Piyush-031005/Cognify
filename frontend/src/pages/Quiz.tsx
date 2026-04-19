@@ -82,6 +82,7 @@ export default function Quiz() {
 
     const entry: QuestionAnalytics = {
       questionId: q.id,
+      question: q.prompt,
       selected: q.options[selected],
       correct,
       responseTimeMs,
