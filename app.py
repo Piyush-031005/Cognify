@@ -128,3 +128,7 @@ def get_topics(subject):
 def get_questions(subject, topic):
     subtopics = QUESTIONS_DB.get(subject, {}).get(topic, {})
     return jsonify(list(subtopics.keys()))
+
+@app.route('/debug')
+def debug():
+    return "DEBUG WORKING"
