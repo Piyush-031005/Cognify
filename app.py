@@ -104,7 +104,7 @@ import json
 import os
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-file_path = os.path.join(BASE_DIR, "data", "questions.json")
+file_path = os.path.join(BASE_DIR, "models", "data", "questions.json")
 
 with open(file_path) as f:
     QUESTIONS_DB = json.load(f)
