@@ -16,19 +16,22 @@ export default function Subtopics() {
 
   return (
     <div className="p-10">
-      <h1>Select Subtopic</h1>
+  <h1 className="text-xl font-bold mb-6">Select Subtopic</h1>
 
-      {subtopics.map(s => (
-        <button
-          key={s}
-          onClick={() => {
-            localStorage.setItem("selectedSubtopic", s);
-            navigate("/quiz");
-          }}
-        >
-          {s}
-        </button>
-      ))}
-    </div>
+  <div className="flex flex-wrap gap-4">
+    {subtopics.map((s) => (
+      <button
+        key={s}
+        onClick={() => {
+          localStorage.setItem("selectedSubtopic", s);
+          navigate("/quiz");
+        }}
+        className="px-5 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition"
+      >
+        {s}
+      </button>
+    ))}
+  </div>
+</div>
   );
 }
