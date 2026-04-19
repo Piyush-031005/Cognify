@@ -3,27 +3,14 @@ import { Navigate, useNavigate } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
 import InsideLayout from "../components/InsideLayout";
 import { Button } from "@/components/ui/button";
+import { QUESTIONS } from "../lib/questions";
 import { getCurrentUser, saveReport, type QuestionAnalytics } from "@/lib/storage";
 
 export default function Quiz() {
   const API = import.meta.env.VITE_API_URL; 
   const [questions, setQuestions] = useState([]);
 useEffect(() => {
-  const subject = localStorage.getItem("selectedSubject");
-  const topic = localStorage.getItem("selectedTopic");
-
-  console.log("SUBJECT:", subject);
-  console.log("TOPIC:", topic);
-
-  fetch(`${API}/questions/${subject}/${topic}`)
-    .then(res => res.json())
-    .then(data => {
-      console.log("QUESTIONS:", data);
-      setQuestions(data);
-    })
-    .catch(err => {
-      console.error("ERROR:", err);
-    });
+  setQuestions(QUESTIONS);
 }, []);
   const user = getCurrentUser();
   const navigate = useNavigate();
