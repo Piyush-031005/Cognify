@@ -40,36 +40,13 @@ console.log("SUBTOPIC:", subtopic);
 
       // 🔥 random pick 7
       const shuffled = [...data].sort(() => 0.5 - Math.random());
-      setQuestions(shuffled.slice(0, 7));
+      setQuestions(shuffled);
     })
     .catch(err => console.error(err));
 }, []);
 
-  // 🔥 SAFETY CHECK
-  if (questions.length === 0) {
-    return <div>No questions found for this topic</div>;
-  }
-  if (!questions || questions.length === 0) {
-  return (
-    <InsideLayout>
-      <div className="text-center mt-20 text-white">
-        Loading questions...
-      </div>
-    </InsideLayout>
-  );
-}
-  // 🔥 CURRENT QUESTION
-  const q = questions[idx] || null;
-  if (!q) {
-  return (
-    <InsideLayout>
-      <div className="text-center mt-20 text-white">
-        No question found
-      </div>
-    </InsideLayout>
-  );
-}
   const total = questions.length;
+  const q = questions[idx] || null;
 
   useEffect(() => {
     startedAt.current = Date.now();
