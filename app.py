@@ -126,5 +126,5 @@ def get_topics(subject):
 
 @app.route('/questions/<subject>/<topic>', methods=['GET'])
 def get_questions(subject, topic):
-    qs = QUESTIONS_DB.get(subject, {}).get(topic, [])
-    return jsonify(qs)
+    subtopics = QUESTIONS_DB.get(subject, {}).get(topic, {})
+    return jsonify(list(subtopics.keys()))
