@@ -9,6 +9,7 @@ import Dashboard from "./pages/Dashboard.tsx";
 import Quiz from "./pages/Quiz.tsx";
 import Report from "./pages/Report.tsx";
 import NotFound from "./pages/NotFound.tsx";
+import Topics from "./pages/Topics.tsx";
 
 const queryClient = new QueryClient();
 
@@ -24,6 +25,7 @@ const App = () => (
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/quiz" element={<Quiz />} />
           <Route path="/report/:id" element={<Report />} />
+          <Route path="/topics" element={<Topics />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
