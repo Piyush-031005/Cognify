@@ -1,0 +1,11 @@
+id,subject,topic,concept,type,format,difficulty,question,optionA,optionB,optionC,optionD,answer,expected_time,concept_group
+1,DSA,Stack,LIFO,basic,mcq,1,Which principle does stack follow?,FIFO,LIFO,Random,None,B,6,operations
+2,DSA,Stack,Overflow,conceptual,true_false,2,Stack overflow occurs when stack is full,,,,,True
+3,DSA,Stack,Underflow,conceptual,true_false,2,Stack underflow occurs when pop is applied on empty stack,,,,,True
+4,DSA,Stack,Operation,application,mcq,2,Which operation removes element from stack?,Push,Pop,Insert,Append,B
+5,DSA,Stack,Operation,application,mcq,2,Which operation adds element to stack?,Pop,Push,Delete,Access,B
+6,DSA,Stack,Usage,conceptual,mcq,2,Which data structure is used in recursion?,Queue,Stack,Tree,Graph,B
+7,DSA,Stack,Application,tricky,mcq,3,Undo operation in editors is implemented using?,Queue,Stack,Heap,Tree,B
+8,DSA,Stack,Expression,application,mcq,3,Which data structure is used for expression evaluation?,Queue,Stack,Array,Graph,B
+9,DSA,Stack,Structure,conceptual,true_false,2,Stack can be implemented using arrays,,,,,True
+10,DSA,Stack,Structure,conceptual,true_false,2,Stack can be implemented using linked lists,,,,,True

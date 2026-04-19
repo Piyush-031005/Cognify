@@ -1,0 +1,238 @@
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ============================================
+   COGNIFY DESIGN SYSTEM
+   Outside: Lime + White (fresh, startup)
+   Inside : Dark Cyan + Mint Green (calm AI)
+   Report : Animated multi-stop gradient (hero)
+   All colors HSL.
+   ============================================ */
+
+@layer base {
+  :root {
+    /* ---- OUTSIDE THEME (default) ---- */
+    --background: 0 0% 100%;
+    --foreground: 0 0% 6%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 0 0% 6%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 0 0% 6%;
+
+    /* Lime is primary outside */
+    --primary: 74 100% 60%;            /* #C6FF33 */
+    --primary-foreground: 0 0% 6%;
+    --primary-glow: 74 100% 70%;
+
+    --secondary: 0 0% 96%;
+    --secondary-foreground: 0 0% 6%;
+
+    --muted: 0 0% 95%;
+    --muted-foreground: 0 0% 35%;
+
+    --accent: 74 100% 60%;
+    --accent-foreground: 0 0% 6%;
+
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 0 0% 90%;
+    --input: 0 0% 92%;
+    --ring: 74 100% 60%;
+
+    --radius: 0.875rem;
+
+    /* ---- BRAND TOKENS ---- */
+    --lime: 74 100% 60%;               /* #C6FF33 */
+    --lime-glow: 74 100% 70%;
+    --cyan-deep: 180 75% 4%;           /* #020E0E */
+    --cyan-deep-2: 180 60% 7%;
+    --mint: 154 99% 44%;               /* #01DE82 */
+    --mint-glow: 154 99% 60%;
+
+    /* Report gradient stops */
+    --report-1: 280 51% 20%;           /* #3F194D */
+    --report-2: 290 87% 26%;           /* #68097E */
+    --report-3: 327 76% 45%;           /* #C91C7A */
+    --report-4: 9 76% 64%;             /* #E8675C */
+    --report-5: 47 100% 51%;           /* #FFCA06 */
+
+    /* Gradients */
+    --gradient-lime: linear-gradient(135deg, hsl(var(--lime)), hsl(var(--lime-glow)));
+    --gradient-mint: linear-gradient(135deg, hsl(var(--mint)), hsl(var(--mint-glow)));
+    --gradient-cyan: linear-gradient(180deg, hsl(var(--cyan-deep)), hsl(var(--cyan-deep-2)));
+    --gradient-report: linear-gradient(
+      135deg,
+      hsl(var(--report-1)),
+      hsl(var(--report-2)),
+      hsl(var(--report-3)),
+      hsl(var(--report-4)),
+      hsl(var(--report-5))
+    );
+
+    /* Shadows / glows */
+    --shadow-lime: 0 10px 40px -10px hsl(var(--lime) / 0.55);
+    --shadow-mint: 0 10px 40px -10px hsl(var(--mint) / 0.55);
+    --shadow-soft: 0 8px 30px -12px hsl(0 0% 0% / 0.15);
+
+    /* Motion */
+    --ease-out-soft: cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  /* ---- INSIDE APP THEME (Dashboard / Quiz) — light, airy, calm ---- */
+  .theme-inside {
+    --background: 170 30% 18%;         /* lighter muted teal */
+    --foreground: 160 30% 94%;
+
+    --card: 170 25% 22%;
+    --card-foreground: 160 30% 94%;
+
+    --popover: 170 25% 22%;
+    --popover-foreground: 160 30% 94%;
+
+    --primary: 152 45% 62%;            /* normal soft green, not neon */
+    --primary-foreground: 170 35% 12%;
+    --primary-glow: 152 50% 72%;
+
+    --secondary: 170 22% 26%;
+    --secondary-foreground: 160 30% 94%;
+
+    --muted: 170 20% 28%;
+    --muted-foreground: 160 18% 75%;
+
+    --accent: 152 45% 62%;
+    --accent-foreground: 170 35% 12%;
+
+    --destructive: 0 60% 60%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 170 22% 30%;
+    --input: 170 20% 28%;
+    --ring: 152 45% 62%;
+
+    /* override brand tokens inside for softer feel */
+    --cyan-deep: 170 30% 18%;
+    --cyan-deep-2: 170 25% 22%;
+    --mint: 152 45% 62%;
+    --mint-glow: 152 50% 72%;
+  }
+
+  /* ---- REPORT THEME — softer, more editorial Tarantino yellow/red ---- */
+  .theme-report {
+    --background: 48 95% 60%;          /* warm yellow */
+    --foreground: 0 0% 8%;
+
+    --card: 48 90% 96%;
+    --card-foreground: 0 0% 10%;
+
+    --popover: 48 90% 96%;
+    --popover-foreground: 0 0% 10%;
+
+    --primary: 4 75% 52%;              /* tarantino red */
+    --primary-foreground: 48 95% 96%;
+    --primary-glow: 4 80% 62%;
+
+    --secondary: 48 85% 88%;
+    --secondary-foreground: 0 0% 10%;
+
+    --muted: 48 60% 82%;
+    --muted-foreground: 0 0% 28%;
+
+    --accent: 4 75% 52%;
+    --accent-foreground: 48 95% 96%;
+
+    --destructive: 0 70% 50%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 0 0% 10%;
+    --input: 48 60% 82%;
+    --ring: 4 75% 52%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  html {
+    font-family: 'Inter', system-ui, sans-serif;
+  }
+  body {
+    @apply bg-background text-foreground antialiased;
+    font-feature-settings: "ss01", "cv11";
+  }
+  h1, h2, h3, h4, .font-display {
+    font-family: 'Space Grotesk', system-ui, sans-serif;
+    letter-spacing: -0.02em;
+  }
+}
+
+@layer components {
+  .glass {
+    background: hsl(var(--card) / 0.55);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border: 1px solid hsl(var(--border) / 0.7);
+  }
+  .glass-mint {
+    background: linear-gradient(135deg, hsl(var(--mint) / 0.08), hsl(var(--mint) / 0.02));
+    border: 1px solid hsl(var(--mint) / 0.25);
+    backdrop-filter: blur(14px);
+  }
+  .text-gradient-report {
+    background: var(--gradient-report);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+  .grid-bg {
+    background-image:
+      linear-gradient(hsl(var(--foreground) / 0.04) 1px, transparent 1px),
+      linear-gradient(90deg, hsl(var(--foreground) / 0.04) 1px, transparent 1px);
+    background-size: 48px 48px;
+  }
+  .grid-bg-mint {
+    background-image:
+      linear-gradient(hsl(var(--mint) / 0.06) 1px, transparent 1px),
+      linear-gradient(90deg, hsl(var(--mint) / 0.06) 1px, transparent 1px);
+    background-size: 48px 48px;
+  }
+}
+
+@layer utilities {
+  .report-animated-bg {
+    background: var(--gradient-report);
+    background-size: 300% 300%;
+    animation: gradientMove 12s ease infinite;
+  }
+  .pulse-dot::after {
+    content: '';
+    display: inline-block;
+    width: 6px; height: 6px;
+    margin-left: 8px;
+    border-radius: 9999px;
+    background: hsl(var(--mint));
+    box-shadow: 0 0 12px hsl(var(--mint));
+    animation: pulseDot 1.4s ease-in-out infinite;
+  }
+}
+
+@keyframes gradientMove {
+  0%   { background-position: 0% 50%; }
+  50%  { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+@keyframes pulseDot {
+  0%, 100% { opacity: 0.35; transform: scale(0.9); }
+  50%      { opacity: 1;    transform: scale(1.15); }
+}
+@keyframes floatSoft {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(-8px); }
+}
+.float-soft { animation: floatSoft 6s ease-in-out infinite; }
