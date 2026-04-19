@@ -8,10 +8,16 @@ export default function Topics() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    fetch(`https://cognify-jkzy.onrender.com/topics/${subject}`)
-      .then(res => res.json())
-      .then(setTopics);
-  }, []);
+  if (!subject) {
+    console.error("❌ Subject missing");
+    return;
+  }
+
+  fetch(`https://cognify-jkzy.onrender.com/topics/${subject}`)
+    .then(res => res.json())
+    .then(setTopics)
+    .catch(err => console.error(err));
+}, [subject]);
 
   return (
     <div className="p-10">
