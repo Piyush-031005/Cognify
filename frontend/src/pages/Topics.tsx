@@ -21,9 +21,14 @@ export default function Topics() {
         <button
           key={t}
           onClick={() => {
-            localStorage.setItem("selectedTopic", t);
-            navigate("/quiz");
-          }}
+  localStorage.setItem("selectedSubject", subject || "");
+  localStorage.setItem("selectedTopic", t);
+
+  // TEMP: abhi subtopic same hi maan le
+  localStorage.setItem("selectedSubtopic", t);
+
+  navigate("/quiz");
+}}
         >
           {t}
         </button>

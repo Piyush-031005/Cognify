@@ -36,7 +36,7 @@ export default function Dashboard() {
             </div>
             <Button asChild size="lg"
               className="group h-14 self-start rounded-2xl bg-mint text-cyan-deep hover:bg-mint-glow shadow-mint px-7 text-base font-semibold transition-all hover:scale-[1.03]">
-              <Link to="/quiz">
+              <Link to="/topics">
                 Start Analysis <ArrowRight className="ml-1 h-5 w-5 transition-transform group-hover:translate-x-1" />
               </Link>
             </Button>
