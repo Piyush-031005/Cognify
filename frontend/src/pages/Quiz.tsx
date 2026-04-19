@@ -6,6 +6,8 @@ import { Button } from "@/components/ui/button";
 import { QUESTIONS } from "../lib/questions";
 import { getCurrentUser, saveReport, type QuestionAnalytics } from "@/lib/storage";
 
+const API = import.meta.env.VITE_API_URL; // ✅ GLOBAL (SAFE)
+
 export default function Quiz() {
   const user = getCurrentUser();
   const navigate = useNavigate();
@@ -48,9 +50,10 @@ export default function Quiz() {
 
   const submit = async () => {
     if (idx === total - 1 && reflection.trim() === "") {
-  alert("Please write your reflection (2-3 lines)");
-  return;
-}
+      alert("Please write your reflection (2-3 lines)");
+      return;
+    }
+
     if (selected === null) return;
 
     const responseTimeMs = Date.now() - startedAt.current;
@@ -69,12 +72,10 @@ export default function Quiz() {
     const next = [...analytics, entry];
     setAnalytics(next);
 
-    // 🔥 BACKEND CALL
-    await fetch("http://127.0.0.1:5000/submit", {
+    // ✅ FIXED BACKEND CALL (CLEAN)
+    await fetch(`${API}/submit`, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         response_time: responseTimeMs / 1000,
         attempts: 1,
@@ -86,7 +87,7 @@ export default function Quiz() {
         idle_time: idleAccum.current / 1000,
         rewrite_count: changes.current,
         backspace_count: 0,
-        skipped: 0,
+        skipped: false,
 
         reflection: reflection
       })
@@ -98,46 +99,43 @@ export default function Quiz() {
       setProcessing(true);
 
       setTimeout(async () => {
-  const res = await fetch("http://127.0.0.1:5000/report");
-  const report = await res.json();
+        const res = await fetch(`${API}/report`);
+        const report = await res.json();
 
-  // 🔥 ADD THIS
-  const weakRes = await fetch("http://127.0.0.1:5000/weakness");
-  const weakData = await weakRes.json();
+        const weakRes = await fetch(`${API}/weakness`);
+        const weakData = await weakRes.json();
 
-  // merge both
-  const finalReport: any = {
-  id: "", // will be added in saveReport
-  userEmail: "",
-  takenAt: new Date().toISOString(),
+        const finalReport: any = {
+          id: "",
+          userEmail: "",
+          takenAt: new Date().toISOString(),
+          perQuestion: next,
 
-  perQuestion: analytics,
+          scores: {
+            conceptual: Math.round((report.understanding_analysis?.[1] || 0) * 100),
+            memorized: Math.round((report.understanding_analysis?.[0] || 0) * 100),
+            fakeUnderstanding: Math.round((report.understanding_analysis?.[2] || 0) * 100),
 
-  scores: {
-    conceptual: Math.round((report.understanding_analysis?.[1] || 0) * 100),
-    memorized: Math.round((report.understanding_analysis?.[0] || 0) * 100),
-    fakeUnderstanding: Math.round((report.understanding_analysis?.[2] || 0) * 100),
+            hesitation: Math.round((report.behavior_analysis?.hesitant || 0) * 100),
+            confidence: Math.round((report.behavior_analysis?.confident || 0) * 100),
+            overthinking: Math.round((report.behavior_analysis?.overthinking || 0) * 100)
+          },
 
-    hesitation: Math.round((report.behavior_analysis?.hesitant || 0) * 100),
-    confidence: Math.round((report.behavior_analysis?.confident || 0) * 100),
-    overthinking: Math.round((report.behavior_analysis?.overthinking || 0) * 100)
-  },
+          pattern: report.strategy_analysis?.trial
+            ? "Trial-based"
+            : "Concept-based",
 
-  pattern: report.strategy_analysis?.trial
-    ? "Trial-based"
-    : "Concept-based",
+          prediction: report.future_prediction || "",
 
-  prediction: report.future_prediction || "",
+          insights: [
+            `Weakness: ${weakData.weakness}`,
+            `Reflection: ${report.reflection_analysis}`
+          ]
+        };
 
-  insights: [
-    `Weakness: ${weakData.weakness}`,
-    `Reflection: ${report.reflection_analysis}`
-  ]
-};
-
-  const reportId = saveReport(finalReport);
-  navigate(`/report/${reportId}`);
-}, 1800);
+        const reportId = saveReport(finalReport);
+        navigate(`/report/${reportId}`);
+      }, 1800);
     }
   };
 
@@ -151,9 +149,9 @@ export default function Quiz() {
         {processing ? (
           <Processing />
         ) : (
-           <motion.div
-              key={idx}
-              initial={{ opacity: 0, y: 10 }}
+          <motion.div
+            key={idx}
+            initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
             transition={{ duration: 0.35 }}
@@ -166,8 +164,8 @@ export default function Quiz() {
 
             <div className="mt-3 h-1 w-full bg-gray-700 rounded">
               <div
-                  className="h-full bg-green-400"
-                  style={{ width: `${progress}%` }}
+                className="h-full bg-green-400"
+                style={{ width: `${progress}%` }}
               />
             </div>
 
@@ -188,27 +186,26 @@ export default function Quiz() {
                 ))}
               </div>
 
-              {/* 🔥 REFLECTION */}
               {idx === total - 1 && (
-  <div className="mt-6">
-    <label className="text-sm text-gray-400">
-      In 2–3 lines, explain the concept you found most difficult:
-    </label>
+                <div className="mt-6">
+                  <label className="text-sm text-gray-400">
+                    In 2–3 lines, explain the concept you found most difficult:
+                  </label>
 
-    <textarea
-      value={reflection}
-      onChange={(e) => setReflection(e.target.value)}
-      className="w-full mt-2 p-3 rounded bg-black text-white border"
-      rows={3}
-    />
-  </div>
-)}
+                  <textarea
+                    value={reflection}
+                    onChange={(e) => setReflection(e.target.value)}
+                    className="w-full mt-2 p-3 rounded bg-black text-white border"
+                    rows={3}
+                  />
+                </div>
+              )}
 
               <div className="mt-6 flex justify-end">
-                <Button 
-  onClick={submit} 
-  disabled={selected === null || (idx === total - 1 && reflection.trim() === "")}
->
+                <Button
+                  onClick={submit}
+                  disabled={selected === null || (idx === total - 1 && reflection.trim() === "")}
+                >
                   {idx + 1 === total ? "Finish & analyze" : "Submit"}
                 </Button>
               </div>
