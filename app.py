@@ -100,11 +100,6 @@ def home():
 def favicon():
     return '', 204
 
-
-if __name__ == "__main__":
-    import os
-    app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 10000)))
-
 import json
 import os
 
@@ -132,3 +127,7 @@ def get_questions(subject, topic):
 @app.route('/debug')
 def debug():
     return "DEBUG WORKING"
+
+if __name__ == "__main__":
+    import os
+    app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 10000)))
