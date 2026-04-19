@@ -3,10 +3,20 @@ import { Navigate, useNavigate } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
 import InsideLayout from "../components/InsideLayout";
 import { Button } from "@/components/ui/button";
-import { QUESTIONS } from "../lib/questions";
 import { getCurrentUser, saveReport, type QuestionAnalytics } from "@/lib/storage";
+const [questions, setQuestions] = useState([]);
 
-const API = import.meta.env.VITE_API_URL; // ✅ GLOBAL (SAFE)
+useEffect(() => {
+  const subject = localStorage.getItem("selectedSubject");
+  const topic = localStorage.getItem("selectedTopic");
+
+  fetch(`http://127.0.0.1:5000/questions/${subject}/${topic}`)
+    .then(res => res.json())
+    .then(setQuestions);
+}, []);
+
+
+const API = import.meta.env.VITE_API_URL; 
 
 export default function Quiz() {
   const user = getCurrentUser();
@@ -18,8 +28,8 @@ export default function Quiz() {
   const [processing, setProcessing] = useState(false);
   const [reflection, setReflection] = useState("");
 
-  const q = QUESTIONS[idx];
-  const total = QUESTIONS.length;
+  const q = questions[idx];
+  const total = questions.length;
 
   const startedAt = useRef<number>(Date.now());
   const lastInteract = useRef<number>(Date.now());

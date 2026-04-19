@@ -104,3 +104,19 @@ def favicon():
 if __name__ == "__main__":
     import os
     app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 10000)))
+
+
+import json
+
+with open("data/questions.json") as f:
+    QUESTIONS_DB = json.load(f)
+
+@app.route('/topics/<subject>', methods=['GET'])
+def get_topics(subject):
+    topics = list(QUESTIONS_DB.get(subject, {}).keys())
+    return jsonify(topics)
+
+@app.route('/questions/<subject>/<topic>', methods=['GET'])
+def get_questions(subject, topic):
+    qs = QUESTIONS_DB.get(subject, {}).get(topic, [])
+    return jsonify(qs)
