@@ -11,9 +11,19 @@ export default function Quiz() {
 useEffect(() => {
   const subject = localStorage.getItem("selectedSubject");
   const topic = localStorage.getItem("selectedTopic");
+
+  console.log("SUBJECT:", subject);
+  console.log("TOPIC:", topic);
+
   fetch(`${API}/questions/${subject}/${topic}`)
     .then(res => res.json())
-    .then(setQuestions);
+    .then(data => {
+      console.log("QUESTIONS:", data);
+      setQuestions(data);
+    })
+    .catch(err => {
+      console.error("ERROR:", err);
+    });
 }, []);
   const user = getCurrentUser();
   const navigate = useNavigate();
@@ -24,7 +34,7 @@ useEffect(() => {
   const [processing, setProcessing] = useState(false);
   const [reflection, setReflection] = useState("");
 
-  const q = questions[idx];
+  const q = questions[idx] || null;
   const total = questions.length;
 
   const startedAt = useRef<number>(Date.now());
@@ -148,6 +158,26 @@ useEffect(() => {
   const progress = useMemo(() => ((idx) / total) * 100, [idx, total]);
 
   if (!user) return <Navigate to="/auth" replace />;
+
+  if (questions.length === 0) {
+  return (
+    <InsideLayout>
+      <div className="text-center mt-20 text-white">
+        Loading questions...
+      </div>
+    </InsideLayout>
+  );
+}
+
+if (!q) {
+  return (
+    <InsideLayout>
+      <div className="text-center mt-20 text-white">
+        No question found
+      </div>
+    </InsideLayout>
+  );
+}
 
   return (
     <InsideLayout showNav={!processing}>
