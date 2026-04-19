@@ -8,7 +8,7 @@ export default function Topics() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    fetch(`http://127.0.0.1:5000/topics/${subject}`)
+    fetch(`https://cognify-jkzy.onrender.com/topics/${subject}`)
       .then(res => res.json())
       .then(setTopics);
   }, []);
