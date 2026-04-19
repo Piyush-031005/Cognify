@@ -1,0 +1,32 @@
+{
+  "physics": {
+    "mechanics": {
+      "kinematics": [
+        {
+          "id": 1,
+          "prompt": "A body moving with constant velocity has...",
+          "options": [
+            "Zero acceleration",
+            "Constant acceleration",
+            "Increasing velocity",
+            "Decreasing velocity"
+          ],
+          "correctIndex": 0,
+          "type": "conceptual"
+        },
+        {
+          "id": 2,
+          "prompt": "If displacement is zero, what can we say?",
+          "options": [
+            "Distance is zero",
+            "Distance may not be zero",
+            "Velocity is zero",
+            "Acceleration is zero"
+          ],
+          "correctIndex": 1,
+          "type": "trick"
+        }
+      ]
+    }
+  }
+}
