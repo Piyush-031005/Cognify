@@ -3,7 +3,6 @@ import { Navigate, useNavigate } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
 import InsideLayout from "../components/InsideLayout";
 import { Button } from "@/components/ui/button";
-import { getRandomQuestions } from "../data/questionBank";
 import { getCurrentUser, saveReport, type QuestionAnalytics } from "@/lib/storage";
 
 export default function Quiz() {
@@ -30,6 +29,9 @@ export default function Quiz() {
   const subject = localStorage.getItem("selectedSubject");
   const topic = localStorage.getItem("selectedTopic");
   const subtopic = localStorage.getItem("selectedSubtopic");
+  console.log("SUBJECT:", subject);
+console.log("TOPIC:", topic);
+console.log("SUBTOPIC:", subtopic);
 
   fetch(`${API}/questions/${subject}/${topic}/${subtopic}`)
     .then(res => res.json())
