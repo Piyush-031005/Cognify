@@ -114,6 +114,11 @@ file_path = os.path.join(BASE_DIR, "data", "questions.json")
 with open(file_path) as f:
     QUESTIONS_DB = json.load(f)
 
+@app.route('/questions/<subject>/<topic>/<subtopic>', methods=['GET'])
+def get_questions_subtopic(subject, topic, subtopic):
+    qs = QUESTIONS_DB.get(subject, {}).get(topic, {}).get(subtopic, [])
+    return jsonify(qs)
+
 @app.route('/topics/<subject>', methods=['GET'])
 def get_topics(subject):
     topics = list(QUESTIONS_DB.get(subject, {}).keys())
