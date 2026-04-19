@@ -10,6 +10,7 @@ import Quiz from "./pages/Quiz.tsx";
 import Report from "./pages/Report.tsx";
 import NotFound from "./pages/NotFound.tsx";
 import Topics from "./pages/Topics.tsx";
+import Subtopics from "./pages/Subtopics.tsx";
 
 const queryClient = new QueryClient();
 
@@ -22,6 +23,7 @@ const App = () => (
         <Routes>
           <Route path="/" element={<Index />} />
           <Route path="/auth" element={<Auth />} />
+          <Route path="/subtopics" element={<Subtopics />} />
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/quiz" element={<Quiz />} />
           <Route path="/report/:id" element={<Report />} />
