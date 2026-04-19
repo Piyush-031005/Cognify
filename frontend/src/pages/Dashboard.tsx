@@ -34,12 +34,21 @@ export default function Dashboard() {
               <h2 className="mt-3 font-display text-3xl sm:text-4xl font-bold tracking-tight">Start a new analysis</h2>
               <p className="mt-2 text-muted-foreground">We'll silently observe how you think — hesitation, confidence, depth — and turn it into a report.</p>
             </div>
-            <Button asChild size="lg"
-              className="group h-14 self-start rounded-2xl bg-mint text-cyan-deep hover:bg-mint-glow shadow-mint px-7 text-base font-semibold transition-all hover:scale-[1.03]">
-              <Link to="/topics">
-                Start Analysis <ArrowRight className="ml-1 h-5 w-5 transition-transform group-hover:translate-x-1" />
-              </Link>
-            </Button>
+            <Button
+  asChild
+  size="lg"
+  className="group h-14 self-start rounded-2xl bg-mint text-cyan-deep hover:bg-mint-glow shadow-mint px-7 text-base font-semibold transition-all hover:scale-[1.03]"
+>
+  <Link
+    to="/topics"
+    onClick={() => {
+      localStorage.setItem("selectedSubject", "physics"); // 👈 magic yaha
+    }}
+  >
+    Start Analysis
+    <ArrowRight className="ml-1 h-5 w-5 transition-transform group-hover:translate-x-1" />
+  </Link>
+</Button>
           </div>
         </motion.div>
 
