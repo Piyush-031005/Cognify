@@ -105,10 +105,13 @@ if __name__ == "__main__":
     import os
     app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 10000)))
 
-
 import json
+import os
 
-with open("data/questions.json") as f:
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+file_path = os.path.join(BASE_DIR, "data", "questions.json")
+
+with open(file_path) as f:
     QUESTIONS_DB = json.load(f)
 
 @app.route('/topics/<subject>', methods=['GET'])
