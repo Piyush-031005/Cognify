@@ -17,16 +17,18 @@ export default function Topics() {
     <div className="min-h-screen bg-[#0a0a0a] text-white p-10">
 
       {/* TITLE */}
-      <h1 className="text-5xl font-bold mb-2 capitalize">
-        {subject} Dashboard
-      </h1>
+      <div className="text-center mb-16">
+  <h1 className="text-5xl font-bold capitalize">
+    {subject} Dashboard
+  </h1>
 
-      <p className="text-gray-400 mb-12">
-        Choose a topic to begin your cognitive analysis
-      </p>
+  <p className="text-gray-400 mt-3">
+    Choose a topic to begin your cognitive analysis
+  </p>
+</div>
 
       {/* CARDS */}
-      <div className="flex gap-6 flex-wrap">
+      <div className="flex gap-6 flex-wrap justify-center">
 
         {topics.map((t: string) => (
           <div

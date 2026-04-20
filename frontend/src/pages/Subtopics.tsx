@@ -32,7 +32,7 @@ export default function Subtopics() {
       </p>
 
       {/* CARDS */}
-      <div className="flex gap-6 flex-wrap">
+      <div className="flex gap-6 flex-wrap justify-center">
 
         {subtopics.map((s: string) => (
           <div
