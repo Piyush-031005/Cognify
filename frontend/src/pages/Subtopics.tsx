@@ -13,31 +13,41 @@ export default function Subtopics() {
       .then(setSubtopics);
   }, []);
 
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-[#0f172a] to-[#064e3b] text-white p-10">
+ return (
+  <div className="min-h-screen bg-gradient-to-br from-[#0f172a] via-[#064e3b] to-[#022c22] text-white p-10">
 
-      <h1 className="text-3xl font-bold mb-2 capitalize">
-        {topic}
-      </h1>
+    <h1 className="text-4xl font-bold mb-2 capitalize">
+      {topic}
+    </h1>
 
-      <p className="text-gray-400 mb-8">
-        Select a subtopic
-      </p>
+    <p className="text-gray-400 mb-10">
+      Select a subtopic
+    </p>
 
-      <div className="flex gap-4 flex-wrap">
-        {subtopics.map(s => (
-          <button
-            key={s}
-            onClick={() => {
-              localStorage.setItem("selectedSubtopic", s);
-              navigate("/quiz");
-            }}
-            className="px-6 py-3 bg-green-600 rounded-full hover:bg-green-700"
-          >
-            {s}
-          </button>
-        ))}
-      </div>
+    <div className="flex gap-4 flex-wrap">
+
+      {subtopics.map(s => (
+        <button
+          key={s}
+          onClick={() => {
+            localStorage.setItem("selectedSubtopic", s);
+            navigate("/quiz");
+          }}
+          className="
+            px-6 py-3 
+            rounded-full 
+            bg-green-500/20 
+            border border-green-400/30
+            hover:bg-green-500/40 
+            transition-all
+            backdrop-blur-md
+          "
+        >
+          {s}
+        </button>
+      ))}
+
     </div>
-  );
+  </div>
+);
 }
