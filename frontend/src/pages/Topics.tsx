@@ -19,19 +19,21 @@ export default function Topics() {
     .catch(err => console.error(err));
 }, [subject]);
 
-    return (
-  <div className="min-h-screen bg-gradient-to-br from-[#0f172a] to-[#064e3b] text-white p-10">
+  return (
+  <div className="min-h-screen bg-gradient-to-br from-[#0f172a] via-[#064e3b] to-[#022c22] text-white p-10">
 
     {/* HEADER */}
-    <h1 className="text-3xl font-bold mb-2 capitalize">
-      {subject} Dashboard
+    <h1 className="text-4xl font-bold mb-2">
+      {subject?.toUpperCase()} Dashboard
     </h1>
-    <p className="text-gray-400 mb-8">
+
+    <p className="text-gray-400 mb-10">
       Choose a topic to begin your cognitive analysis
     </p>
 
-    {/* TOPICS GRID */}
-    <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
+    {/* GRID */}
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+
       {topics.map(t => (
         <div
           key={t}
@@ -39,22 +41,30 @@ export default function Topics() {
             localStorage.setItem("selectedTopic", t);
             navigate("/subtopics");
           }}
-          className="cursor-pointer p-6 rounded-2xl bg-[#1e293b] hover:bg-[#334155] transition-all shadow-lg"
+          className="
+            cursor-pointer 
+            rounded-2xl 
+            p-6 
+            bg-white/5 
+            backdrop-blur-md 
+            border border-white/10
+            hover:bg-white/10 
+            transition-all 
+            shadow-lg 
+            hover:scale-105
+          "
         >
-          <h2 className="text-xl font-semibold capitalize">
-  {t === "mechanics" && "⚙️ "}
-  {t === "algebra" && "📐 "}
-  {t === "dsa" && "💻 "}
-  {t === "geometry" && "📏 "}
-  {t === "physics" && "🔬 "}
-  {t}
-</h2>
-          <p className="text-sm text-gray-400 mt-2">
+          <h2 className="text-xl font-semibold flex items-center gap-2">
+            ⚙️ {t}
+          </h2>
+
+          <p className="text-gray-400 mt-2 text-sm">
             Explore {t} concepts
           </p>
         </div>
       ))}
+
     </div>
   </div>
-  );
+);
 }
