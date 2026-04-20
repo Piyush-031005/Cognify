@@ -1,65 +1,73 @@
-import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 export default function Subtopics() {
-  const [subtopics, setSubtopics] = useState<string[]>([]);
+  const navigate = useNavigate();
+
   const subject = localStorage.getItem("selectedSubject");
   const topic = localStorage.getItem("selectedTopic");
 
-  const navigate = useNavigate();
+  // ✅ STATIC mapping (safe for demo)
+  const subtopicsMap: any = {
+    physics: {
+      mechanics: ["kinematics", "motion", "laws"]
+    },
+    math: {
+      algebra: ["linear", "quadratic", "polynomials"]
+    }
+  };
 
-  useEffect(() => {
-    if (!subject || !topic) return;
-
-    fetch(`https://cognify-jkzy.onrender.com/subtopics/${subject}/${topic}`)
-      .then(res => res.json())
-      .then(data => {
-        console.log("SUBTOPICS:", data);
-        setSubtopics(data);
-      })
-      .catch(err => console.error(err));
-  }, [subject, topic]);
+  const subtopics =
+    subtopicsMap?.[subject || ""]?.[topic || ""] || [];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#0f2027] via-[#203a43] to-[#2c5364] text-white p-10">
+    <div className="min-h-screen bg-[#0a0a0a] text-white p-10">
 
       {/* TITLE */}
-      <h1 className="text-4xl font-bold mb-2 capitalize">
+      <h1 className="text-5xl font-bold mb-2 capitalize">
         {topic}
       </h1>
 
-      <p className="text-gray-300 mb-8">
+      <p className="text-gray-400 mb-10">
         Choose a concept to analyze your thinking
       </p>
 
       {/* CARDS */}
       <div className="flex gap-6 flex-wrap">
-        {subtopics.map(s => (
+
+        {subtopics.map((s: string) => (
           <div
             key={s}
             onClick={() => {
               localStorage.setItem("selectedSubtopic", s);
               navigate("/quiz");
             }}
-            className="cursor-pointer bg-white/10 backdrop-blur-md border border-white/20 
-                       px-6 py-4 rounded-2xl hover:bg-green-400/20 
-                       hover:scale-105 transition-all duration-300 
-                       hover:shadow-[0_0_20px_rgba(34,197,94,0.5)]"
+            className="
+              cursor-pointer 
+              bg-[#1a1a1a] 
+              border border-[#C6FF33]/30
+              px-8 py-5 
+              rounded-2xl 
+              hover:bg-[#C6FF33] 
+              hover:text-black
+              transition-all duration-300
+              shadow-lg
+            "
           >
-            <h2 className="text-xl font-semibold flex items-center gap-2 capitalize">
-              ⚡ {s}
+            <h2 className="text-xl font-semibold capitalize">
+              {s}
             </h2>
 
-            <p className="text-sm text-gray-300">
-              Explore {s} concepts
+            <p className="text-sm opacity-70">
+              Explore {s}
             </p>
           </div>
         ))}
+
       </div>
 
-      {/* BOTTOM TEXT */}
-      <div className="mt-16 text-center opacity-80">
-        <p className="text-lg italic text-gray-300">
+      {/* BOTTOM */}
+      <div className="mt-24 text-center opacity-60">
+        <p className="text-lg italic">
           "Understanding comes from thinking, not memorizing."
         </p>
       </div>
