@@ -1,6 +1,9 @@
 from pynput import keyboard
+import sys
+import os
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../../")))
 import time
-from realtime.session_manager import SessionManager
+from session_manager import SessionManager
 import pandas as pd
 import os
 import joblib
@@ -35,7 +38,7 @@ features = session.get_features()
 # ----------------------
 # LOAD ML MODEL
 # ----------------------
-ml_model = joblib.load("model/cognitive_model.pkl")
+ml_model = joblib.load("cognitive_model.pkl")
 
 # ----------------------
 # PREPARE INPUT

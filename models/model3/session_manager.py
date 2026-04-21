@@ -1,4 +1,4 @@
-from realtime.event_tracker import EventTracker
+from event_tracker import EventTracker
 
 class SessionManager:
     def __init__(self, question_id):

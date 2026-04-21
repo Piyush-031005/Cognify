@@ -14,7 +14,6 @@ from report import generate_report
 app = Flask(__name__)
 CORS(app, resources={r"/*": {"origins": "*"}})
 
-
 # 🔥 MAIN SUBMIT ROUTE (MISSING THA)
 @app.route('/submit', methods=['POST'])
 def submit():
@@ -83,7 +82,6 @@ def weakness():
     return jsonify({
         "weakness": result
     })
-
 
 @app.route('/reset', methods=['POST'])
 def reset():
