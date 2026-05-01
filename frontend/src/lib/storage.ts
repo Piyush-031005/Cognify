@@ -1,14 +1,22 @@
-// Lightweight localStorage helpers for Cognify (frontend-only)
+// Lightweight localStorage helpers for Cognify
+
 export type CognifyUser = {
   name: string;
   age: number;
   email: string;
-  password: string; // demo only — replace with real auth later
+  password: string;
   education: string;
   subjects: string[];
   learningStyle: string;
-  confidence: number; // 1-10
+  confidence: number;
   createdAt: string;
+  role?: string;
+
+  roomCode?: string;
+  assignedSubject?: string;
+  assignedTopic?: string;
+  assignedSubtopic?: string;
+  teacherEmail?: string;
 };
 
 export type QuestionAnalytics = {
@@ -26,7 +34,7 @@ export type CognifyReport = {
   id: string;
   userEmail: string;
   takenAt: string;
-  perQuestion: QuestionAnalytics[];
+  perQuestion: any[];
   scores: {
     conceptual: number;
     memorized: number;
@@ -40,46 +48,72 @@ export type CognifyReport = {
   insights: string[];
 };
 
-const USERS_KEY = "cognify.users";
 const SESSION_KEY = "cognify.session";
 const REPORTS_KEY = "cognify.reports";
 
-export const getUsers = (): CognifyUser[] => {
-  try { return JSON.parse(localStorage.getItem(USERS_KEY) || "[]"); } catch { return []; }
-};
-export const saveUser = (u: CognifyUser) => {
-  const all = getUsers().filter(x => x.email !== u.email);
-  all.push(u);
-  localStorage.setItem(USERS_KEY, JSON.stringify(all));
-};
-export const findUser = (email: string) => getUsers().find(u => u.email === email);
 
-export const setSession = (email: string) => localStorage.setItem(SESSION_KEY, email);
-export const getSession = () => localStorage.getItem(SESSION_KEY);
-export const clearSession = () => localStorage.removeItem(SESSION_KEY);
-export const getCurrentUser = (): CognifyUser | null => {
-  const e = getSession();
-  return e ? findUser(e) ?? null : null;
+// ================= SESSION =================
+
+export const setSession = (user: CognifyUser) =>
+  localStorage.setItem(SESSION_KEY, JSON.stringify(user));
+
+export const getSession = (): CognifyUser | null => {
+  try {
+    return JSON.parse(localStorage.getItem(SESSION_KEY) || "null");
+  } catch {
+    return null;
+  }
 };
+
+export const clearSession = () => localStorage.removeItem(SESSION_KEY);
+
+export const getCurrentUser = (): CognifyUser | null => {
+  return getSession();
+};
+
+
+// ================= REPORTS =================
 
 export const getReports = (): CognifyReport[] => {
-  try { return JSON.parse(localStorage.getItem(REPORTS_KEY) || "[]"); } catch { return []; }
+  try {
+    return JSON.parse(localStorage.getItem(REPORTS_KEY) || "[]");
+  } catch {
+    return [];
+  }
 };
-export const saveReport = (r: CognifyReport) => {
-  const id = Date.now().toString();
 
-  const newReport = {
-    ...r,
-    id,   // 🔥 ADD THIS
-    takenAt: new Date().toISOString()
+export const saveReport = (r: any) => {
+  const id = Date.now().toString();
+  const user = getCurrentUser();
+
+  const normalizedReport: CognifyReport = {
+    id,
+    userEmail: user?.email || "",
+    takenAt: new Date().toISOString(),
+
+    perQuestion: r.perQuestion || [],
+
+    scores: {
+      conceptual: r.scores?.conceptual ?? 0,
+      memorized: r.scores?.memorized ?? 0,
+      fakeUnderstanding: r.scores?.fakeUnderstanding ?? 0,
+      hesitation: r.scores?.hesitation ?? 0,
+      confidence: r.scores?.confidence ?? 0,
+      overthinking: r.scores?.overthinking ?? 0
+    },
+
+    pattern: r.pattern || "Mixed",
+    prediction: r.prediction || "Stable",
+    insights: r.insights || []
   };
 
   const all = getReports();
-  all.unshift(newReport);
+  all.unshift(normalizedReport);
 
   localStorage.setItem(REPORTS_KEY, JSON.stringify(all));
-
-  return id;   // 🔥 VERY IMPORTANT
+  return id;
 };
-export const getReport = (id: string) => 
-  getReports().find(r => r.id === id);
+
+export const getReport = (id: string) => {
+  return getReports().find((r) => r.id === id);
+};

@@ -6,13 +6,12 @@ import { Button } from "@/components/ui/button";
 import { getCurrentUser, saveReport, type QuestionAnalytics } from "@/lib/storage";
 
 export default function Quiz() {
-  const API = "https://cognify-jkzy.onrender.com";
+  const API = "http://127.0.0.1:10000";
 
-  // 🔥 STATE SABSE PEHLE
   const [questions, setQuestions] = useState<any[]>([]);
   const [idx, setIdx] = useState(0);
   const [selected, setSelected] = useState<number | null>(null);
-  const [analytics, setAnalytics] = useState<QuestionAnalytics[]>([]);
+  const analyticsRef = useRef<any[]>([]);
   const [processing, setProcessing] = useState(false);
   const [reflection, setReflection] = useState("");
 
@@ -24,52 +23,101 @@ export default function Quiz() {
   const idleAccum = useRef<number>(0);
   const changes = useRef<number>(0);
 
-  // 🔥 LOAD QUESTIONS (AB SAHI JAGAH)
+  const attemptsRef = useRef<number>(0);
+  const backspaceRef = useRef<number>(0);
+  const focusLostRef = useRef<number>(0);
+  const hoverCountRef = useRef<number>(0);
+  const sameOptionClicksRef = useRef<number>(0);
+  const hoveredOptionsRef = useRef<Set<number>>(new Set());
+
   useEffect(() => {
-  const subject = localStorage.getItem("selectedSubject");
-  const topic = localStorage.getItem("selectedTopic");
-  const subtopic = localStorage.getItem("selectedSubtopic");
-  console.log("SUBJECT:", subject);
-console.log("TOPIC:", topic);
-console.log("SUBTOPIC:", subtopic);
+  const currentUser = getCurrentUser();
+
+  const subject = currentUser?.assignedSubject;
+  const topic = currentUser?.assignedTopic;
+  const subtopic = currentUser?.assignedSubtopic;
+
+  console.log("LOADING ROOM QUESTIONS => ", subject, topic, subtopic);
+
+  if (!subject || !topic || !subtopic) {
+    alert("No teacher room assigned.");
+    navigate("/dashboard");
+    return;
+  }
 
   fetch(`${API}/questions/${subject}/${topic}/${subtopic}`)
-    .then(res => res.json())
-    .then(data => {
-      console.log("API QUESTIONS:", data);
-      setQuestions(data);
-
-      // 🔥 random pick 7
-      const shuffled = [...data].sort(() => 0.5 - Math.random());
-      setQuestions(shuffled);
-    })
-    .catch(err => console.error(err));
-}, []);
+      .then((res) => res.json())
+      .then((data) => {
+        const shuffled = [...data].sort(() => 0.5 - Math.random());
+        setQuestions(shuffled);
+      })
+      .catch((err) => console.error(err));
+  }, []);
 
   const total = questions.length;
   const q = questions[idx] || null;
 
   useEffect(() => {
-    startedAt.current = Date.now();
-    lastInteract.current = Date.now();
-    idleAccum.current = 0;
-    changes.current = 0;
-    setSelected(null);
-  }, [idx]);
+  startedAt.current = Date.now();
+  lastInteract.current = Date.now();
+  idleAccum.current = 0;
+  changes.current = 0;
+  attemptsRef.current = 0;
+  backspaceRef.current = 0;
+  focusLostRef.current = 0;
+  hoverCountRef.current = 0;
+  sameOptionClicksRef.current = 0;
+  hoveredOptionsRef.current = new Set();
+  setSelected(null);
+}, [idx]);
 
   useEffect(() => {
     const t = setInterval(() => {
       const since = Date.now() - lastInteract.current;
-      if (since > 1500) idleAccum.current += 500;
+      if (since > 4000) idleAccum.current += 500;
     }, 500);
+
     return () => clearInterval(t);
   }, []);
 
-  const choose = (i: number) => {
-    if (selected !== null && selected !== i) changes.current += 1;
-    setSelected(i);
+  useEffect(() => {
+  const handleKey = () => {
     lastInteract.current = Date.now();
   };
+
+  const handleMove = () => {
+    lastInteract.current = Date.now();
+  };
+
+  const handleBlur = () => {
+    focusLostRef.current += 1;
+  };
+
+  window.addEventListener("keydown", handleKey);
+  window.addEventListener("mousemove", handleMove);
+  window.addEventListener("blur", handleBlur);
+
+  return () => {
+    window.removeEventListener("keydown", handleKey);
+    window.removeEventListener("mousemove", handleMove);
+    window.removeEventListener("blur", handleBlur);
+  };
+}, []);
+
+  const choose = (i: number) => {
+  attemptsRef.current += 1;
+
+  if (selected === i) {
+    sameOptionClicksRef.current += 1;
+  }
+
+  if (selected !== null && selected !== i) {
+    changes.current += 1;
+  }
+
+  setSelected(i);
+  lastInteract.current = Date.now();
+};
 
   const submit = async () => {
     if (idx === total - 1 && reflection.trim() === "") {
@@ -82,85 +130,100 @@ console.log("SUBTOPIC:", subtopic);
     const responseTimeMs = Date.now() - startedAt.current;
     const correct = selected === q.correctIndex;
 
-    const entry: QuestionAnalytics = {
-      questionId: q.id,
-      question: q.prompt,
-      selected: q.options[selected],
-      correct,
-      responseTimeMs,
-      idleTimeMs: idleAccum.current,
-      backspaceCount: 0,
-      changedAnswerCount: changes.current,
+  const dynamicConfidence = Math.max(
+  0.35,
+  Math.min(
+    0.95,
+    0.88
+      - changes.current * 0.08
+      - backspaceRef.current * 0.015
+      - focusLostRef.current * 0.06
+      - (idleAccum.current / 1000) * 0.01
+      - hoverCountRef.current * 0.008
+      - sameOptionClicksRef.current * 0.02
+      - attemptsRef.current * 0.015
+      - (reflection.trim().length < 20 && idx === total - 1 ? 0.05 : 0)
+  )
+);
+
+   const submitRes = await fetch(`${API}/submit`, {
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify({
+    question_id: q.id,
+    question_text: q.prompt,
+    student_email: user?.email,
+
+    response_time: responseTimeMs / 1000,
+    attempts: attemptsRef.current || 1,
+    confidence: dynamicConfidence,
+    is_application: q.prompt.length > 25 ? 1 : 0,
+    correct: correct,
+
+    time_taken: responseTimeMs / 1000,
+    idle_time: idleAccum.current / 1000,
+    rewrite_count: changes.current,
+    backspace_count: backspaceRef.current,
+    skipped: selected === null,
+
+    reflection: idx === total - 1 ? reflection : "",
+hover_count: hoverCountRef.current,
+same_option_clicks: sameOptionClicksRef.current,
+reflection_length: idx === total - 1 ? reflection.trim().length : 30
+  })
+});
+
+const processedResponse = await submitRes.json();
+const processedSession = processedResponse.session;
+
+if (processedSession) {
+  analyticsRef.current.push(processedSession);
+}
+
+console.log("ANALYTICS REF => ", analyticsRef.current);
+
+if (idx + 1 < total) {
+  setIdx(idx + 1);
+} else {
+  setProcessing(true);
+
+  const analyticsSnapshot = [...analyticsRef.current]; 
+
+  setTimeout(async () => {
+    const reportRes = await fetch(`${API}/report?student_email=${user?.email}`);
+    const report = await reportRes.json();
+    console.log("FULL REPORT FROM BACKEND => ", report);
+
+    const weakRes = await fetch(`${API}/weakness`);
+    const weakData = await weakRes.json();
+
+    const finalReport: any = {
+      id: "",
+      userEmail: "",
+      takenAt: new Date().toISOString(),
+      perQuestion: report.perQuestion || [],
+
+      scores: {
+        conceptual: Math.round((report.conceptual || 0) * 100),
+        memorized: Math.round((report.memorized || 0) * 100),
+        fakeUnderstanding: Math.round((report.fake || 0) * 100),
+
+        hesitation: Math.round((report.hesitation || 0) * 100),
+        confidence: Math.round((report.confidence || 0) * 100),
+        overthinking: Math.round((report.overthinking || 0) * 100)
+      },
+
+      pattern: report.dominant_pattern || "Mixed",
+      prediction: report.future_prediction || "",
+      insights: report.insights || [`Weakness: ${weakData.weakness}`]
     };
 
-    const next = [...analytics, entry];
-    setAnalytics(next);
+    console.log("FINAL REPORT => ", finalReport);
 
-    // ✅ FIXED BACKEND CALL (CLEAN)
-    await fetch(`${API}/submit`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        response_time: responseTimeMs / 1000,
-        attempts: 1,
-        confidence: 0.8,
-        is_application: 1,
-        correct: correct,
-
-        time_taken: responseTimeMs / 1000,
-        idle_time: idleAccum.current / 1000,
-        rewrite_count: changes.current,
-        backspace_count: 0,
-        skipped: false,
-
-        reflection: reflection || "No reflection"
-      })
-    });
-
-    if (idx + 1 < total) {
-      setIdx(idx + 1);
-    } else {
-      setProcessing(true);
-
-      setTimeout(async () => {
-        const res = await fetch(`${API}/report`);
-        const report = await res.json();
-
-        const weakRes = await fetch(`${API}/weakness`);
-        const weakData = await weakRes.json();
-
-        const finalReport: any = {
-          id: "",
-          userEmail: "",
-          takenAt: new Date().toISOString(),
-          perQuestion: next,
-
-          scores: {
-            conceptual: Math.round((report.understanding_analysis?.[1] || 0) * 100),
-            memorized: Math.round((report.understanding_analysis?.[0] || 0) * 100),
-            fakeUnderstanding: Math.round((report.understanding_analysis?.[2] || 0) * 100),
-
-            hesitation: Math.round((report.behavior_analysis?.hesitant || 0) * 100),
-            confidence: Math.round((report.behavior_analysis?.confident || 0) * 100),
-            overthinking: Math.round((report.behavior_analysis?.overthinking || 0) * 100)
-          },
-
-          pattern: report.strategy_analysis?.trial
-            ? "Trial-based"
-            : "Concept-based",
-
-          prediction: report.future_prediction || "",
-
-          insights: [
-            `Weakness: ${weakData.weakness}`,
-            `Reflection: ${report.reflection_analysis}`
-          ]
-        };
-
-        const reportId = saveReport(finalReport);
-        navigate(`/report/${reportId}`);
-      }, 1800);
-    }
+    const reportId = saveReport(finalReport);
+    navigate(`/report/${reportId}`);
+  }, 4000);
+}
   };
 
   const progress = useMemo(() => ((idx) / total) * 100, [idx, total]);
@@ -168,26 +231,21 @@ console.log("SUBTOPIC:", subtopic);
   if (!user) return <Navigate to="/auth" replace />;
 
   if (questions.length === 0) {
-  return (
-    <InsideLayout>
-      <div className="text-center mt-20 text-white">
-        Loading questions...
-      </div>
-    </InsideLayout>
-  );
-}
+    return (
+      <InsideLayout>
+        <div className="text-center mt-20 text-white">Loading questions...</div>
+      </InsideLayout>
+    );
+  }
 
-if (!q) {
-  return (
-    <InsideLayout>
-      <div className="text-center mt-20 text-white">
-        No question found
-      </div>
-    </InsideLayout>
-  );
-}
-
-  return (
+  if (!q) {
+    return (
+      <InsideLayout>
+        <div className="text-center mt-20 text-white">No question found</div>
+      </InsideLayout>
+    );
+  }
+    return (
     <InsideLayout showNav={!processing}>
       <AnimatePresence mode="wait">
         {processing ? (
@@ -217,10 +275,17 @@ if (!q) {
               <h2 className="text-xl font-semibold">{q.prompt}</h2>
 
               <div className="mt-5 space-y-3">
-                {q.options.map((opt, i) => (
+                {q.options.map((opt: string, i: number) => (
                   <button
-                    key={i}
-                    onClick={() => choose(i)}
+                  key={i}
+                  onMouseEnter={() => {
+  if (!hoveredOptionsRef.current.has(i)) {
+    hoveredOptionsRef.current.add(i);
+    hoverCountRef.current += 1;
+  }
+  lastInteract.current = Date.now();
+}}
+                  onClick={() => choose(i)}
                     className={`w-full text-left p-3 rounded border ${
                       selected === i ? "bg-green-500" : "bg-gray-800"
                     }`}
@@ -238,7 +303,13 @@ if (!q) {
 
                   <textarea
                     value={reflection}
-                    onChange={(e) => setReflection(e.target.value)}
+                    onChange={(e) => {
+                      setReflection(e.target.value);
+                      lastInteract.current = Date.now();
+                      if (e.nativeEvent instanceof InputEvent && e.nativeEvent.inputType === "deleteContentBackward") {
+                        backspaceRef.current += 1;
+                      }
+                    }}
                     className="w-full mt-2 p-3 rounded bg-black text-white border"
                     rows={3}
                   />
