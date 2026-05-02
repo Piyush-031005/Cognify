@@ -336,10 +336,69 @@ if (idx + 1 < total) {
 }
 
 function Processing() {
+  const stages = [
+    "Capturing behavioral hesitation markers...",
+    "Mapping confidence-response inconsistencies...",
+    "Running conceptual depth inference...",
+    "Cross-evaluating memory vs reasoning dependency...",
+    "Generating cognitive stability forecast..."
+  ];
+
+  const [stage, setStage] = useState(0);
+
+  useEffect(() => {
+    const t = setInterval(() => {
+      setStage((p) => (p < stages.length - 1 ? p + 1 : p));
+    }, 750);
+
+    return () => clearInterval(t);
+  }, []);
+
   return (
-    <div className="min-h-[80vh] flex items-center justify-center text-center">
-      <div>
-        <h2 className="text-2xl font-bold">Analyzing your thinking...</h2>
+    <div className="min-h-[85vh] flex items-center justify-center px-6 relative overflow-hidden">
+      <div className="absolute inset-0 bg-black" />
+      <div className="absolute w-[500px] h-[500px] rounded-full bg-green-500/10 blur-3xl animate-pulse" />
+
+      <div className="relative text-center max-w-3xl">
+        <div className="text-[11px] uppercase tracking-[0.45em] text-green-400 mb-6">
+          Cognify Neural Engine v2
+        </div>
+
+        <h2 className="text-3xl sm:text-5xl font-bold text-white leading-tight">
+          Building your
+          <span className="text-green-400"> cognitive fingerprint</span>
+        </h2>
+
+        <p className="mt-5 text-gray-400 text-lg leading-8">
+          We are not evaluating correctness alone.  
+          The system is reconstructing how decisions were formed beneath your answers.
+        </p>
+
+        <div className="mt-12 space-y-4 text-left">
+          {stages.map((s, i) => (
+            <motion.div
+              key={i}
+              initial={{ opacity: 0.25 }}
+              animate={{ opacity: i <= stage ? 1 : 0.25 }}
+              className={`rounded-xl border px-5 py-4 ${
+                i <= stage
+                  ? "border-green-400/40 bg-green-400/5 text-green-300"
+                  : "border-gray-800 bg-gray-900 text-gray-600"
+              }`}
+            >
+              {i <= stage ? "✓ " : "• "} {s}
+            </motion.div>
+          ))}
+        </div>
+
+        <div className="mt-10 h-1 w-full bg-gray-800 rounded-full overflow-hidden">
+          <motion.div
+            className="h-full bg-green-400"
+            initial={{ width: "0%" }}
+            animate={{ width: "100%" }}
+            transition={{ duration: 4, ease: "easeInOut" }}
+          />
+        </div>
       </div>
     </div>
   );
