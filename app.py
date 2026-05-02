@@ -13,7 +13,13 @@ from database import (
     join_room,
     get_student_room,
     save_response,
-    save_final_report
+    save_final_report,
+    get_conn,
+
+    get_all_subjects,
+    get_topics_by_subject,
+    get_subtopics,
+    get_room_questions
 )
 
 from session_data import (
@@ -24,13 +30,14 @@ from session_data import (
     get_reflection
 )
 
-import json
 import os
+import json
 
 app = Flask(__name__)
 CORS(app, resources={r"/*": {"origins": "*"}})
 
 init_db()
+
 
 # =========================
 # AUTH ROUTES
@@ -75,20 +82,25 @@ def signin():
 
 
 # =========================
-# QUIZ / COGNITIVE PROCESSING
+# QUIZ SUBMIT
 # =========================
 @app.route('/submit', methods=['POST'])
 def submit():
     data = request.json
 
     session_obj = process_question(data)
-
     print("MASTER SESSION:", session_obj)
 
     add_question_session(session_obj)
     set_reflection(data.get("reflection", ""))
 
     student_email = data.get("student_email", "anonymous")
+
+    session_obj["room_code"] = data.get("room_code", "solo")
+    session_obj["subject"] = data.get("subject", "")
+    session_obj["topic"] = data.get("topic", "")
+    session_obj["subtopic"] = data.get("subtopic", "")
+
     save_response(student_email, session_obj)
 
     return jsonify({
@@ -100,6 +112,7 @@ def submit():
 @app.route('/report', methods=['GET'])
 def report():
     student_email = request.args.get("student_email", "anonymous")
+    room_code = request.args.get("room_code", "solo")
 
     sessions = get_all_sessions()
     reflection = get_reflection()
@@ -107,9 +120,7 @@ def report():
     report_data = generate_report(sessions, reflection)
     report_data["perQuestion"] = sessions
 
-    save_final_report(student_email, report_data)
-    
-    reset_results()
+    save_final_report(student_email, report_data, room_code)
 
     return jsonify(report_data)
 
@@ -128,7 +139,7 @@ def reset():
 
 
 # =========================
-# TEACHER ROOM SYSTEM
+# ROOM SYSTEM
 # =========================
 @app.route('/create-room', methods=['POST'])
 def create_room_api():
@@ -165,53 +176,78 @@ def join_room_api():
 def student_room(email):
     room = get_student_room(email)
     return jsonify(room if room else {})
-
+ 
 
 # =========================
-# QUESTION BANK ROUTES
+# TEACHER CUSTOM QUESTION ADD
 # =========================
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-file_path = os.path.join(BASE_DIR, "models", "data", "questions.json")
+@app.route('/add-custom-question', methods=['POST'])
+def add_custom_question():
+    data = request.json
 
-with open(file_path) as f:
-    QUESTIONS_DB = json.load(f)
+    conn = get_conn()
+    cur = conn.cursor()
 
+    cur.execute("""
+        INSERT INTO teacher_custom_questions (
+            teacher_email, subject, topic, subtopic,
+            prompt, options_json, correct_index,
+            question_category, image_url, created_at
+        )
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))
+    """, (
+        data["teacher_email"],
+        data["subject"],
+        data["topic"],
+        data["subtopic"],
+        data["prompt"],
+        json.dumps(data["options"]),
+        data["correct_index"],
+        data["question_category"],
+        data.get("image_url", "")
+    ))
 
-@app.route('/questions/<subject>/<topic>/<subtopic>', methods=['GET'])
-def get_questions_subtopic(subject, topic, subtopic):
-    qs = QUESTIONS_DB.get(subject, {}).get(topic, {}).get(subtopic, [])
-    return jsonify(qs)
+    conn.commit()
+    conn.close()
 
-
-@app.route('/topics/<subject>', methods=['GET'])
-def get_topics(subject):
-    topics = list(QUESTIONS_DB.get(subject, {}).keys())
-    return jsonify(topics)
-
-
-@app.route('/questions/<subject>/<topic>', methods=['GET'])
-def get_questions(subject, topic):
-    subtopics = QUESTIONS_DB.get(subject, {}).get(topic, {})
-    return jsonify(list(subtopics.keys()))
-
+    return jsonify({"success": True})
 
 # =========================
 # MISC
 # =========================
+@app.route('/')
+def home():
+    return {"message": "Cognify Backend Running Enterprise V2 🚀"}
+
+
 @app.route('/favicon.ico')
 def favicon():
     return '', 204
 
 
-@app.route('/debug')
-def debug():
-    return "DEBUG WORKING"
-
-
-@app.route('/')
-def home():
-    return {"message": "Cognify Backend Running 🚀"}
-
-
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 10000)))
+
+
+# =========================
+# DYNAMIC SUBJECT/TOPIC/SUBTOPIC/QUESTION ROUTES
+# =========================
+@app.route('/subjects', methods=['GET'])
+def subjects_api():
+    return jsonify(get_all_subjects())
+
+
+@app.route('/topics/<subject>', methods=['GET'])
+def topics_api(subject):
+    return jsonify(get_topics_by_subject(subject))
+
+
+@app.route('/subtopics/<subject>/<topic>', methods=['GET'])
+def subtopics_api(subject, topic):
+    return jsonify(get_subtopics(subject, topic))
+
+
+@app.route('/questions/<subject>/<topic>/<subtopic>/<difficulty>/<qtype>/<int:count>', methods=['GET'])
+def room_questions_api(subject, topic, subtopic, difficulty, qtype, count):
+    qs = get_room_questions(subject, topic, subtopic, difficulty, qtype, count)
+    return jsonify(qs)

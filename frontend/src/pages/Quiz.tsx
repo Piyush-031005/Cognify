@@ -30,14 +30,18 @@ export default function Quiz() {
   const sameOptionClicksRef = useRef<number>(0);
   const hoveredOptionsRef = useRef<Set<number>>(new Set());
 
+
   useEffect(() => {
   const currentUser = getCurrentUser();
 
   const subject = currentUser?.assignedSubject;
   const topic = currentUser?.assignedTopic;
   const subtopic = currentUser?.assignedSubtopic;
+  const difficulty = (currentUser as any)?.difficulty || "mixed";
+  const qtype = (currentUser as any)?.questionMix || "mixed";
+  const count = (currentUser as any)?.questionCount || 5;
 
-  console.log("LOADING ROOM QUESTIONS => ", subject, topic, subtopic);
+  console.log("LOADING ROOM QUESTIONS => ", subject, topic, subtopic, difficulty, qtype, count);
 
   if (!subject || !topic || !subtopic) {
     alert("No teacher room assigned.");
@@ -45,14 +49,13 @@ export default function Quiz() {
     return;
   }
 
-  fetch(`${API}/questions/${subject}/${topic}/${subtopic}`)
-      .then((res) => res.json())
-      .then((data) => {
-        const shuffled = [...data].sort(() => 0.5 - Math.random());
-        setQuestions(shuffled);
-      })
-      .catch((err) => console.error(err));
-  }, []);
+  fetch(`${API}/questions/${subject}/${topic}/${subtopic}/${difficulty}/${qtype}/${count}`)
+    .then((res) => res.json())
+    .then((data) => {
+      setQuestions(data);
+    })
+    .catch((err) => console.error(err));
+}, []);
 
   const total = questions.length;
   const q = questions[idx] || null;

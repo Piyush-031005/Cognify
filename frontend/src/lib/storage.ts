@@ -11,6 +11,9 @@ export type CognifyUser = {
   confidence: number;
   createdAt: string;
   role?: string;
+  difficulty?: string;
+  questionMix?: string;
+  questionCount?: number;
 
   roomCode?: string;
   assignedSubject?: string;

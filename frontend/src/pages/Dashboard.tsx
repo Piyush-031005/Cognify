@@ -1,6 +1,6 @@
 import { Link, Navigate, useNavigate } from "react-router-dom";
-import { useEffect, useState } from "react";
-import { getCurrentUser, setSession, getReports} from "@/lib/storage";
+import { useEffect, useMemo, useState } from "react";
+import { getCurrentUser, setSession, getReports } from "@/lib/storage";
 import { toast } from "@/hooks/use-toast";
 import { motion } from "framer-motion";
 import { ArrowRight, Brain, Clock, FileText } from "lucide-react";
@@ -13,9 +13,21 @@ export default function Dashboard() {
   if (!user) return <Navigate to="/auth" replace />;
 
  const API = "http://127.0.0.1:10000";
+const [reports, setReports] = useState<any[]>([]);
 const [roomCode, setRoomCode] = useState("");
 const [teacherRooms, setTeacherRooms] = useState<any[]>([]);
-const [reports, setReports] = useState<any[]>([]);
+
+const [subjects, setSubjects] = useState<string[]>([]);
+const [topics, setTopics] = useState<string[]>([]);
+const [subtopics, setSubtopics] = useState<string[]>([]);
+
+const [selectedSubject, setSelectedSubject] = useState("");
+const [selectedTopic, setSelectedTopic] = useState("");
+const [selectedSubtopic, setSelectedSubtopic] = useState("");
+
+const [difficulty, setDifficulty] = useState("mixed");
+const [questionMix, setQuestionMix] = useState("mixed");
+const [questionCount, setQuestionCount] = useState(5);
 
 useEffect(() => {
   const allReports = getReports().filter((r) => r.userEmail === user.email);
@@ -57,13 +69,17 @@ const handleJoinRoom = async () => {
   const room = data.room;
 
   setSession({
-    ...user!,
-    roomCode: room.room_code,
-    assignedSubject: room.subject,
-    assignedTopic: room.topic,
-    assignedSubtopic: room.subtopic,
-    teacherEmail: room.teacher_email
-  });
+  ...user!,
+  roomCode: room.room_code,
+  assignedSubject: room.subject,
+  assignedTopic: room.topic,
+  assignedSubtopic: room.subtopic,
+  teacherEmail: room.teacher_email,
+
+  difficulty: room.difficulty,
+  questionMix: room.question_mix,
+  questionCount: room.question_count
+});
 
   toast({
     title: "Room joined successfully"
@@ -72,29 +88,68 @@ const handleJoinRoom = async () => {
   navigate("/quiz");
 };
 
+
 useEffect(() => {
-  let mounted = true;
-
-  async function loadRooms() {
-    if (user.role === "teacher") {
-      const res = await fetch(`${API}/teacher-rooms/${user.email}`);
-      const data = await res.json();
-
-      if (mounted) setTeacherRooms(data);
-
-      useEffect(() => {
   const allReports = getReports().filter((r) => r.userEmail === user.email);
   setReports(allReports);
 }, [user.email]);
-    }
+
+useEffect(() => {
+  async function loadRooms() {
+    if (user.role !== "teacher") return;
+
+    const res = await fetch(`${API}/teacher-rooms/${user.email}`);
+    const data = await res.json();
+    setTeacherRooms(data);
   }
 
   loadRooms();
-
-  return () => {
-    mounted = false;
-  };
 }, [user.email, user.role]);
+
+
+useEffect(() => {
+  async function loadSubjects() {
+    if (user.role !== "teacher") return;
+
+    const res = await fetch(`${API}/subjects`);
+    const data = await res.json();
+    setSubjects(data);
+  }
+
+  loadSubjects();
+}, [user.role]);
+
+
+useEffect(() => {
+  async function loadTopics() {
+    if (!selectedSubject) return;
+
+    const res = await fetch(`${API}/topics/${selectedSubject}`);
+    const data = await res.json();
+
+    setTopics(data);
+    setSelectedTopic("");
+    setSubtopics([]);
+    setSelectedSubtopic("");
+  }
+
+  loadTopics();
+}, [selectedSubject]);
+
+useEffect(() => {
+  async function loadSubtopics() {
+    if (!selectedSubject || !selectedTopic) return;
+
+    const res = await fetch(`${API}/subtopics/${selectedSubject}/${selectedTopic}`);
+    const data = await res.json();
+
+    setSubtopics(data);
+    setSelectedSubtopic("");
+  }
+
+  loadSubtopics();
+}, [selectedSubject, selectedTopic]);
+
 
   if (user.role === "teacher") {
   return (
@@ -106,31 +161,102 @@ useEffect(() => {
         </h1>
 
         <div className="mt-8 rounded-3xl border p-8 bg-card">
-          <h2 className="text-2xl font-bold">Create Cognitive Exam Room</h2>
-          <p className="text-muted-foreground mt-2">Generate a live room for students to join.</p>
+  <h2 className="text-2xl font-bold">Create Cognitive Exam Room</h2>
+  <p className="text-muted-foreground mt-2">Generate a live adaptive room for students.</p>
 
-          <Button
-            className="mt-5"
-            onClick={async () => {
-              const res = await fetch(`${API}/create-room`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                  teacher_email: user.email,
-                  subject: "physics",
-                  topic: "mechanics",
-                  subtopic: "kinematics"
-                })
-              });
+  <div className="grid sm:grid-cols-2 gap-4 mt-6">
 
-              const data = await res.json();
-              alert("Room Created: " + data.room_code);
-              window.location.reload();
-            }}
-          >
-            Create New Room
-          </Button>
-        </div>
+    <select
+      value={selectedSubject}
+      onChange={(e) => setSelectedSubject(e.target.value)}
+      className="p-3 rounded-xl bg-black border"
+    >
+      <option value="">Select Subject</option>
+      {subjects.map((s) => <option key={s}>{s}</option>)}
+    </select>
+
+    <select
+      value={selectedTopic}
+      onChange={(e) => setSelectedTopic(e.target.value)}
+      className="p-3 rounded-xl bg-black border"
+    >
+      <option value="">Select Topic</option>
+      {topics.map((t) => <option key={t}>{t}</option>)}
+    </select>
+
+    <select
+      value={selectedSubtopic}
+      onChange={(e) => setSelectedSubtopic(e.target.value)}
+      className="p-3 rounded-xl bg-black border"
+    >
+      <option value="">Select Subtopic</option>
+      {subtopics.map((s) => <option key={s}>{s}</option>)}
+    </select>
+
+    <select
+      value={difficulty}
+      onChange={(e) => setDifficulty(e.target.value)}
+      className="p-3 rounded-xl bg-black border"
+    >
+      <option value="mixed">Mixed Difficulty</option>
+      <option value="easy">Easy</option>
+      <option value="medium">Medium</option>
+      <option value="hard">Hard</option>
+    </select>
+
+    <select
+      value={questionMix}
+      onChange={(e) => setQuestionMix(e.target.value)}
+      className="p-3 rounded-xl bg-black border"
+    >
+      <option value="mixed">Mixed Question Types</option>
+      <option value="conceptual">Conceptual</option>
+      <option value="memory">Memory</option>
+      <option value="tricky">Tricky</option>
+      <option value="application">Application</option>
+    </select>
+
+    <input
+      type="number"
+      min={3}
+      max={20}
+      value={questionCount}
+      onChange={(e) => setQuestionCount(Number(e.target.value))}
+      className="p-3 rounded-xl bg-black border"
+      placeholder="Question Count"
+    />
+  </div>
+
+  <Button
+    className="mt-6"
+    onClick={async () => {
+      if (!selectedSubject || !selectedTopic || !selectedSubtopic) {
+        alert("Please select subject/topic/subtopic");
+        return;
+      }
+
+      const res = await fetch(`${API}/create-room`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          teacher_email: user.email,
+          subject: selectedSubject,
+          topic: selectedTopic,
+          subtopic: selectedSubtopic,
+          difficulty: difficulty,
+          question_mix: questionMix,
+          question_count: questionCount
+        })
+      });
+
+      const data = await res.json();
+      alert("Room Created: " + data.room_code);
+      window.location.reload();
+    }}
+  >
+    Create New Room
+  </Button>
+</div>
 
         <div className="mt-10">
           <h3 className="text-2xl font-bold">Your Created Rooms</h3>
@@ -217,7 +343,6 @@ return (
                     <span className="inline-flex items-center gap-1.5"><Clock className="h-3.5 w-3.5" />{new Date(r.takenAt).toLocaleString()}</span>
                     <FileText className="h-4 w-4 text-mint" />
                   </div>
-                  <div className="mt-3 font-display text-lg font-semibold">{r.pattern}</div>
                   <div className="mt-3 font-display text-lg font-semibold">{r.pattern}</div>
 
 <div className="mt-2 inline-flex rounded-full border border-mint/20 px-2 py-1 text-[10px] uppercase tracking-[0.2em] text-mint">
