@@ -29,11 +29,6 @@ const [difficulty, setDifficulty] = useState("mixed");
 const [questionMix, setQuestionMix] = useState("mixed");
 const [questionCount, setQuestionCount] = useState(5);
 
-useEffect(() => {
-  const allReports = getReports().filter((r) => r.userEmail === user.email);
-  setReports(allReports);
-}, [user.email]);
-
 const handleJoinRoom = async () => {
   const user = getCurrentUser();
 
@@ -114,6 +109,7 @@ useEffect(() => {
     const res = await fetch(`${API}/subjects`);
     const data = await res.json();
     setSubjects(data);
+    console.log("SUBJECTS FROM API => ", data);
   }
 
   loadSubjects();
@@ -128,8 +124,10 @@ useEffect(() => {
     const data = await res.json();
 
     setTopics(data);
+    console.log("TOPICS FROM API => ", data);
     setSelectedTopic("");
     setSubtopics([]);
+    console.log("SUBTOPICS FROM API => ", data);
     setSelectedSubtopic("");
   }
 
@@ -169,34 +167,46 @@ useEffect(() => {
     <select
       value={selectedSubject}
       onChange={(e) => setSelectedSubject(e.target.value)}
-      className="p-3 rounded-xl bg-black border"
+      className="p-3 rounded-xl bg-black border text-white"
     >
       <option value="">Select Subject</option>
-      {subjects.map((s) => <option key={s}>{s}</option>)}
+      {subjects.map((s) => (
+  <option key={s} value={s}>
+    {s}
+  </option>
+))}
     </select>
 
     <select
       value={selectedTopic}
       onChange={(e) => setSelectedTopic(e.target.value)}
-      className="p-3 rounded-xl bg-black border"
+      className="p-3 rounded-xl bg-black border text-white"
     >
       <option value="">Select Topic</option>
-      {topics.map((t) => <option key={t}>{t}</option>)}
+      {topics.map((t) => (
+  <option key={t} value={t}>
+    {t}
+  </option>
+))}
     </select>
 
     <select
       value={selectedSubtopic}
       onChange={(e) => setSelectedSubtopic(e.target.value)}
-      className="p-3 rounded-xl bg-black border"
+      className="p-3 rounded-xl bg-black border text-white"
     >
       <option value="">Select Subtopic</option>
-      {subtopics.map((s) => <option key={s}>{s}</option>)}
+      {subtopics.map((s) => (
+  <option key={s} value={s}>
+    {s}
+  </option>
+))}
     </select>
 
     <select
       value={difficulty}
       onChange={(e) => setDifficulty(e.target.value)}
-      className="p-3 rounded-xl bg-black border"
+      className="p-3 rounded-xl bg-black border text-white"
     >
       <option value="mixed">Mixed Difficulty</option>
       <option value="easy">Easy</option>
@@ -207,7 +217,7 @@ useEffect(() => {
     <select
       value={questionMix}
       onChange={(e) => setQuestionMix(e.target.value)}
-      className="p-3 rounded-xl bg-black border"
+      className="p-3 rounded-xl bg-black border text-white"
     >
       <option value="mixed">Mixed Question Types</option>
       <option value="conceptual">Conceptual</option>
@@ -226,6 +236,12 @@ useEffect(() => {
       placeholder="Question Count"
     />
   </div>
+
+  <div className="text-xs text-white mt-4">
+  SUBJECT = {selectedSubject} <br />
+  TOPIC = {selectedTopic} <br />
+  SUBTOPIC = {selectedSubtopic}
+</div>
 
   <Button
     className="mt-6"

@@ -225,10 +225,6 @@ def favicon():
     return '', 204
 
 
-if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 10000)))
-
-
 # =========================
 # DYNAMIC SUBJECT/TOPIC/SUBTOPIC/QUESTION ROUTES
 # =========================
@@ -251,3 +247,8 @@ def subtopics_api(subject, topic):
 def room_questions_api(subject, topic, subtopic, difficulty, qtype, count):
     qs = get_room_questions(subject, topic, subtopic, difficulty, qtype, count)
     return jsonify(qs)
+
+
+
+if __name__ == "__main__":
+    app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 10000)))
