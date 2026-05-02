@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, Navigate, useParams } from "react-router-dom";
 import { motion } from "framer-motion";
-import { ArrowLeft, Brain, Sparkles, TrendingUp, Activity, Repeat } from "lucide-react";
+import { ArrowLeft, Brain, Sparkles, TrendingUp, Activity, Repeat, ShieldAlert } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { getCurrentUser, getReport } from "@/lib/storage";
 
@@ -25,6 +25,39 @@ export default function Report() {
   if (!report) return <div className="p-10">Loading report...</div>;
 
   const s = report.scores;
+
+  const riskBadge =
+  s.fakeUnderstanding >= 45
+    ? "High Surface Familiarity Risk"
+    : s.hesitation >= 45
+    ? "Moderate Cognitive Distortion"
+    : "Stable Cognitive State";
+
+const teacherDiagnostic =
+  report.pattern === "Trial-based"
+    ? "Student exhibits recurring trial-resolution dependency under medium uncertainty prompts."
+    : report.pattern === "Concept-based"
+    ? "Student shows principle-led answer commitment with relatively lower recognition dependence."
+    : "Student displays alternating concept recall and option-verification dependency.";
+
+const vulnerability =
+  s.fakeUnderstanding >= 40
+    ? {
+        area: "Internal Concept Stability",
+        fail: "Indirect application questions",
+        remedy: "Deep why-based reinforcement required"
+      }
+    : s.hesitation >= 45
+    ? {
+        area: "Decision Commitment",
+        fail: "Timed multi-option pressure",
+        remedy: "Rapid confidence drills recommended"
+      }
+    : {
+        area: "Mixed Cognitive Consistency",
+        fail: "Difficulty spikes",
+        remedy: "Progressive layered practice advised"
+      };
 
   const predictionText =
   report.prediction === "Decline"
@@ -88,35 +121,23 @@ const finalConclusion =
             your mind moved.
           </h1>
 
-          <div className="mt-5 inline-flex items-center gap-2 rounded-2xl border border-foreground/20 bg-foreground text-background px-4 py-2 text-sm font-semibold">
-            <Brain className="h-4 w-4" /> Pattern:{" "}
-            <span className="text-primary">{report.pattern}</span>
-          </div>
+<div className="mt-5 inline-flex items-center gap-2 rounded-2xl border border-foreground/20 bg-foreground text-background px-4 py-2 text-sm font-semibold">
+  <Brain className="h-4 w-4" /> Pattern:
+  <span className="text-primary">{report.pattern}</span>
+</div>
+
+<div className="mt-4 inline-flex items-center gap-2 rounded-2xl border border-red-400/20 bg-red-400/10 px-4 py-2 text-sm font-semibold text-red-300">
+  <ShieldAlert className="h-4 w-4" /> {riskBadge}
+</div>
         </motion.section>
 
-        <Section
-          icon={<Brain className="h-4 w-4" />}
-          title="Understanding"
-          subtitle="How you actually grasp ideas"
-        >
-          <div className="grid gap-4 sm:grid-cols-3">
-            <Bar label="Conceptual" v={s.conceptual} accent />
-            <Bar label="Memorized" v={s.memorized} />
-            <Bar label="Fake understanding" v={s.fakeUnderstanding} accent />
-          </div>
-        </Section>
 
-        <Section
-          icon={<Activity className="h-4 w-4" />}
-          title="Behavior"
-          subtitle="The signals you didn't notice you were sending"
-        >
-          <div className="grid gap-4 sm:grid-cols-3">
-            <Bar label="Hesitation" v={s.hesitation} accent />
-            <Bar label="Confidence" v={s.confidence} />
-            <Bar label="Overthinking" v={s.overthinking} accent />
-          </div>
-        </Section>
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <MetricCard title="Concept Depth Index" value={s.conceptual} />
+          <MetricCard title="Confidence Integrity" value={s.confidence} />
+          <MetricCard title="Hesitation Pressure" value={s.hesitation} />
+          <MetricCard title="Overthinking Density" value={s.overthinking} />
+        </div>
 
         <Section
           icon={<Repeat className="h-4 w-4" />}
@@ -143,6 +164,16 @@ const finalConclusion =
             </div>
           </div>
         </Section>
+
+        <Section
+  icon={<Brain className="h-4 w-4" />}
+  title="Teacher Diagnostic"
+  subtitle="Professional classroom interpretation"
+>
+  <div className="rounded-2xl border border-foreground/20 bg-card p-7 leading-8 text-lg">
+    {teacherDiagnostic}
+  </div>
+</Section>
 
         <Section
           icon={<Sparkles className="h-4 w-4" />}
@@ -219,7 +250,30 @@ const finalConclusion =
         </Section>
 
         <Section
-          icon={<Brain className="h-4 w-4" />}
+  icon={<ShieldAlert className="h-4 w-4" />}
+  title="Cognitive Vulnerability"
+  subtitle="Where this learner is most likely to break"
+>
+  <div className="grid sm:grid-cols-3 gap-4">
+    <div className="rounded-2xl border p-5 bg-card">
+      <div className="text-xs uppercase opacity-60">Main Weakness Area</div>
+      <div className="mt-2 text-lg font-bold">{vulnerability.area}</div>
+    </div>
+
+    <div className="rounded-2xl border p-5 bg-card">
+      <div className="text-xs uppercase opacity-60">Likely Failure Under</div>
+      <div className="mt-2 text-lg font-bold">{vulnerability.fail}</div>
+    </div>
+
+    <div className="rounded-2xl border p-5 bg-card">
+      <div className="text-xs uppercase opacity-60">Recommended Intervention</div>
+      <div className="mt-2 text-lg font-bold">{vulnerability.remedy}</div>
+    </div>
+  </div>
+</Section>
+
+        <Section
+          icon={<Brain className="h-4 w-4" />} 
           title="System conclusion"
           subtitle="Cognify final psychological interpretation"
         >
@@ -278,6 +332,29 @@ function Section({
       {subtitle && <div className="mt-2 opacity-75 text-sm">{subtitle}</div>}
       <div className="mt-5">{children}</div>
     </motion.section>
+  );
+}
+
+function MetricCard({ title, value }: { title: string; value: number }) {
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 8 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true }}
+      className="rounded-3xl border border-foreground/20 bg-card p-6"
+    >
+      <div className="text-[11px] uppercase tracking-[0.25em] opacity-60">{title}</div>
+      <div className="mt-3 text-4xl font-bold">{value}%</div>
+      <div className="mt-3 h-1.5 rounded-full bg-background/40 overflow-hidden">
+        <motion.div
+          className="h-full bg-primary"
+          initial={{ width: 0 }}
+          whileInView={{ width: `${value}%` }}
+          viewport={{ once: true }}
+          transition={{ duration: 1 }}
+        />
+      </div>
+    </motion.div>
   );
 }
 
