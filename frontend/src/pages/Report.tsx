@@ -131,13 +131,29 @@ const finalConclusion =
 </div>
         </motion.section>
 
+ <Section
+  icon={<Brain className="h-4 w-4" />}
+  title="Understanding"
+  subtitle="How you actually grasp ideas"
+>
+  <div className="grid gap-4 sm:grid-cols-3">
+    <Bar label="Conceptual" v={s.conceptual} accent />
+    <Bar label="Memorized" v={s.memorized} />
+    <Bar label="Fake understanding" v={s.fakeUnderstanding} accent />
+  </div>
+</Section>    
 
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          <MetricCard title="Concept Depth Index" value={s.conceptual} />
-          <MetricCard title="Confidence Integrity" value={s.confidence} />
-          <MetricCard title="Hesitation Pressure" value={s.hesitation} />
-          <MetricCard title="Overthinking Density" value={s.overthinking} />
-        </div>
+<Section
+  icon={<Activity className="h-4 w-4" />}
+  title="Behavior"
+  subtitle="The signals you didn't notice you were sending"
+>
+  <div className="grid gap-4 sm:grid-cols-3">
+    <Bar label="Hesitation" v={s.hesitation} accent />
+    <Bar label="Confidence" v={s.confidence} />
+    <Bar label="Overthinking" v={s.overthinking} accent />
+  </div>
+</Section>
 
         <Section
           icon={<Repeat className="h-4 w-4" />}
@@ -341,10 +357,10 @@ function MetricCard({ title, value }: { title: string; value: number }) {
       initial={{ opacity: 0, y: 8 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true }}
-      className="rounded-3xl border border-foreground/20 bg-card p-6"
+      className="rounded-3xl border border-foreground/20 bg-card p-6 shadow-[0_0_30px_rgba(255,255,255,0.03)]"
     >
-      <div className="text-[11px] uppercase tracking-[0.25em] opacity-60">{title}</div>
-      <div className="mt-3 text-4xl font-bold">{value}%</div>
+      <div className="text-[11px] uppercase tracking-[0.25em] text-primary/70">{title}</div>
+      <div className="mt-3 text-5xl font-bold font-display">{value}%</div>
       <div className="mt-3 h-1.5 rounded-full bg-background/40 overflow-hidden">
         <motion.div
           className="h-full bg-primary"
@@ -360,20 +376,26 @@ function MetricCard({ title, value }: { title: string; value: number }) {
 
 function Bar({ label, v, accent }: { label: string; v: number; accent?: boolean }) {
   return (
-    <div className="rounded-2xl border border-foreground/20 bg-card p-5">
-      <div className="flex justify-between text-sm font-bold">
+    <motion.div
+      initial={{ opacity: 0, y: 8 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true }}
+      className="rounded-2xl border border-foreground/20 bg-card px-5 py-4"
+    >
+      <div className="flex justify-between items-center text-sm font-bold">
         <span>{label}</span>
         <span>{v}%</span>
       </div>
-      <div className="mt-2 h-2.5 rounded-full bg-background/50 overflow-hidden">
+
+      <div className="mt-3 h-2 rounded-full bg-background/40 overflow-hidden">
         <motion.div
           className={`h-full rounded-full ${accent ? "bg-primary" : "bg-foreground"}`}
           initial={{ width: 0 }}
           whileInView={{ width: `${v}%` }}
           viewport={{ once: true }}
-          transition={{ duration: 1.1, ease: "easeOut" }}
+          transition={{ duration: 1 }}
         />
       </div>
-    </div>
+    </motion.div>
   );
 }
