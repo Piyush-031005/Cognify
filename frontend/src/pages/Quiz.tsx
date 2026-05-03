@@ -29,6 +29,7 @@ export default function Quiz() {
   const hoverCountRef = useRef<number>(0);
   const sameOptionClicksRef = useRef<number>(0);
   const hoveredOptionsRef = useRef<Set<number>>(new Set());
+  const attemptIdRef = useRef<string>(Date.now().toString() + "_" + Math.floor(Math.random()*10000));
 
 
   useEffect(() => {
@@ -156,6 +157,7 @@ export default function Quiz() {
     question_id: q.id,
     question_text: q.prompt,
     student_email: user?.email,
+    attempt_id: attemptIdRef.current,
 
     response_time: responseTimeMs / 1000,
     attempts: attemptsRef.current || 1,
@@ -193,7 +195,7 @@ if (idx + 1 < total) {
   const analyticsSnapshot = [...analyticsRef.current]; 
 
   setTimeout(async () => {
-    const reportRes = await fetch(`${API}/report?student_email=${user?.email}`);
+    const reportRes = await fetch(`${API}/report?student_email=${user?.email}&attempt_id=${attemptIdRef.current}`);
     const report = await reportRes.json();
     console.log("FULL REPORT FROM BACKEND => ", report);
 

@@ -1,5 +1,6 @@
 from collections import Counter
 from models.model5.engine import predict_future
+from database import get_student_attempt_responses
 
 
 def analyze_reflection(text):
@@ -28,7 +29,8 @@ def safe_avg(arr):
     return round(sum(arr) / len(arr), 2) if arr else 0
 
 
-def generate_report(question_sessions, reflection=""):
+def generate_report(student_email, attempt_id, reflection=""):
+    question_sessions = get_student_attempt_responses(student_email, attempt_id)
     if len(question_sessions) == 0:
         return {}
 

@@ -142,6 +142,7 @@ def init_db():
         room_code TEXT,
         student_email TEXT,
         subject TEXT,
+        attempt_id TEXT,
         topic TEXT,
         subtopic TEXT,
         question_id INTEGER,
@@ -340,7 +341,7 @@ def save_response(student_email, obj):
 
     cur.execute("""
         INSERT INTO responses (
-            room_code, student_email, subject, topic, subtopic,
+            room_code, student_email, attempt_id, subject, topic, subtopic,
             question_id, question_text,
             response_time, idle_time, rewrite_count, backspace_count,
             attempts, confidence, correct,
@@ -349,11 +350,12 @@ def save_response(student_email, obj):
             cognitive_flag, hover_count, same_option_clicks, reflection_length,
             created_at
         )
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     """, (
         obj.get("room_code", "solo"),
-        student_email,
-        obj.get("subject", ""),
+student_email,
+obj.get("attempt_id", "default_attempt"),
+obj.get("subject", ""),
         obj.get("topic", ""),
         obj.get("subtopic", ""),
         obj.get("question_id"),
@@ -472,3 +474,67 @@ def get_room_questions(subject, topic, subtopic, difficulty="mixed", qtype="mixe
         })
 
     return final
+
+# =========================
+# FETCH STUDENT RESPONSES
+# =========================
+def get_student_responses(student_email):
+    conn = get_conn()
+    cur = conn.cursor()
+
+    cur.execute("""
+        SELECT * FROM responses
+        WHERE student_email = ?
+        ORDER BY id ASC
+    """, (student_email,))
+
+    rows = cur.fetchall()
+    conn.close()
+
+    return [dict(r) for r in rows]
+
+
+# =========================
+# CLEAR STUDENT RESPONSES AFTER REPORT
+# =========================
+def clear_student_responses(student_email):
+    conn = get_conn()
+    cur = conn.cursor()
+
+    cur.execute("""
+        DELETE FROM responses
+        WHERE student_email = ?
+    """, (student_email,))
+
+    conn.commit()
+    conn.close()
+
+
+def get_student_responses(student_email):
+    conn = get_conn()
+    cur = conn.cursor()
+
+    cur.execute("""
+        SELECT * FROM responses
+        WHERE student_email = ?
+        ORDER BY id ASC
+    """, (student_email,))
+
+    rows = cur.fetchall()
+    conn.close()
+    return [dict(r) for r in rows]
+
+
+def get_student_attempt_responses(student_email, attempt_id):
+    conn = get_conn()
+    cur = conn.cursor()
+
+    cur.execute("""
+        SELECT * FROM responses
+        WHERE student_email = ? AND attempt_id = ?
+        ORDER BY id ASC
+    """, (student_email, attempt_id))
+
+    rows = cur.fetchall()
+    conn.close()
+    return [dict(r) for r in rows]

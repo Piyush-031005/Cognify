@@ -14,6 +14,7 @@ from database import (
     get_student_room,
     save_response,
     save_final_report,
+    get_student_responses,
     get_conn,
 
     get_all_subjects,
@@ -93,13 +94,16 @@ def submit():
 
     add_question_session(session_obj)
     set_reflection(data.get("reflection", ""))
-
     student_email = data.get("student_email", "anonymous")
 
+    attempt_id = data.get("attempt_id", "default_attempt")
+
     session_obj["room_code"] = data.get("room_code", "solo")
+    session_obj["attempt_id"] = attempt_id
     session_obj["subject"] = data.get("subject", "")
     session_obj["topic"] = data.get("topic", "")
     session_obj["subtopic"] = data.get("subtopic", "")
+    
 
     save_response(student_email, session_obj)
 
@@ -113,12 +117,10 @@ def submit():
 def report():
     student_email = request.args.get("student_email", "anonymous")
     room_code = request.args.get("room_code", "solo")
-
-    sessions = get_all_sessions()
+    attempt_id = request.args.get("attempt_id", "default_attempt")
     reflection = get_reflection()
 
-    report_data = generate_report(sessions, reflection)
-    report_data["perQuestion"] = sessions
+    report_data = generate_report(student_email, attempt_id, reflection)
 
     save_final_report(student_email, report_data, room_code)
 
