@@ -31,28 +31,23 @@ export default function Quiz() {
   const hoveredOptionsRef = useRef<Set<number>>(new Set());
   const attemptIdRef = useRef<string>(Date.now().toString() + "_" + Math.floor(Math.random()*10000));
 
-
-  useEffect(() => {
+useEffect(() => {
   const currentUser = getCurrentUser();
 
-  const subject = currentUser?.assignedSubject;
-  const topic = currentUser?.assignedTopic;
-  const subtopic = currentUser?.assignedSubtopic;
-  const difficulty = (currentUser as any)?.difficulty || "mixed";
-  const qtype = (currentUser as any)?.questionMix || "mixed";
-  const count = (currentUser as any)?.questionCount || 5;
+  const roomCode = currentUser?.roomCode;
 
-  console.log("LOADING ROOM QUESTIONS => ", subject, topic, subtopic, difficulty, qtype, count);
+  console.log("LOCKED ROOM FETCH => ", roomCode);
 
-  if (!subject || !topic || !subtopic) {
-    alert("No teacher room assigned.");
+  if (!roomCode) {
+    alert("No room assigned.");
     navigate("/dashboard");
     return;
   }
 
-  fetch(`${API}/questions/${subject}/${topic}/${subtopic}/${difficulty}/${qtype}/${count}`)
+  fetch(`${API}/room-questions/${roomCode}`)
     .then((res) => res.json())
     .then((data) => {
+      console.log("LOCKED QUESTIONS RECEIVED => ", data);
       setQuestions(data);
     })
     .catch((err) => console.error(err));
@@ -155,9 +150,13 @@ export default function Quiz() {
   headers: { "Content-Type": "application/json" },
   body: JSON.stringify({
     question_id: q.id,
-    question_text: q.prompt,
-    student_email: user?.email,
-    attempt_id: attemptIdRef.current,
+question_text: q.prompt,
+student_email: user?.email,
+attempt_id: attemptIdRef.current,
+room_code: user?.roomCode,
+subject: user?.assignedSubject,
+topic: user?.assignedTopic,
+subtopic: user?.assignedSubtopic,
 
     response_time: responseTimeMs / 1000,
     attempts: attemptsRef.current || 1,

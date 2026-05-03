@@ -20,7 +20,10 @@ from database import (
     get_all_subjects,
     get_topics_by_subject,
     get_subtopics,
-    get_room_questions
+    get_room_questions,
+
+    map_questions_to_room,
+    get_locked_room_questions
 )
 
 from session_data import (
@@ -105,6 +108,7 @@ def submit():
     session_obj["subtopic"] = data.get("subtopic", "")
     
 
+    student_email = data.get("student_email", "anonymous")
     save_response(student_email, session_obj)
 
     return jsonify({
@@ -146,7 +150,19 @@ def reset():
 @app.route('/create-room', methods=['POST'])
 def create_room_api():
     data = request.json
+
     code = create_room(data)
+
+    locked_questions = get_room_questions(
+        data["subject"],
+        data["topic"],
+        data["subtopic"],
+        data.get("difficulty", "mixed"),
+        data.get("question_mix", "mixed"),
+        int(data.get("question_count", 5))
+    )
+
+    map_questions_to_room(code, locked_questions)
 
     return jsonify({
         "success": True,
@@ -248,6 +264,11 @@ def subtopics_api(subject, topic):
 @app.route('/questions/<subject>/<topic>/<subtopic>/<difficulty>/<qtype>/<int:count>', methods=['GET'])
 def room_questions_api(subject, topic, subtopic, difficulty, qtype, count):
     qs = get_room_questions(subject, topic, subtopic, difficulty, qtype, count)
+    return jsonify(qs)
+
+@app.route('/room-questions/<room_code>', methods=['GET'])
+def locked_room_questions_api(room_code):
+    qs = get_locked_room_questions(room_code)
     return jsonify(qs)
 
 

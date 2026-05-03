@@ -475,6 +475,57 @@ def get_room_questions(subject, topic, subtopic, difficulty="mixed", qtype="mixe
 
     return final
 
+def map_questions_to_room(room_code, question_list):
+    conn = get_conn()
+    cur = conn.cursor()
+
+    for q in question_list:
+        cur.execute("""
+            INSERT INTO room_questions_map (room_code, question_id, source_type, created_at)
+            VALUES (?, ?, ?, ?)
+        """, (
+            room_code,
+            q["id"],
+            "question_bank",
+            datetime.now().isoformat()
+        ))
+
+    conn.commit()
+    conn.close()
+
+
+def get_locked_room_questions(room_code):
+    conn = get_conn()
+    cur = conn.cursor()
+
+    cur.execute("""
+        SELECT qb.*
+        FROM room_questions_map rqm
+        JOIN question_bank qb ON qb.id = rqm.question_id
+        WHERE rqm.room_code = ?
+        ORDER BY rqm.id ASC
+    """, (room_code,))
+
+    rows = cur.fetchall()
+    conn.close()
+
+    final = []
+
+    for r in rows:
+        final.append({
+            "id": r["id"],
+            "prompt": r["prompt"],
+            "options": [
+                r["option_a"],
+                r["option_b"],
+                r["option_c"],
+                r["option_d"]
+            ],
+            "correctIndex": r["correct_index"]
+        })
+
+    return final
+
 # =========================
 # FETCH STUDENT RESPONSES
 # =========================
