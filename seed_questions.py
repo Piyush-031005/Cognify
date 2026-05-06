@@ -205,18 +205,6 @@ questions = [
 "correct_index":0
 },
 
-{
-"subject":"math","topic":"algebra","subtopic":"quadratic",
-"difficulty":"medium","qtype":"conceptual",
-"cognitive_type":"conceptual",
-"tags":"roots",
-"estimated_time":20,
-"explanation":"Nature of roots depends on discriminant.",
-"prompt":"Nature of roots depends on?",
-"options":["a","b","c","discriminant"],
-"correct_index":3
-},
-
 # TRIGONOMETRY
 {
 "subject":"math","topic":"trigonometry","subtopic":"identities",
@@ -310,30 +298,6 @@ questions = [
 
 {
 "subject":"cs","topic":"programming","subtopic":"basics",
-"difficulty":"easy","qtype":"memory",
-"cognitive_type":"memory",
-"tags":"loop",
-"estimated_time":10,
-"explanation":"for loop is a looping structure.",
-"prompt":"Which of these is a loop structure?",
-"options":["if","for","int","class"],
-"correct_index":1
-},
-
-{
-"subject":"cs","topic":"programming","subtopic":"basics",
-"difficulty":"easy","qtype":"conceptual",
-"cognitive_type":"conceptual",
-"tags":"variable",
-"estimated_time":10,
-"explanation":"Variable stores data values.",
-"prompt":"Variable is used to?",
-"options":["Store data","Print code","Close compiler","Repeat hardware"],
-"correct_index":0
-},
-
-{
-"subject":"cs","topic":"programming","subtopic":"basics",
 "difficulty":"medium","qtype":"tricky",
 "cognitive_type":"tricky",
 "tags":"data-structure",
@@ -343,6 +307,7 @@ questions = [
 "options":["Stack","Queue","Tree","Graph"],
 "correct_index":1
 },
+
 {
 "subject":"cs","topic":"data_structures","subtopic":"queue_stack",
 "difficulty":"easy","qtype":"memory","cognitive_type":"memory",
@@ -393,7 +358,7 @@ questions = [
 "correct_index":1
 },
 
-#arrays
+# arrays
 {
 "subject":"dsa","topic":"arrays","subtopic":"basics",
 "difficulty":"easy","qtype":"memory","cognitive_type":"memory",
@@ -443,7 +408,6 @@ questions = [
 "options":["Less memory","Faster access","Dynamic size","No pointers"],
 "correct_index":1
 },
-
 
 # jee physics (rotation+thinking traps)
 
@@ -557,7 +521,7 @@ questions = [
 "correct_index":1
 },
 
-#dbms
+# dbms
 {
 "subject":"dbms","topic":"sql","subtopic":"queries",
 "difficulty":"easy","qtype":"memory","cognitive_type":"memory",
@@ -598,7 +562,7 @@ questions = [
 "correct_index":2
 },
 
-#cn
+# cn
 {
 "subject":"cn","topic":"network_layer","subtopic":"ip",
 "difficulty":"easy","qtype":"memory","cognitive_type":"memory",
@@ -639,8 +603,7 @@ questions = [
 "correct_index":1
 },
 
-#os
-
+# os
 {
 "subject":"os","topic":"process","subtopic":"scheduling",
 "difficulty":"easy","qtype":"memory","cognitive_type":"memory",
@@ -681,11 +644,11 @@ questions = [
 "correct_index":1
 }
 
-
 ]
 
 # ================= INSERT =================
 for q in questions:
+    options = q["options"] + [""] * 4  # safety: ensure at least 4 options
     cur.execute("""
     INSERT INTO question_bank (
         subject, topic, subtopic,
@@ -707,10 +670,10 @@ for q in questions:
         q["qtype"],
         q["cognitive_type"],
         q["prompt"],
-        q["options"][0],
-        q["options"][1],
-        q["options"][2],
-        q["options"][3],
+        options[0],
+        options[1],
+        options[2],
+        options[3],
         q["correct_index"],
         q["explanation"],
         q["tags"],
