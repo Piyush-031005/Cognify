@@ -433,35 +433,32 @@ def get_subtopics(subject, topic):
     return [r["subtopic"] for r in rows]
 
 
-def get_room_questions(subject, topic, subtopic, difficulty="mixed", qtype="mixed", limit_count=5):
+def get_room_questions(subject, topic, subtopic, limit_count=5):
     conn = get_conn()
     cur = conn.cursor()
 
-    query = """
-    SELECT * FROM question_bank
-    WHERE subject=? AND topic=? AND subtopic=?
-    """
-    params = [subject, topic, subtopic]
+    cognitive_types = ["memory", "conceptual", "tricky", "application", "reasoning"]
 
-    if difficulty != "mixed":
-        query += " AND difficulty=?"
-        params.append(difficulty)
+    final_questions = []
 
-    if qtype != "mixed":
-        query += " AND qtype=?"
-        params.append(qtype)
+    for ct in cognitive_types:
+        cur.execute("""
+            SELECT * FROM question_bank
+            WHERE subject=? AND topic=? AND subtopic=? AND cognitive_type=?
+            ORDER BY RANDOM()
+            LIMIT 1
+        """, (subject, topic, subtopic, ct))
 
-    query += " ORDER BY RANDOM() LIMIT ?"
-    params.append(limit_count)
+        row = cur.fetchone()
 
-    cur.execute(query, tuple(params))
-    rows = cur.fetchall()
+        if row:
+            final_questions.append(row)
+
     conn.close()
 
-    final = []
-
-    for r in rows:
-        final.append({
+    formatted = []
+    for r in final_questions:
+        formatted.append({
             "id": r["id"],
             "prompt": r["prompt"],
             "options": [
@@ -473,7 +470,7 @@ def get_room_questions(subject, topic, subtopic, difficulty="mixed", qtype="mixe
             "correctIndex": r["correct_index"]
         })
 
-    return final
+    return formatted
 
 def map_questions_to_room(room_code, question_list):
     conn = get_conn()
@@ -589,3 +586,50 @@ def get_student_attempt_responses(student_email, attempt_id):
     rows = cur.fetchall()
     conn.close()
     return [dict(r) for r in rows]
+
+
+def upgrade_question_bank_schema():
+    conn = get_conn()
+    cur = conn.cursor()
+
+    try:
+        cur.execute("ALTER TABLE question_bank ADD COLUMN cognitive_type TEXT")
+    except:
+        pass
+
+    try:
+        cur.execute("ALTER TABLE question_bank ADD COLUMN explanation TEXT")
+    except:
+        pass
+
+    try:
+        cur.execute("ALTER TABLE question_bank ADD COLUMN image_url TEXT")
+    except:
+        pass
+
+    try:
+        cur.execute("ALTER TABLE question_bank ADD COLUMN source_exam TEXT")
+    except:
+        pass
+
+    try:
+        cur.execute("ALTER TABLE question_bank ADD COLUMN teacher_added INTEGER DEFAULT 0")
+    except:
+        pass
+
+    try:
+        cur.execute("ALTER TABLE question_bank ADD COLUMN tags TEXT")
+    except:
+        pass
+
+    try:
+        cur.execute("ALTER TABLE question_bank ADD COLUMN created_at TEXT")
+    except:
+        pass
+    try:
+        cur.execute("ALTER TABLE question_bank ADD COLUMN estimated_time INTEGER")
+    except:
+        pass
+
+    conn.commit()
+    conn.close()

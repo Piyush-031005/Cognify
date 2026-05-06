@@ -23,7 +23,9 @@ from database import (
     get_room_questions,
 
     map_questions_to_room,
-    get_locked_room_questions
+    get_locked_room_questions,
+
+    upgrade_question_bank_schema
 )
 
 from session_data import (
@@ -41,6 +43,7 @@ app = Flask(__name__)
 CORS(app, resources={r"/*": {"origins": "*"}})
 
 init_db()
+upgrade_question_bank_schema()
 
 
 # =========================
