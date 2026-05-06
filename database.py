@@ -441,6 +441,7 @@ def get_room_questions(subject, topic, subtopic, limit_count=5):
 
     final_questions = []
 
+    # 1. try cognitive distribution (1 from each type)
     for ct in cognitive_types:
         cur.execute("""
             SELECT * FROM question_bank
@@ -454,8 +455,24 @@ def get_room_questions(subject, topic, subtopic, limit_count=5):
         if row:
             final_questions.append(row)
 
+    # 2. fallback if not enough questions
+    if len(final_questions) < limit_count:
+        remaining = limit_count - len(final_questions)
+
+        cur.execute("""
+            SELECT * FROM question_bank
+            WHERE subject=? AND topic=? AND subtopic=?
+            ORDER BY RANDOM()
+            LIMIT ?
+        """, (subject, topic, subtopic, remaining))
+
+        extra_rows = cur.fetchall()
+
+        final_questions.extend(extra_rows)
+
     conn.close()
 
+    # format output
     formatted = []
     for r in final_questions:
         formatted.append({

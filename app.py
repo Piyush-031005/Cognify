@@ -157,13 +157,11 @@ def create_room_api():
     code = create_room(data)
 
     locked_questions = get_room_questions(
-        data["subject"],
-        data["topic"],
-        data["subtopic"],
-        data.get("difficulty", "mixed"),
-        data.get("question_mix", "mixed"),
-        int(data.get("question_count", 5))
-    )
+    data["subject"],
+    data["topic"],
+    data["subtopic"],
+    int(data.get("question_count", 5))
+)
 
     map_questions_to_room(code, locked_questions)
 
