@@ -272,6 +272,30 @@ def locked_room_questions_api(room_code):
     qs = get_locked_room_questions(room_code)
     return jsonify(qs)
 
+@app.route('/adaptive-question', methods=['POST'])
+def adaptive_question():
+    data = request.json
+
+    subject = data["subject"]
+    topic = data["topic"]
+    subtopic = data["subtopic"]
+
+    current_diff = data["difficulty"]
+    last_correct = data["correct"]
+    response_time = data["response_time"]
+    confidence = data["confidence"]
+    hesitation = data["hesitation"]
+
+    new_diff = update_difficulty(current_diff, last_correct, response_time, confidence)
+    new_type = get_next_cognitive_type(last_correct, hesitation)
+
+    q = get_adaptive_question(subject, topic, subtopic, new_diff, new_type)
+
+    return jsonify({
+        "question": q,
+        "difficulty": new_diff,
+        "cognitive_type": new_type
+    })
 
 def update_difficulty(current, correct, response_time, confidence):
     if correct and response_time < 5:
@@ -285,7 +309,14 @@ def update_difficulty(current, correct, response_time, confidence):
 
     return current
 
+def get_next_cognitive_type(last_correct, hesitation_score):
+    if not last_correct:
+        return "conceptual"
 
+    if hesitation_score > 0.3:
+        return "memory"
+
+    return random.choice(["tricky", "application", "reasoning"])
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 10000)))
