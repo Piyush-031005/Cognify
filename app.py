@@ -273,6 +273,19 @@ def locked_room_questions_api(room_code):
     return jsonify(qs)
 
 
+def update_difficulty(current, correct, response_time, confidence):
+    if correct and response_time < 5:
+        return "hard" if current == "medium" else "medium"
+
+    if not correct and confidence > 0.7:
+        return "medium"
+
+    if response_time > 10:
+        return "easy"
+
+    return current
+
+
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 10000)))
