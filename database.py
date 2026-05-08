@@ -605,6 +605,37 @@ def get_student_attempt_responses(student_email, attempt_id):
     return [dict(r) for r in rows]
 
 
+def get_adaptive_question(subject, topic, subtopic, current_difficulty, cognitive_type):
+    conn = get_conn()
+    cur = conn.cursor()
+
+    cur.execute("""
+        SELECT * FROM question_bank
+        WHERE subject=? AND topic=? AND subtopic=?
+        AND difficulty=? AND cognitive_type=?
+        ORDER BY RANDOM()
+        LIMIT 1
+    """, (subject, topic, subtopic, current_difficulty, cognitive_type))
+
+    row = cur.fetchone()
+    conn.close()
+
+    if not row:
+        return None
+
+    return {
+        "id": row["id"],
+        "prompt": row["prompt"],
+        "options": [
+            row["option_a"],
+            row["option_b"],
+            row["option_c"],
+            row["option_d"]
+        ],
+        "correctIndex": row["correct_index"]
+    }
+
+
 def upgrade_question_bank_schema():
     conn = get_conn()
     cur = conn.cursor()
