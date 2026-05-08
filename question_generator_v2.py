@@ -2,6 +2,25 @@ from database import get_conn
 from datetime import datetime
 import random
 
+def generate_variations(base_prompts):
+    return random.choice(base_prompts)
+
+
+def ensure_minimum_questions(subject, topic, subtopic, generator_func, min_count=10):
+    conn = get_conn()
+    cur = conn.cursor()
+
+    cur.execute("""
+    SELECT COUNT(*) as count FROM question_bank
+    WHERE subject=? AND topic=? AND subtopic=?
+    """, (subject, topic, subtopic))
+
+    count = cur.fetchone()["count"]
+
+    if count < min_count:
+        needed = min_count - count
+        for _ in range(needed):
+            insert_questions(subject, topic, subtopic, generator_func())
 # =========================
 # CN GENERATOR
 # =========================
@@ -171,12 +190,62 @@ def math_quadratic():
 
 def cn_network_layer():
     return [
-        {"type":"memory","prompt":"IP works on which layer?","options":["Network","Transport","Data link","Application"],"correct":0},
-        {"type":"conceptual","prompt":"Why IP is connectionless?","options":["No session tracking","Uses TCP","Encrypts data","Stores packets"],"correct":0},
-        {"type":"tricky","prompt":"IP guarantees?","options":["None","Delivery","Order","Reliability"],"correct":0},
-        {"type":"application","prompt":"Which device uses IP?","options":["Router","Switch","Hub","Bridge"],"correct":0},
-        {"type":"reasoning","prompt":"Why packet loss occurs in IP?","options":["No reliability","Encryption","Compression","Caching"],"correct":0}
+        {
+            "type": "memory",
+            "prompt": generate_variations([
+                "IP full form?",
+                "What does IP stand for?",
+                "IP abbreviation means?"
+            ]),
+            "options": ["Internet Protocol","Internal Process","Input Protocol","Internet Process"],
+            "correct": 0
+        },
+
+        {
+            "type": "conceptual",
+            "prompt": generate_variations([
+                "Why IP is connectionless?",
+                "What makes IP unreliable?",
+                "Why IP does not guarantee delivery?"
+            ]),
+            "options": ["No acknowledgment","Too slow","Uses TCP","Encryption issue"],
+            "correct": 0
+        },
+
+        {
+            "type": "tricky",
+            "prompt": generate_variations([
+                "IP ensures?",
+                "Which guarantee does IP provide?",
+                "IP protocol guarantees what?"
+            ]),
+            "options": ["Delivery","Order","Nothing","Speed"],
+            "correct": 2
+        },
+
+        {
+            "type": "application",
+            "prompt": generate_variations([
+                "Packet lost in IP, what happens?",
+                "If packet drops in IP layer?",
+                "IP packet loss leads to?"
+            ]),
+            "options": ["Retransmission","Drop","Reordering","Crash"],
+            "correct": 1
+        },
+
+        {
+            "type": "reasoning",
+            "prompt": generate_variations([
+                "Why TCP needed over IP?",
+                "Why reliability layer above IP?",
+                "Why IP alone insufficient?"
+            ]),
+            "options": ["Reliability","Speed","Security","Routing"],
+            "correct": 0
+        }
     ]
+
 
 def dsa_stack():
     return [
@@ -313,8 +382,14 @@ def run():
     print(f"\n🔥 TOTAL GENERATED: {total}")
 
 
-if __name__ == "__main__":
-    run()
+# =========================
+# RUN GENERATOR V4
+# =========================
 
+if __name__ == "__main__":
+    for (subj, topic, subtopic), func in GEN_MAP.items():
+        ensure_minimum_questions(subj, topic, subtopic, func)
+
+    print("🔥 V4 GENERATION COMPLETE")
 
 
