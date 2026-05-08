@@ -3,6 +3,9 @@ from flask_cors import CORS
 from models.model4.engine import get_weakness
 from report import generate_report
 from models.cognitive_master_engine import process_question
+from database import get_adaptive_question
+import random
+
 
 from database import (
     init_db,
@@ -26,6 +29,7 @@ from database import (
     get_locked_room_questions,
 
     upgrade_question_bank_schema
+    
 )
 
 from session_data import (
