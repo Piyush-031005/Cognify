@@ -166,14 +166,82 @@ def math_quadratic():
         }
     ]
 
+
+
+
+def cn_network_layer():
+    return [
+        {"type":"memory","prompt":"IP works on which layer?","options":["Network","Transport","Data link","Application"],"correct":0},
+        {"type":"conceptual","prompt":"Why IP is connectionless?","options":["No session tracking","Uses TCP","Encrypts data","Stores packets"],"correct":0},
+        {"type":"tricky","prompt":"IP guarantees?","options":["None","Delivery","Order","Reliability"],"correct":0},
+        {"type":"application","prompt":"Which device uses IP?","options":["Router","Switch","Hub","Bridge"],"correct":0},
+        {"type":"reasoning","prompt":"Why packet loss occurs in IP?","options":["No reliability","Encryption","Compression","Caching"],"correct":0}
+    ]
+
+def dsa_stack():
+    return [
+        {"type":"memory","prompt":"Stack follows?","options":["LIFO","FIFO","Random","Priority"],"correct":0},
+        {"type":"conceptual","prompt":"Why stack used in recursion?","options":["Function calls","Sorting","Searching","Traversal"],"correct":0},
+        {"type":"tricky","prompt":"Overflow occurs when?","options":["Stack full","Stack empty","Queue full","Memory free"],"correct":0},
+        {"type":"application","prompt":"Stack used in?","options":["Undo operation","Database","Networking","Routing"],"correct":0},
+        {"type":"reasoning","prompt":"Why stack is fast?","options":["Top access O(1)","Sorted data","Dynamic size","Tree based"],"correct":0}
+    ]
+
+def dsa_queue():
+    return [
+        {"type":"memory","prompt":"Queue follows?","options":["FIFO","LIFO","Random","Stack"],"correct":0},
+        {"type":"conceptual","prompt":"Queue used in?","options":["Scheduling","Sorting","Recursion","Stack"],"correct":0},
+        {"type":"tricky","prompt":"Deque allows?","options":["Both ends","Front only","Rear only","None"],"correct":0},
+        {"type":"application","prompt":"Queue used in BFS?","options":["Yes","No","Sometimes","Never"],"correct":0},
+        {"type":"reasoning","prompt":"Why queue for scheduling?","options":["Fairness","Speed","Memory","Sorting"],"correct":0}
+    ]
+
+def dbms_sql():
+    return [
+        {"type":"memory","prompt":"SELECT used for?","options":["Fetch data","Insert","Delete","Update"],"correct":0},
+        {"type":"conceptual","prompt":"Primary key ensures?","options":["Uniqueness","Sorting","Deletion","Indexing"],"correct":0},
+        {"type":"tricky","prompt":"NULL means?","options":["Unknown","Zero","Empty","False"],"correct":0},
+        {"type":"application","prompt":"JOIN used for?","options":["Combine tables","Delete","Insert","Sort"],"correct":0},
+        {"type":"reasoning","prompt":"Why indexing used?","options":["Faster search","Security","Deletion","Backup"],"correct":0}
+    ]
+
+def os_scheduling():
+    return [
+        {"type":"memory","prompt":"FCFS stands for?","options":["First Come First Serve","Fast CPU First Serve","First CPU First Serve","None"],"correct":0},
+        {"type":"conceptual","prompt":"Scheduling improves?","options":["CPU utilization","Memory","Disk","Network"],"correct":0},
+        {"type":"tricky","prompt":"Starvation occurs in?","options":["Priority scheduling","FCFS","Round robin","FIFO"],"correct":0},
+        {"type":"application","prompt":"Round robin uses?","options":["Time slice","Priority","Stack","Queue"],"correct":0},
+        {"type":"reasoning","prompt":"Why scheduling needed?","options":["Efficiency","Security","Storage","Compression"],"correct":0}
+    ]
+
+def logical_reasoning():
+    return [
+        {"type":"memory","prompt":"Series follows pattern of?","options":["Logic","Memory","Data","Code"],"correct":0},
+        {"type":"conceptual","prompt":"Syllogism checks?","options":["Logical validity","Memory","Speed","Data"],"correct":0},
+        {"type":"tricky","prompt":"All A are B, some B are C → ?","options":["Uncertain","True","False","Always true"],"correct":0},
+        {"type":"application","prompt":"Coding decoding used in?","options":["Pattern recognition","Sorting","Searching","Memory"],"correct":0},
+        {"type":"reasoning","prompt":"Why reasoning tests matter?","options":["Thinking ability","Memory","Speed","Typing"],"correct":0}
+    ]
+
+
 # =========================
 # MASTER MAP
 # =========================
 
 GEN_MAP = {
     ("cn","data_link","error_detection"): cn_error_detection,
+    ("cn","network_layer","ip"): cn_network_layer,
+
     ("dsa","arrays","basics"): dsa_arrays,
-    ("math","algebra","quadratic"): math_quadratic
+    ("dsa","stack","basics"): dsa_stack,
+    ("dsa","queue","basics"): dsa_queue,
+
+    ("dbms","sql","queries"): dbms_sql,
+    ("os","scheduling","process"): os_scheduling,
+
+    ("math","algebra","quadratic"): math_quadratic,
+
+    ("logic","reasoning","basic"): logical_reasoning
 }
 
 # =========================
@@ -185,18 +253,35 @@ def insert_questions(subject, topic, subtopic, qlist):
     cur = conn.cursor()
 
     for q in qlist:
+
+        # 🔍 duplicate check
         cur.execute("""
-            INSERT INTO question_bank (
-                subject, topic, subtopic, difficulty, cognitive_type,
-                prompt, option_a, option_b, option_c, option_d,
-                correct_index, created_at
-            )
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        SELECT id FROM question_bank
+        WHERE subject=? AND topic=? AND subtopic=? AND prompt=?
+        """, (subject, topic, subtopic, q["prompt"]))
+
+        if cur.fetchone():
+            continue
+
+        # ✅ insert
+        cur.execute("""
+        INSERT INTO question_bank (
+            subject, topic, subtopic, difficulty, cognitive_type,
+            prompt, option_a, option_b, option_c, option_d,
+            correct_index, created_at
+        )
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """, (
             subject,
             topic,
             subtopic,
-            random.choice(["easy","medium","hard"]),
+            {
+                "memory": "easy",
+                "conceptual": "medium",
+                "tricky": "medium",
+                "application": "hard",
+                "reasoning": "hard"
+            }[q["type"]],
             q["type"],
             q["prompt"],
             q["options"][0],
@@ -230,3 +315,6 @@ def run():
 
 if __name__ == "__main__":
     run()
+
+
+
