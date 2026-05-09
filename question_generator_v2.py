@@ -2,337 +2,49 @@ from database import get_conn
 from datetime import datetime
 import random
 
-def generate_variations(base_prompts):
-    return random.choice(base_prompts)
+# =========================
+# SMART VARIATION ENGINE
+# =========================
+def vary(prompt_list):
+    return random.choice(prompt_list)
 
+# =========================
+# DIFFICULTY ENGINE (REAL)
+# =========================
+def get_difficulty(qtype):
+    return {
+        "memory": "easy",
+        "conceptual": "medium",
+        "tricky": "medium",
+        "application": "hard",
+        "reasoning": "hard"
+    }[qtype]
 
-def ensure_minimum_questions(subject, topic, subtopic, generator_func, min_count=10):
-    conn = get_conn()
-    cur = conn.cursor()
-
+# =========================
+# DUPLICATE CHECK (STRONG)
+# =========================
+def is_duplicate(cur, prompt):
     cur.execute("""
-    SELECT COUNT(*) as count FROM question_bank
-    WHERE subject=? AND topic=? AND subtopic=?
-    """, (subject, topic, subtopic))
-
-    count = cur.fetchone()["count"]
-
-    if count < min_count:
-        needed = min_count - count
-        for _ in range(needed):
-            insert_questions(subject, topic, subtopic, generator_func())
-# =========================
-# CN GENERATOR
-# =========================
-
-def cn_error_detection():
-    return [
-        {
-            "type": "conceptual",
-            "prompt": "Why is CRC more reliable than parity check?",
-            "options": [
-                "It detects multiple bit errors",
-                "It uses encryption",
-                "It is faster",
-                "It compresses data"
-            ],
-            "correct": 0
-        },
-        {
-            "type": "tricky",
-            "prompt": "Parity bit can detect?",
-            "options": [
-                "Only single bit errors",
-                "All errors",
-                "No errors",
-                "Burst errors always"
-            ],
-            "correct": 0
-        },
-        {
-            "type": "application",
-            "prompt": "CRC is mainly used in?",
-            "options": [
-                "Data transmission",
-                "CPU scheduling",
-                "Memory allocation",
-                "Encryption"
-            ],
-            "correct": 0
-        },
-        {
-            "type": "memory",
-            "prompt": "CRC stands for?",
-            "options": [
-                "Cyclic Redundancy Check",
-                "Control Redundancy Code",
-                "Coded Random Check",
-                "Cyclic Random Code"
-            ],
-            "correct": 0
-        },
-        {
-            "type": "reasoning",
-            "prompt": "Why parity fails in even number of bit errors?",
-            "options": [
-                "Parity remains same",
-                "Parity flips twice",
-                "Parity resets",
-                "Parity becomes random"
-            ],
-            "correct": 0
-        }
-    ]
+    SELECT id FROM question_bank
+    WHERE LOWER(prompt) = ?
+    """, (prompt.lower(),))
+    return cur.fetchone() is not None
 
 # =========================
-# DSA GENERATOR
+# INSERT ENGINE
 # =========================
-
-def dsa_arrays():
-    return [
-        {
-            "type": "conceptual",
-            "prompt": "Why is array access O(1)?",
-            "options": [
-                "Direct indexing",
-                "Sequential access",
-                "Pointer traversal",
-                "Hashing"
-            ],
-            "correct": 0
-        },
-        {
-            "type": "tricky",
-            "prompt": "Worst case insertion in array?",
-            "options": [
-                "O(n)",
-                "O(1)",
-                "O(log n)",
-                "O(n log n)"
-            ],
-            "correct": 0
-        },
-        {
-            "type": "application",
-            "prompt": "Where arrays are preferred over linked list?",
-            "options": [
-                "Cache efficiency",
-                "Dynamic insertion",
-                "Memory saving",
-                "Tree traversal"
-            ],
-            "correct": 0
-        },
-        {
-            "type": "memory",
-            "prompt": "Array stores elements in?",
-            "options": [
-                "Contiguous memory",
-                "Random memory",
-                "Stack memory",
-                "Heap scattered"
-            ],
-            "correct": 0
-        },
-        {
-            "type": "reasoning",
-            "prompt": "Why binary search needs sorted array?",
-            "options": [
-                "To divide search space",
-                "To reduce memory",
-                "To increase speed",
-                "To avoid loops"
-            ],
-            "correct": 0
-        }
-    ]
-
-# =========================
-# MATH GENERATOR
-# =========================
-
-def math_quadratic():
-    return [
-        {
-            "type": "memory",
-            "prompt": "Discriminant formula?",
-            "options": ["b²-4ac", "a²-4bc", "b²+4ac", "a²+b²"],
-            "correct": 0
-        },
-        {
-            "type": "conceptual",
-            "prompt": "Discriminant decides?",
-            "options": ["Nature of roots", "Sum of roots", "Product", "Graph"],
-            "correct": 0
-        },
-        {
-            "type": "tricky",
-            "prompt": "If D < 0 roots are?",
-            "options": ["Imaginary", "Equal", "Real", "Zero"],
-            "correct": 0
-        },
-        {
-            "type": "application",
-            "prompt": "If roots equal then D?",
-            "options": ["0", "1", "-1", "∞"],
-            "correct": 0
-        },
-        {
-            "type": "reasoning",
-            "prompt": "Why quadratic has max 2 roots?",
-            "options": ["Degree 2", "Two variables", "Graph linear", "No reason"],
-            "correct": 0
-        }
-    ]
-
-
-
-
-def cn_network_layer():
-    return [
-        {
-            "type": "memory",
-            "prompt": generate_variations([
-                "IP full form?",
-                "What does IP stand for?",
-                "IP abbreviation means?"
-            ]),
-            "options": ["Internet Protocol","Internal Process","Input Protocol","Internet Process"],
-            "correct": 0
-        },
-
-        {
-            "type": "conceptual",
-            "prompt": generate_variations([
-                "Why IP is connectionless?",
-                "What makes IP unreliable?",
-                "Why IP does not guarantee delivery?"
-            ]),
-            "options": ["No acknowledgment","Too slow","Uses TCP","Encryption issue"],
-            "correct": 0
-        },
-
-        {
-            "type": "tricky",
-            "prompt": generate_variations([
-                "IP ensures?",
-                "Which guarantee does IP provide?",
-                "IP protocol guarantees what?"
-            ]),
-            "options": ["Delivery","Order","Nothing","Speed"],
-            "correct": 2
-        },
-
-        {
-            "type": "application",
-            "prompt": generate_variations([
-                "Packet lost in IP, what happens?",
-                "If packet drops in IP layer?",
-                "IP packet loss leads to?"
-            ]),
-            "options": ["Retransmission","Drop","Reordering","Crash"],
-            "correct": 1
-        },
-
-        {
-            "type": "reasoning",
-            "prompt": generate_variations([
-                "Why TCP needed over IP?",
-                "Why reliability layer above IP?",
-                "Why IP alone insufficient?"
-            ]),
-            "options": ["Reliability","Speed","Security","Routing"],
-            "correct": 0
-        }
-    ]
-
-
-def dsa_stack():
-    return [
-        {"type":"memory","prompt":"Stack follows?","options":["LIFO","FIFO","Random","Priority"],"correct":0},
-        {"type":"conceptual","prompt":"Why stack used in recursion?","options":["Function calls","Sorting","Searching","Traversal"],"correct":0},
-        {"type":"tricky","prompt":"Overflow occurs when?","options":["Stack full","Stack empty","Queue full","Memory free"],"correct":0},
-        {"type":"application","prompt":"Stack used in?","options":["Undo operation","Database","Networking","Routing"],"correct":0},
-        {"type":"reasoning","prompt":"Why stack is fast?","options":["Top access O(1)","Sorted data","Dynamic size","Tree based"],"correct":0}
-    ]
-
-def dsa_queue():
-    return [
-        {"type":"memory","prompt":"Queue follows?","options":["FIFO","LIFO","Random","Stack"],"correct":0},
-        {"type":"conceptual","prompt":"Queue used in?","options":["Scheduling","Sorting","Recursion","Stack"],"correct":0},
-        {"type":"tricky","prompt":"Deque allows?","options":["Both ends","Front only","Rear only","None"],"correct":0},
-        {"type":"application","prompt":"Queue used in BFS?","options":["Yes","No","Sometimes","Never"],"correct":0},
-        {"type":"reasoning","prompt":"Why queue for scheduling?","options":["Fairness","Speed","Memory","Sorting"],"correct":0}
-    ]
-
-def dbms_sql():
-    return [
-        {"type":"memory","prompt":"SELECT used for?","options":["Fetch data","Insert","Delete","Update"],"correct":0},
-        {"type":"conceptual","prompt":"Primary key ensures?","options":["Uniqueness","Sorting","Deletion","Indexing"],"correct":0},
-        {"type":"tricky","prompt":"NULL means?","options":["Unknown","Zero","Empty","False"],"correct":0},
-        {"type":"application","prompt":"JOIN used for?","options":["Combine tables","Delete","Insert","Sort"],"correct":0},
-        {"type":"reasoning","prompt":"Why indexing used?","options":["Faster search","Security","Deletion","Backup"],"correct":0}
-    ]
-
-def os_scheduling():
-    return [
-        {"type":"memory","prompt":"FCFS stands for?","options":["First Come First Serve","Fast CPU First Serve","First CPU First Serve","None"],"correct":0},
-        {"type":"conceptual","prompt":"Scheduling improves?","options":["CPU utilization","Memory","Disk","Network"],"correct":0},
-        {"type":"tricky","prompt":"Starvation occurs in?","options":["Priority scheduling","FCFS","Round robin","FIFO"],"correct":0},
-        {"type":"application","prompt":"Round robin uses?","options":["Time slice","Priority","Stack","Queue"],"correct":0},
-        {"type":"reasoning","prompt":"Why scheduling needed?","options":["Efficiency","Security","Storage","Compression"],"correct":0}
-    ]
-
-def logical_reasoning():
-    return [
-        {"type":"memory","prompt":"Series follows pattern of?","options":["Logic","Memory","Data","Code"],"correct":0},
-        {"type":"conceptual","prompt":"Syllogism checks?","options":["Logical validity","Memory","Speed","Data"],"correct":0},
-        {"type":"tricky","prompt":"All A are B, some B are C → ?","options":["Uncertain","True","False","Always true"],"correct":0},
-        {"type":"application","prompt":"Coding decoding used in?","options":["Pattern recognition","Sorting","Searching","Memory"],"correct":0},
-        {"type":"reasoning","prompt":"Why reasoning tests matter?","options":["Thinking ability","Memory","Speed","Typing"],"correct":0}
-    ]
-
-
-# =========================
-# MASTER MAP
-# =========================
-
-GEN_MAP = {
-    ("cn","data_link","error_detection"): cn_error_detection,
-    ("cn","network_layer","ip"): cn_network_layer,
-
-    ("dsa","arrays","basics"): dsa_arrays,
-    ("dsa","stack","basics"): dsa_stack,
-    ("dsa","queue","basics"): dsa_queue,
-
-    ("dbms","sql","queries"): dbms_sql,
-    ("os","scheduling","process"): os_scheduling,
-
-    ("math","algebra","quadratic"): math_quadratic,
-
-    ("logic","reasoning","basic"): logical_reasoning
-}
-
-# =========================
-# INSERT
-# =========================
-
 def insert_questions(subject, topic, subtopic, qlist):
     conn = get_conn()
     cur = conn.cursor()
 
+    inserted = 0
+
     for q in qlist:
+        prompt = q["prompt"].strip().lower()
 
-        # 🔍 duplicate check
-        cur.execute("""
-        SELECT id FROM question_bank
-        WHERE subject=? AND topic=? AND subtopic=? AND prompt=?
-        """, (subject, topic, subtopic, q["prompt"]))
-
-        if cur.fetchone():
+        if is_duplicate(cur, prompt):
             continue
 
-        # ✅ insert
         cur.execute("""
         INSERT INTO question_bank (
             subject, topic, subtopic, difficulty, cognitive_type,
@@ -344,15 +56,9 @@ def insert_questions(subject, topic, subtopic, qlist):
             subject,
             topic,
             subtopic,
-            {
-                "memory": "easy",
-                "conceptual": "medium",
-                "tricky": "medium",
-                "application": "hard",
-                "reasoning": "hard"
-            }[q["type"]],
+            get_difficulty(q["type"]),
             q["type"],
-            q["prompt"],
+            prompt,
             q["options"][0],
             q["options"][1],
             q["options"][2],
@@ -361,35 +67,167 @@ def insert_questions(subject, topic, subtopic, qlist):
             datetime.now().isoformat()
         ))
 
+        inserted += 1
+
     conn.commit()
     conn.close()
 
-# =========================
-# RUN
-# =========================
-
-def run():
-    total = 0
-
-    for (subject, topic, subtopic), func in GEN_MAP.items():
-        qlist = func()
-
-        insert_questions(subject, topic, subtopic, qlist)
-
-        print(f"✔ {subject}/{topic}/{subtopic} → {len(qlist)}")
-        total += len(qlist)
-
-    print(f"\n🔥 TOTAL GENERATED: {total}")
-
+    return inserted
 
 # =========================
-# RUN GENERATOR V4
+# AUTO EXPAND ENGINE 🔥
+# =========================
+def ensure_minimum(subject, topic, subtopic, generator, target=25):
+    conn = get_conn()
+    cur = conn.cursor()
+
+    cur.execute("""
+    SELECT COUNT(*) as c FROM question_bank
+    WHERE subject=? AND topic=? AND subtopic=?
+    """, (subject, topic, subtopic))
+
+    count = cur.fetchone()["c"]
+
+    rounds = 0
+
+    while count < target and rounds < 10:
+        inserted = insert_questions(subject, topic, subtopic, generator())
+
+        count += inserted
+        rounds += 1
+
+        if inserted == 0:
+            break  # no new variation possible
+
+    conn.close()
+
+# =========================
+# GENERATORS (UPGRADED)
+# =========================
+
+def cn_network_layer():
+    return [
+        {
+            "type": "memory",
+            "prompt": vary([
+                "IP full form?",
+                "What does IP stand for?",
+                "IP abbreviation means?"
+            ]),
+            "options": ["Internet Protocol","Internal Process","Input Protocol","Internet Process"],
+            "correct": 0
+        },
+        {
+            "type": "conceptual",
+            "prompt": vary([
+                "Why IP is unreliable?",
+                "Why IP is connectionless?",
+                "Why IP does not guarantee delivery?"
+            ]),
+            "options": ["No acknowledgment","Too slow","Uses TCP","Encrypted"],
+            "correct": 0
+        },
+        {
+            "type": "tricky",
+            "prompt": vary([
+                "IP guarantees what?",
+                "What does IP ensure?",
+                "Which guarantee IP provides?"
+            ]),
+            "options": ["Delivery","Order","Nothing","Speed"],
+            "correct": 2
+        },
+        {
+            "type": "application",
+            "prompt": vary([
+                "If packet lost in IP?",
+                "Packet drop in IP leads to?",
+                "Lost packet in IP results in?"
+            ]),
+            "options": ["Retransmission","Drop","Reordering","Crash"],
+            "correct": 1
+        },
+        {
+            "type": "reasoning",
+            "prompt": vary([
+                "Why TCP needed over IP?",
+                "Why IP needs TCP layer?",
+                "Why IP alone insufficient?"
+            ]),
+            "options": ["Reliability","Speed","Security","Routing"],
+            "correct": 0
+        }
+    ]
+
+def dsa_arrays():
+    return [
+        {
+            "type": "memory",
+            "prompt": vary([
+                "Array stores elements in?",
+                "Where array elements stored?",
+                "Memory layout of array?"
+            ]),
+            "options": ["Contiguous memory","Random memory","Heap scattered","Stack"],
+            "correct": 0
+        },
+        {
+            "type": "conceptual",
+            "prompt": vary([
+                "Why array access O(1)?",
+                "Why indexing fast in array?",
+                "How array gives constant access?"
+            ]),
+            "options": ["Direct indexing","Traversal","Hashing","Pointer chain"],
+            "correct": 0
+        },
+        {
+            "type": "tricky",
+            "prompt": vary([
+                "Worst case insertion in array?",
+                "Insertion complexity array?",
+                "Insert at beginning array cost?"
+            ]),
+            "options": ["O(n)","O(1)","O(log n)","O(n log n)"],
+            "correct": 0
+        },
+        {
+            "type": "application",
+            "prompt": vary([
+                "Where arrays better than linked list?",
+                "Why array used over linked list?",
+                "Real use of array advantage?"
+            ]),
+            "options": ["Cache efficiency","Dynamic insert","Flexibility","Pointers"],
+            "correct": 0
+        },
+        {
+            "type": "reasoning",
+            "prompt": vary([
+                "Why binary search needs sorted array?",
+                "Why sorting required for binary search?",
+                "Binary search works only when?"
+            ]),
+            "options": ["Divide search","Reduce memory","Speed","Avoid loops"],
+            "correct": 0
+        }
+    ]
+
+# =========================
+# MASTER MAP
+# =========================
+
+GEN_MAP = {
+    ("cn","network_layer","ip"): cn_network_layer,
+    ("dsa","arrays","basics"): dsa_arrays,
+}
+
+# =========================
+# RUN V5
 # =========================
 
 if __name__ == "__main__":
     for (subj, topic, subtopic), func in GEN_MAP.items():
-        ensure_minimum_questions(subj, topic, subtopic, func)
+        ensure_minimum(subj, topic, subtopic, func, target=25)
 
-    print("🔥 V4 GENERATION COMPLETE")
-
-
+    print("🔥 V5 COMPLETE (AUTO EXPAND + NO REPEAT + SMART DIFFICULTY)")
