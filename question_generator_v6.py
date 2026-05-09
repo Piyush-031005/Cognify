@@ -1,170 +1,161 @@
 from database import get_conn
 from datetime import datetime
 import random
+import hashlib
 
 # =========================
-# WORD BANKS (AI STYLE)
+# UNIQUE CHECK (SMART)
 # =========================
+def is_similar(p1, p2):
+    p1 = p1.lower().strip()
+    p2 = p2.lower().strip()
 
-objects = ["array", "stack", "queue"]
-properties = ["access", "insertion", "deletion"]
-complexities = ["O(1)", "O(n)", "O(log n)"]
+    # allow variation — only reject if almost identical
+    return p1 == p2
 
-ip_terms = ["packet", "routing", "delivery", "transmission"]
 
-# =========================
-# PROMPT GENERATOR ENGINE
-# =========================
+def already_exists(cur, prompt):
+    cur.execute("SELECT prompt FROM question_bank")
+    rows = cur.fetchall()
 
-def generate_prompt(template, variables):
-    return template.format(**variables)
+    for r in rows:
+        if is_similar(prompt, r["prompt"]):
+            return True
+    return False
 
-# =========================
-# TEMPLATES (POWER SOURCE)
-# =========================
-
-ARRAY_TEMPLATES = [
-    ("memory", "What is the time complexity of {property} in {object}?"),
-    ("conceptual", "Why is {object} {property} efficient?"),
-    ("tricky", "Which operation in {object} is NOT {complexity}?"),
-    ("application", "In real systems, where is {object} used for {property}?"),
-    ("reasoning", "Why does {object} perform {property} in {complexity}?")
-]
-
-IP_TEMPLATES = [
-    ("memory", "IP is responsible for {term}?"),
-    ("conceptual", "Why does IP not guarantee {term}?"),
-    ("tricky", "Which of these is NOT handled by IP: {term}?"),
-    ("application", "If {term} fails in IP, what happens?"),
-    ("reasoning", "Why is IP considered unreliable for {term}?")
-]
 
 # =========================
-# OPTION GENERATOR
+# DIFFICULTY ENGINE
 # =========================
-
-def generate_options(correct):
-    options = [correct]
-
-    distractors = [
-        "Faster execution",
-        "Memory optimization",
-        "Security enhancement",
-        "Random behavior"
-    ]
-
-    while len(options) < 4:
-        d = random.choice(distractors)
-        if d not in options:
-            options.append(d)
-
-    random.shuffle(options)
-    return options, options.index(correct)
-
-# =========================
-# DUPLICATE CHECK
-# =========================
-
-def exists(cur, prompt):
-    cur.execute("SELECT id FROM question_bank WHERE prompt=?", (prompt,))
-    return cur.fetchone() is not None
-
-# =========================
-# INSERT ENGINE
-# =========================
-
-def insert(subject, topic, subtopic, qtype, prompt, options, correct_index):
-    conn = get_conn()
-    cur = conn.cursor()
-
-    if exists(cur, prompt):
-        conn.close()
-        return 0
-
-    difficulty_map = {
+def get_difficulty(qtype):
+    return {
         "memory": "easy",
         "conceptual": "medium",
         "tricky": "medium",
         "application": "hard",
         "reasoning": "hard"
+    }[qtype]
+
+
+# =========================
+# AI GENERATOR CORE
+# =========================
+def generate_question(subtopic):
+    
+    base_templates = [
+    ("memory", f"What is {subtopic}?"),
+    ("memory", f"{subtopic} refers to?"),
+
+    ("conceptual", f"Which statement best describes {subtopic}?"),
+    ("conceptual", f"Why is {subtopic} important?"),
+
+    ("tricky", f"Which of the following is NOT true about {subtopic}?"),
+    ("tricky", f"What is a common misconception about {subtopic}?"),
+
+    ("application", f"Where is {subtopic} used in real-world systems?"),
+    ("application", f"In which scenario is {subtopic} applied?"),
+
+    ("reasoning", f"Why is {subtopic} preferred over alternatives?"),
+    ("reasoning", f"What problem does {subtopic} solve?")
+]
+
+    qtype, prompt = random.choice(base_templates)
+
+    return {
+        "type": qtype,
+        "prompt": prompt,
+        "options": [
+            "Option A",
+            "Option B",
+            "Option C",
+            "Option D"
+        ],
+        "correct": 0
     }
+
+
+# =========================
+# INSERT ENGINE
+# =========================
+def insert_question(cur, subject, topic, subtopic, q):
+
+    if already_exists(cur, q["prompt"]):
+        return False
 
     cur.execute("""
     INSERT INTO question_bank (
-        subject, topic, subtopic, difficulty, cognitive_type,
-        prompt, option_a, option_b, option_c, option_d,
+        subject, topic, subtopic,
+        difficulty, cognitive_type,
+        prompt,
+        option_a, option_b, option_c, option_d,
         correct_index, created_at
     )
     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     """, (
-        subject, topic, subtopic,
-        difficulty_map[qtype],
-        qtype,
-        prompt,
-        options[0], options[1], options[2], options[3],
-        correct_index,
+        subject,
+        topic,
+        subtopic,
+        get_difficulty(q["type"]),
+        q["type"],
+        q["prompt"],
+        q["options"][0],
+        q["options"][1],
+        q["options"][2],
+        q["options"][3],
+        q["correct"],
         datetime.now().isoformat()
     ))
 
+    return True
+
+
+# =========================
+# AUTO EXPAND ENGINE
+# =========================
+def expand_dataset():
+
+    conn = get_conn()
+    cur = conn.cursor()
+
+    TARGET = 20
+
+    cur.execute("""
+    SELECT DISTINCT subject, topic, subtopic FROM question_bank
+    """)
+    combos = cur.fetchall()
+
+    total_added = 0
+
+    for c in combos:
+
+        subject = c["subject"]
+        topic = c["topic"]
+        subtopic = c["subtopic"]
+
+        cur.execute("""
+        SELECT COUNT(*) as cnt FROM question_bank
+        WHERE subject=? AND topic=? AND subtopic=?
+        """, (subject, topic, subtopic))
+
+        current = cur.fetchone()["cnt"]
+
+        for _ in range(25):  # force generate
+
+            q = generate_question(subtopic)
+
+            if insert_question(cur, subject, topic, subtopic, q):
+                current += 1
+                total_added += 1
+
     conn.commit()
     conn.close()
-    return 1
+
+    print(f"🔥 V6.5 COMPLETE → {total_added} new questions added")
+
 
 # =========================
-# GENERATE BULK QUESTIONS
+# RUN
 # =========================
-
-def generate_array_questions(n=50):
-    total = 0
-
-    for _ in range(n):
-        template_type, template = random.choice(ARRAY_TEMPLATES)
-
-        vars = {
-            "object": random.choice(objects),
-            "property": random.choice(properties),
-            "complexity": random.choice(complexities)
-        }
-
-        prompt = generate_prompt(template, vars)
-
-        correct = "Direct indexing" if template_type == "conceptual" else random.choice(complexities)
-
-        options, idx = generate_options(correct)
-
-        total += insert("dsa", "arrays", "basics", template_type, prompt, options, idx)
-
-    return total
-
-def generate_ip_questions(n=50):
-    total = 0
-
-    for _ in range(n):
-        template_type, template = random.choice(IP_TEMPLATES)
-
-        vars = {
-            "term": random.choice(ip_terms)
-        }
-
-        prompt = generate_prompt(template, vars)
-
-        correct = "No guarantee"
-
-        options, idx = generate_options(correct)
-
-        total += insert("cn", "network_layer", "ip", template_type, prompt, options, idx)
-
-    return total
-
-# =========================
-# MAIN RUN
-# =========================
-
 if __name__ == "__main__":
-    print("🚀 GENERATING AI-LEVEL QUESTIONS...")
-
-    total = 0
-    total += generate_array_questions(80)
-    total += generate_ip_questions(80)
-
-    print(f"🔥 DONE: {total} questions inserted")
+    print("🚀 V6.5 AI GENERATION STARTED...")
+    expand_dataset()
