@@ -62,8 +62,16 @@ OPTION_BANK = {
 
 def generate_question(concept):
 
-    options = OPTION_BANK.get(concept, ["A","B","C","D"])
+    base_options = OPTION_BANK.get(concept, ["A","B","C","D"])
+    correct_answer = base_options[0]
+
+    options = base_options.copy()
     random.shuffle(options)
+
+    correct_index = options.index(correct_answer)
+
+    # tricky ke liye wrong index
+    wrong_index = random.choice([i for i in range(4) if i != correct_index])
 
     return [
         {
@@ -75,51 +83,55 @@ def generate_question(concept):
                 f"Identify correct statement about {concept}"
             ]),
             "options": options,
-            "correct": 0
+            "correct": correct_index
         },
+
         {
             "type":"conceptual",
             "prompt": random.choice([
                 f"Why is {concept} important?",
-                f"Explain the significance of {concept}.",
-                f"What makes {concept} unique?",
-                f"How does {concept} impact related concepts?"
+                f"What is the purpose of {concept}?",
+                f"Why do we use {concept}?",
+                f"What makes {concept} important?"
             ]),
             "options": options,
-            "correct": 0
+            "correct": correct_index
         },
+
         {
             "type":"tricky",
             "prompt": random.choice([
                 f"Which option is incorrect about {concept}?",
-                f"Identify the false statement regarding {concept}.",
-                f"Select the incorrect description of {concept}.",
-                f"Which of the following is NOT true about {concept}?"
+                f"Which statement is false regarding {concept}?",
+                f"Identify the wrong statement about {concept}",
+                f"What is NOT true about {concept}?"
             ]),
             "options": options,
-            "correct": 1
+            "correct": wrong_index
         },
+
         {
             "type":"application",
             "prompt": random.choice([
                 f"Where is {concept} applied?",
-                f"In what scenarios is {concept} used?",
-                f"Give an example of {concept} in action.",
-                f"How is {concept} utilized in real-world applications?"
+                f"In which scenario is {concept} used?",
+                f"Where would you use {concept}?",
+                f"{concept} is used in which situation?"
             ]),
             "options": options,
-            "correct": 0
+            "correct": correct_index
         },
+
         {
             "type":"reasoning",
             "prompt": random.choice([
                 f"What problem does {concept} solve?",
-                f"How would you approach solving a problem related to {concept}?",
-                f"Explain the logical steps to address {concept}.",
-                f"Provide a reasoned argument about {concept}."
+                f"Why is {concept} needed?",
+                f"What issue does {concept} address?",
+                f"Why was {concept} introduced?"
             ]),
             "options": options,
-            "correct": 0
+            "correct": correct_index
         }
     ]
 
@@ -183,7 +195,7 @@ def run():
 
         for concept in concepts:
 
-            for _ in range(5):  # 🔥 variants
+            for _ in range(10):  # 🔥 variants
 
                 qlist = generate_question(concept)
 
