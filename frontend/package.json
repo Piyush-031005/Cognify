@@ -4,7 +4,7 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
+    "dev": "start chrome http://localhost:8080 && vite",
     "build": "vite build",
     "build:dev": "vite build --mode development",
     "lint": "eslint .",

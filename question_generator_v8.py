@@ -8,27 +8,27 @@ import random
 
 MASTER_MAP = {
     ("dsa","arrays","basics"): [
-        "indexing",
-        "memory",
-        "insertion",
-        "searching",
-        "complexity"
+        "array indexing",
+        "array memory allocation",
+        "array insertion complexity",
+        "searching in arrays",
+        "time complexity of arrays"
     ],
 
     ("cn","network_layer","ip"): [
-        "ip addressing",
-        "packet delivery",
-        "connectionless",
-        "routing",
-        "packet loss"
+        "IP addressing",
+        "packet delivery in IP",
+        "connectionless communication in IP",
+        "routing in network layer",
+        "packet loss in networking"
     ],
 
     ("math","algebra","quadratic"): [
-        "discriminant",
-        "roots",
-        "nature",
-        "formula",
-        "graph"
+        "discriminant of quadratic equation",
+        "roots of quadratic equation",
+        "nature of roots in quadratic equation",
+        "quadratic formula",
+        "graph of quadratic equation"
     ]
 }
 
@@ -153,10 +153,27 @@ def get_diff(t):
 # =========================
 
 def insert(cur, s, t, st, q):
-    cur.execute("SELECT id FROM question_bank WHERE prompt=?", (q["prompt"],))
+
+    cur.execute("""
+    SELECT id FROM question_bank
+    WHERE prompt=?
+    AND option_a=?
+    AND option_b=?
+    AND option_c=?
+    AND option_d=?
+    """, (
+        q["prompt"],
+        q["options"][0],
+        q["options"][1],
+        q["options"][2],
+        q["options"][3]
+    ))
+
+    # duplicate found
     if cur.fetchone():
         return False
 
+    # insert new question
     cur.execute("""
     INSERT INTO question_bank (
         subject, topic, subtopic,
