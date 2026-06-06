@@ -1,6 +1,10 @@
 from database import get_conn
 from datetime import datetime
 import random
+from semantic_engine import (
+    generate_semantic_id,
+    generate_variant_id
+)
 
 # =========================
 # MASTER MAP (EXPANDED)
@@ -154,6 +158,7 @@ def get_diff(t):
 
 def insert(cur, s, t, st, q):
 
+    # duplicate check
     cur.execute("""
     SELECT id FROM question_bank
     WHERE prompt=?
@@ -169,22 +174,44 @@ def insert(cur, s, t, st, q):
         q["options"][3]
     ))
 
-    # duplicate found
     if cur.fetchone():
         return False
 
-    # insert new question
+    # semantic ids
+    semantic_id = generate_semantic_id(
+        st,
+        q["type"]
+    )
+
+    variant_id = generate_variant_id(
+        st,
+        q["type"],
+        q["prompt"]
+    )
+
+    # insert
     cur.execute("""
     INSERT INTO question_bank (
-        subject, topic, subtopic,
-        difficulty, cognitive_type,
+        subject,
+        topic,
+        subtopic,
+        difficulty,
+        cognitive_type,
         prompt,
-        option_a, option_b, option_c, option_d,
-        correct_index, created_at
+        option_a,
+        option_b,
+        option_c,
+        option_d,
+        correct_index,
+        semantic_id,
+        variant_id,
+        created_at
     )
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     """, (
-        s, t, st,
+        s,
+        t,
+        st,
         get_diff(q["type"]),
         q["type"],
         q["prompt"],
@@ -193,6 +220,8 @@ def insert(cur, s, t, st, q):
         q["options"][2],
         q["options"][3],
         q["correct"],
+        semantic_id,
+        variant_id,
         datetime.now().isoformat()
     ))
 

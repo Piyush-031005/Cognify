@@ -4,6 +4,7 @@ from models.model4.engine import get_weakness
 from report import generate_report
 from models.cognitive_master_engine import process_question
 from database import get_adaptive_question
+from semantic_engine import upgrade_semantic_schema
 import random
 
 
@@ -321,6 +322,8 @@ def get_next_cognitive_type(last_correct, hesitation_score):
         return "memory"
 
     return random.choice(["tricky", "application", "reasoning"])
+
+upgrade_semantic_schema()
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 10000)))

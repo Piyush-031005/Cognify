@@ -66,18 +66,28 @@ def init_db():
     # QUESTION BANK META TABLE
     cur.execute("""
     CREATE TABLE IF NOT EXISTS question_bank (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        subject TEXT,
-        topic TEXT,
-        subtopic TEXT,
-        difficulty TEXT,
-        qtype TEXT,
-        prompt TEXT,
-        option_a TEXT,
-        option_b TEXT,
-        option_c TEXT,
-        option_d TEXT,
-        correct_index INTEGER
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+
+    subject TEXT,
+    topic TEXT,
+    subtopic TEXT,
+
+    difficulty TEXT,
+    cognitive_type TEXT,
+
+    semantic_id TEXT,
+    variant_id TEXT,
+
+    prompt TEXT,
+
+    option_a TEXT,
+    option_b TEXT,
+    option_c TEXT,
+    option_d TEXT,
+
+    correct_index INTEGER,
+
+    created_at TEXT
 )
 """)
 
@@ -197,7 +207,30 @@ def init_db():
     conn.commit()
     conn.close()
 
+def upgrade_semantic_schema():
 
+    conn = get_conn()
+    cur = conn.cursor()
+
+    try:
+        cur.execute("""
+        ALTER TABLE question_bank
+        ADD COLUMN semantic_id TEXT
+        """)
+    except:
+        pass
+
+    try:
+        cur.execute("""
+        ALTER TABLE question_bank
+        ADD COLUMN variant_id TEXT
+        """)
+    except:
+        pass
+
+    conn.commit()
+    conn.close()
+    
 # =========================
 # USER FUNCTIONS
 # =========================
