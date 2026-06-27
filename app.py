@@ -2913,6 +2913,34 @@ def api_context_recommendations(email):
     recommendations = context_engine.generate_contextual_recommendations(email)
     return jsonify(recommendations)
 
+
+import teacher_twin
+
+@app.route('/api/v1/teacher/rooms/<room_id>/heatmap', methods=['GET'])
+def api_teacher_heatmap(room_id):
+    heatmap = teacher_twin.get_classroom_heatmap(room_id)
+    return jsonify(heatmap)
+
+@app.route('/api/v1/teacher/rooms/<room_id>/prioritization', methods=['POST'])
+def api_teacher_prioritization(room_id):
+    data = request.json or {}
+    session_context = data.get("session_context")
+    prioritization = teacher_twin.get_student_prioritization(room_id, session_context=session_context)
+    return jsonify(prioritization)
+    
+@app.route('/api/v1/teacher/feedback', methods=['POST'])
+def api_teacher_feedback():
+    data = request.json
+    if not data or "context_id" not in data or "action_taken" not in data:
+        return jsonify({"error": "Missing required fields"}), 400
+        
+    result = teacher_twin.record_teacher_feedback(
+        data["context_id"],
+        data["action_taken"],
+        data.get("outcome_notes", "")
+    )
+    return jsonify(result)
+
 if __name__ == "__main__":
     upgrade_question_bank_schema()
     upgrade_semantic_schema()
