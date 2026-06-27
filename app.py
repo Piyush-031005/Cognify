@@ -2525,6 +2525,117 @@ def copilot_action_api():
     return jsonify({"success": True, "new_status": action})
 
 
+# --- Phase 2 APD APIs ---
+
+@app.route('/kg/discover-prerequisites', methods=['POST'])
+def api_discover_prerequisites():
+    data = request.json or {}
+    subject = data.get("subject")
+    min_sample = data.get("min_sample", 50)
+    
+    if not subject:
+        return jsonify({"error": "subject is required"}), 400
+        
+    try:
+        from apd_engine import run_apd_discovery
+        result = run_apd_discovery(subject, min_sample=min_sample)
+        return jsonify(result), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/kg/prerequisites/candidates', methods=['GET'])
+def api_get_candidates():
+    subject = request.args.get("subject")
+    limit = request.args.get("limit", 100)
+    
+    conn = get_conn()
+    cur = conn.cursor()
+    
+    query = """
+        SELECT e.source_id, e.target_id, e.confidence, e.stability_score, 
+               ev.p_struggle_given_mastered, ev.p_struggle_given_not_mastered, 
+               ev.kl_divergence, ev.student_sample_size, ev.explanation,
+               n1.name as source_name, n2.name as target_name
+        FROM kg_edges e
+        JOIN kg_edge_evidence ev ON e.source_id = ev.source_id AND e.target_id = ev.target_id
+        JOIN kg_nodes n1 ON e.source_id = n1.id
+        JOIN kg_nodes n2 ON e.target_id = n2.id
+        WHERE e.status = 'candidate' AND e.discovery_method = 'kl_divergence'
+    """
+    params = []
+    if subject:
+        query += " AND n1.subject = ?"
+        params.append(subject)
+        
+    query += " ORDER BY e.confidence DESC, ev.kl_divergence DESC, ev.student_sample_size DESC LIMIT ?"
+    params.append(limit)
+    
+    cur.execute(query, params)
+    candidates = [dict(r) for r in cur.fetchall()]
+    conn.close()
+    
+    return jsonify({"candidates": candidates})
+
+@app.route('/kg/prerequisites/validate', methods=['POST'])
+def api_validate_candidate():
+    data = request.json or {}
+    source_id = data.get("source_id")
+    target_id = data.get("target_id")
+    action = data.get("action") # 'accept', 'reject', 'modify'
+    teacher_email = data.get("teacher_email", "teacher@school.edu")
+    
+    if not all([source_id, target_id, action]):
+        return jsonify({"error": "source_id, target_id, and action are required"}), 400
+        
+    conn = get_conn()
+    cur = conn.cursor()
+    now_str = datetime.utcnow().isoformat()
+    
+    cur.execute("SELECT * FROM kg_edges WHERE source_id=? AND target_id=? AND relation_type='prerequisite_of'", (source_id, target_id))
+    edge = cur.fetchone()
+    if not edge:
+        conn.close()
+        return jsonify({"error": "Edge not found"}), 404
+        
+    if action == 'accept':
+        cur.execute("""
+            UPDATE kg_edge_evidence SET teacher_support = teacher_support + 1 WHERE source_id=? AND target_id=?
+        """, (source_id, target_id))
+        
+        cur.execute("""
+            UPDATE kg_edges 
+            SET validation_count = validation_count + 1,
+                status = CASE WHEN validation_count + 1 >= 3 THEN 'production' ELSE 'validated' END
+            WHERE source_id=? AND target_id=?
+        """, (source_id, target_id))
+        
+        cur.execute("INSERT INTO kg_evolution_log (operation, entity_id, old_state, new_state, actor, timestamp) VALUES (?, ?, ?, ?, ?, ?)",
+                    ('teacher_validated', f"{source_id}->{target_id}", '{"status": "candidate"}', '{"status": "validated"}', teacher_email, now_str))
+                    
+    elif action == 'reject':
+        cur.execute("""
+            UPDATE kg_edge_evidence SET teacher_rejections = teacher_rejections + 1 WHERE source_id=? AND target_id=?
+        """, (source_id, target_id))
+        
+        cur.execute("UPDATE kg_edges SET status = 'rejected' WHERE source_id=? AND target_id=?", (source_id, target_id))
+        
+        cur.execute("INSERT INTO kg_evolution_log (operation, entity_id, old_state, new_state, actor, timestamp) VALUES (?, ?, ?, ?, ?, ?)",
+                    ('edge_rejected', f"{source_id}->{target_id}", '{"status": "candidate"}', '{"status": "rejected"}', teacher_email, now_str))
+                    
+    conn.commit()
+    conn.close()
+    
+    return jsonify({"success": True, "action": action})
+
+@app.route('/kg/evolution', methods=['GET'])
+def api_kg_evolution():
+    conn = get_conn()
+    cur = conn.cursor()
+    cur.execute("SELECT * FROM kg_evolution_log ORDER BY timestamp DESC LIMIT 100")
+    logs = [dict(r) for r in cur.fetchall()]
+    conn.close()
+    return jsonify({"evolution_logs": logs})
+
 upgrade_semantic_schema()
 
 if __name__ == "__main__":

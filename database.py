@@ -43,6 +43,53 @@ def init_db():
     )
     """)
 
+    # Create kg_edge_evidence table
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS kg_edge_evidence (
+        id TEXT PRIMARY KEY,
+        source_id TEXT,
+        target_id TEXT,
+        relation_type TEXT,
+        teacher_support INTEGER DEFAULT 0,
+        teacher_rejections INTEGER DEFAULT 0,
+        student_sample_size INTEGER DEFAULT 0,
+        p_struggle_given_mastered REAL,
+        p_struggle_given_not_mastered REAL,
+        kl_divergence REAL,
+        confidence_score REAL,
+        explanation TEXT,
+        last_recomputed TEXT,
+        FOREIGN KEY (source_id, target_id, relation_type) REFERENCES kg_edges(source_id, target_id, relation_type)
+    )
+    """)
+
+    # Create apd_batch_runs table
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS apd_batch_runs (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        run_date TEXT,
+        subject TEXT,
+        student_sample INTEGER,
+        concepts_analyzed INTEGER,
+        edges_tested INTEGER,
+        candidates_generated INTEGER,
+        execution_time_ms INTEGER
+    )
+    """)
+
+    # Create kg_evolution_log table
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS kg_evolution_log (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        operation TEXT,
+        entity_id TEXT,
+        old_state TEXT,
+        new_state TEXT,
+        actor TEXT,
+        timestamp TEXT
+    )
+    """)
+
     # CONCEPTS (Academic Knowledge Graph)
     cur.execute("""
     CREATE TABLE IF NOT EXISTS concepts (
@@ -1168,11 +1215,30 @@ def upgrade_database_schema():
         relation_type TEXT, -- 'parent_of', 'prerequisite_of', 'targets_concept', 'remedies_misconception', 'strengthens', 'weakens', 'related_to', 'tested_by'
         weight REAL DEFAULT 1.0,
         confidence REAL DEFAULT 0.95,
+        discovery_method TEXT DEFAULT 'human',
+        discovery_date TEXT,
+        validation_count INTEGER DEFAULT 0,
+        status TEXT DEFAULT 'production',
+        stability_score REAL DEFAULT 1.0,
         PRIMARY KEY (source_id, target_id, relation_type),
         FOREIGN KEY (source_id) REFERENCES kg_nodes(id),
         FOREIGN KEY (target_id) REFERENCES kg_nodes(id)
     )
     """)
+
+    # Alter kg_edges table extensions for existing DBs
+    alterations_kg_edges = [
+        ("discovery_method", "TEXT DEFAULT 'human'"),
+        ("discovery_date", "TEXT"),
+        ("validation_count", "INTEGER DEFAULT 0"),
+        ("status", "TEXT DEFAULT 'production'"),
+        ("stability_score", "REAL DEFAULT 1.0")
+    ]
+    for col_name, col_type in alterations_kg_edges:
+        try:
+            cur.execute(f"ALTER TABLE kg_edges ADD COLUMN {col_name} {col_type}")
+        except sqlite3.OperationalError:
+            pass
 
     # Create new student_concept_mastery table referencing TEXT primary key
     cur.execute("""
@@ -2174,4 +2240,4 @@ def save_question_version(question_id, edited_by, change_reason, qqi_before=None
     ))
     conn.commit()
     conn.close()
-    return True
+    return True
