@@ -84,6 +84,8 @@ def derive_current_state(email, node_id, up_to_time=None):
     """
     Replays the event log to derive the exact cognitive state at `up_to_time`.
     Implements Ebbinghaus forgetting: R = e^(-t / S)
+    Also decays confidence based on time elapsed since last evidence.
+    Returns predicted states at 7, 14, and 30 days with uncertainty.
     """
     if not up_to_time:
         up_to_time = datetime.now().isoformat()
@@ -102,14 +104,13 @@ def derive_current_state(email, node_id, up_to_time=None):
     if not events:
         return {
             "retrieval_strength": 0.0,
-            "storage_strength": 0.1, # Base minimal storage to avoid division by zero
+            "storage_strength": 0.1,
             "confidence": 0.0,
             "evidence_count": 0,
             "memory_type": "unknown",
             "last_event_time": None
         }
     
-    # Replay
     current_S = 0.1
     current_R = 0.0
     current_conf = 0.0
@@ -118,16 +119,15 @@ def derive_current_state(email, node_id, up_to_time=None):
     last_t = events[0]["timestamp"]
     
     for ev in events:
-        # Time decay since last event before applying THIS event
         days_passed = calculate_time_diff_days(last_t, ev["timestamp"])
         if days_passed > 0 and current_S > 0:
-            # Ebbinghaus curve: Decay R based on time and S
-            # We scale S by evidence. More evidence = slower decay.
             effective_S = current_S * (1.0 + math.log1p(evidence)) 
             decay_factor = math.exp(-days_passed / effective_S)
             current_R = current_R * decay_factor
             
-        # Apply the explicit event state
+            # Confidence decay
+            current_conf = current_conf * math.exp(-days_passed / 60.0)
+            
         current_R = ev["retrieval_strength"]
         current_S = ev["storage_strength"]
         current_conf = ev["confidence"]
@@ -135,12 +135,19 @@ def derive_current_state(email, node_id, up_to_time=None):
         last_t = ev["timestamp"]
         mem_type = ev["memory_type"]
         
-    # Finally, decay from the last event to `up_to_time`
     final_days_passed = calculate_time_diff_days(last_t, up_to_time)
     if final_days_passed > 0 and current_S > 0:
         effective_S = current_S * (1.0 + math.log1p(evidence))
         decay_factor = math.exp(-final_days_passed / effective_S)
         current_R = current_R * decay_factor
+        current_conf = current_conf * math.exp(-final_days_passed / 60.0)
+        
+    # Predictions
+    effective_S = current_S * (1.0 + math.log1p(evidence)) if current_S > 0 else 0.1
+    def predict(days):
+        base_r = current_R * math.exp(-days / effective_S)
+        uncertainty = round(min(0.2, (days / 60.0) * (1.0 - current_conf)), 2)
+        return {"value": round(base_r, 3), "uncertainty": uncertainty}
         
     return {
         "retrieval_strength": current_R,
@@ -148,7 +155,12 @@ def derive_current_state(email, node_id, up_to_time=None):
         "confidence": current_conf,
         "evidence_count": evidence,
         "memory_type": mem_type,
-        "last_event_time": last_t
+        "last_event_time": last_t,
+        "predictions": {
+            "7_days": predict(7),
+            "14_days": predict(14),
+            "30_days": predict(30)
+        }
     }
 
 def get_full_student_memory(email):
