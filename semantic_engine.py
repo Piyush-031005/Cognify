@@ -75,4 +75,4 @@ def upgrade_semantic_schema():
     conn.commit()
     conn.close()
 
-    print("✅ semantic schema upgraded")
+    print("[OK] semantic schema upgraded")
