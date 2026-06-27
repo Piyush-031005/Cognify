@@ -20,6 +20,7 @@ export type CognifyUser = {
   assignedTopic?: string;
   assignedSubtopic?: string;
   teacherEmail?: string;
+  assessmentStrategy?: string;
 };
 
 export type QuestionAnalytics = {

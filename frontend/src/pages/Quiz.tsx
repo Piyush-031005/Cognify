@@ -150,13 +150,14 @@ useEffect(() => {
   headers: { "Content-Type": "application/json" },
   body: JSON.stringify({
     question_id: q.id,
-question_text: q.prompt,
-student_email: user?.email,
-attempt_id: attemptIdRef.current,
-room_code: user?.roomCode,
-subject: user?.assignedSubject,
-topic: user?.assignedTopic,
-subtopic: user?.assignedSubtopic,
+    question_text: q.prompt,
+    student_email: user?.email,
+    attempt_id: attemptIdRef.current,
+    room_code: user?.roomCode,
+    subject: user?.assignedSubject,
+    topic: user?.assignedTopic,
+    subtopic: user?.assignedSubtopic,
+    selected_option_index: selected,
 
     response_time: responseTimeMs / 1000,
     attempts: attemptsRef.current || 1,
@@ -171,9 +172,9 @@ subtopic: user?.assignedSubtopic,
     skipped: selected === null,
 
     reflection: idx === total - 1 ? reflection : "",
-hover_count: hoverCountRef.current,
-same_option_clicks: sameOptionClicksRef.current,
-reflection_length: idx === total - 1 ? reflection.trim().length : 30
+    hover_count: hoverCountRef.current,
+    same_option_clicks: sameOptionClicksRef.current,
+    reflection_length: idx === total - 1 ? reflection.trim().length : 30
   })
 });
 
@@ -187,6 +188,39 @@ if (processedSession) {
 console.log("ANALYTICS REF => ", analyticsRef.current);
 
 if (idx + 1 < total) {
+  const isAdaptive = user?.assessmentStrategy && user.assessmentStrategy.startsWith("adaptive_");
+  if (isAdaptive) {
+    try {
+      const nextQRes = await fetch(`${API}/adaptive-question`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          subject: user?.assignedSubject,
+          topic: user?.assignedTopic,
+          subtopic: user?.assignedSubtopic,
+          difficulty: q.difficulty || "medium",
+          correct: correct,
+          response_time: responseTimeMs / 1000,
+          confidence: dynamicConfidence,
+          hesitation: processedSession?.hesitation_score || 0.3,
+          strategy: user?.assessmentStrategy
+        })
+      });
+      const nextQData = await nextQRes.json();
+      if (nextQData && nextQData.question) {
+        const updatedQuestions = [...questions];
+        updatedQuestions[idx + 1] = {
+          ...nextQData.question,
+          difficulty: nextQData.difficulty,
+          cognitive_type: nextQData.cognitive_type,
+          subtopic: nextQData.subtopic || user?.assignedSubtopic
+        };
+        setQuestions(updatedQuestions);
+      }
+    } catch (err) {
+      console.error("Adaptive question selection failed:", err);
+    }
+  }
   setIdx(idx + 1);
 } else {
   setProcessing(true);
