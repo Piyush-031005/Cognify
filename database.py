@@ -1205,7 +1205,15 @@ def upgrade_database_schema():
         mastery_level REAL DEFAULT 0.0,
         created_at TEXT,
         updated_at TEXT,
-        metadata TEXT
+        metadata TEXT,
+        status TEXT DEFAULT 'production',
+        discovery_method TEXT DEFAULT 'expert',
+        validation_count INTEGER DEFAULT 0,
+        statistical_confidence REAL DEFAULT 0.0,
+        teacher_confidence REAL DEFAULT 0.0,
+        historical_stability REAL DEFAULT 1.0,
+        overall_confidence REAL DEFAULT 0.0,
+        canonical_id TEXT
     )
     """)
 
