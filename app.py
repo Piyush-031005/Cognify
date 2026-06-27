@@ -2899,6 +2899,20 @@ def api_student_memory_timeline(email, node_id):
         "event_timeline": events
     })
 
+
+import orchestrator
+import context_engine
+
+@app.route('/api/v1/student/<email>/unified_state', methods=['GET'])
+def api_unified_state(email):
+    state = orchestrator.get_unified_cognitive_state(email)
+    return jsonify(state)
+
+@app.route('/api/v1/student/<email>/context', methods=['GET'])
+def api_context_recommendations(email):
+    recommendations = context_engine.generate_contextual_recommendations(email)
+    return jsonify(recommendations)
+
 if __name__ == "__main__":
     upgrade_question_bank_schema()
     upgrade_semantic_schema()
