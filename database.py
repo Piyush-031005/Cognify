@@ -11,8 +11,10 @@ DB_NAME = "cognify.db"
 # CONNECTION
 # =========================
 def get_conn():
-    conn = sqlite3.connect(DB_NAME, check_same_thread=False)
+    conn = sqlite3.connect(DB_NAME, check_same_thread=False, timeout=10)
     conn.row_factory = sqlite3.Row
+    conn.execute("PRAGMA journal_mode=WAL")
+    conn.execute("PRAGMA busy_timeout=5000")
     return conn
 
 
@@ -41,6 +43,22 @@ def init_db():
     )
     """)
 
+    # CONCEPTS (Academic Knowledge Graph)
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS concepts (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT UNIQUE,
+        description TEXT,
+        subject TEXT,
+        topic TEXT,
+        subtopic TEXT,
+        parent_concept_id INTEGER,
+        learning_outcome TEXT,
+        kg_version TEXT DEFAULT 'v1.0',
+        FOREIGN KEY (parent_concept_id) REFERENCES concepts(id)
+    )
+    """)
+
     # QUESTIONS MASTER (SYSTEM GENERATED)
     cur.execute("""
     CREATE TABLE IF NOT EXISTS questions_master (
@@ -63,33 +81,67 @@ def init_db():
     )
     """)
 
-    # QUESTION BANK META TABLE
+    # QUESTION BANK META TABLE (Knowledge Repository)
     cur.execute("""
     CREATE TABLE IF NOT EXISTS question_bank (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        subject TEXT,
+        topic TEXT,
+        subtopic TEXT,
+        difficulty TEXT,
+        cognitive_type TEXT,
+        semantic_id TEXT,
+        variant_id TEXT,
+        prompt TEXT,
+        option_a TEXT,
+        option_b TEXT,
+        option_c TEXT,
+        option_d TEXT,
+        correct_index INTEGER,
+        explanation TEXT,
+        image_url TEXT,
+        source_exam TEXT,
+        teacher_added INTEGER DEFAULT 0,
+        teacher_email TEXT,
+        tags TEXT,
+        estimated_time INTEGER,
+        purpose TEXT DEFAULT 'practice',
+        cognitive_load TEXT DEFAULT 'medium',
+        created_at TEXT,
+        status TEXT DEFAULT 'Draft',
+        version INTEGER DEFAULT 1,
+        qqi_score REAL DEFAULT 80.0,
+        qqi_confidence REAL DEFAULT 0.1,
+        student_responses_count INTEGER DEFAULT 0,
+        purity_score REAL DEFAULT 80.0,
+        discrimination_score REAL DEFAULT 80.0,
+        difficulty_stability_score REAL DEFAULT 80.0,
+        guess_resistance_score REAL DEFAULT 80.0,
+        language_quality_score REAL DEFAULT 80.0,
+        behavior_signal_score REAL DEFAULT 80.0,
+        kg_mapping_score REAL DEFAULT 80.0,
+        time_stability_score REAL DEFAULT 80.0,
+        teacher_rating_score REAL DEFAULT 80.0,
+        historical_reliability_score REAL DEFAULT 80.0,
+        parent_question_id INTEGER,
+        current_version INTEGER DEFAULT 1,
+        edited_by TEXT,
+        edited_at TEXT,
+        change_reason TEXT
+    )
+    """)
 
-    subject TEXT,
-    topic TEXT,
-    subtopic TEXT,
-
-    difficulty TEXT,
-    cognitive_type TEXT,
-
-    semantic_id TEXT,
-    variant_id TEXT,
-
-    prompt TEXT,
-
-    option_a TEXT,
-    option_b TEXT,
-    option_c TEXT,
-    option_d TEXT,
-
-    correct_index INTEGER,
-
-    created_at TEXT
-)
-""")
+    # QUESTION CONCEPTS (Concept Weight Mapping)
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS question_concepts (
+        question_id INTEGER,
+        concept_id INTEGER,
+        weight REAL,
+        PRIMARY KEY (question_id, concept_id),
+        FOREIGN KEY (question_id) REFERENCES question_bank(id),
+        FOREIGN KEY (concept_id) REFERENCES concepts(id)
+    )
+    """)
 
     # TEACHER CUSTOM QUESTIONS
     cur.execute("""
@@ -108,21 +160,39 @@ def init_db():
     )
     """)
 
+    # TEACHER REVIEWS TABLE
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS teacher_reviews (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        question_id INTEGER,
+        teacher_email TEXT,
+        difficulty INTEGER,
+        concept_correct INTEGER,
+        language_rating INTEGER,
+        useful INTEGER,
+        recommended INTEGER,
+        estimated_solve_time INTEGER,
+        submitted_at TEXT,
+        FOREIGN KEY (question_id) REFERENCES question_bank(id)
+    )
+    """)
+
     # ROOMS TABLE
     cur.execute("""
     CREATE TABLE IF NOT EXISTS rooms (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    room_code TEXT UNIQUE,
-    teacher_email TEXT,
-    subject TEXT,
-    topic TEXT,
-    subtopic TEXT,
-    difficulty TEXT,
-    question_mix TEXT,
-    question_count INTEGER,
-    created_at TEXT
-)
-""")
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        room_code TEXT UNIQUE,
+        teacher_email TEXT,
+        subject TEXT,
+        topic TEXT,
+        subtopic TEXT,
+        difficulty TEXT,
+        question_mix TEXT,
+        question_count INTEGER,
+        assessment_strategy TEXT DEFAULT 'balanced',
+        created_at TEXT
+    )
+    """)
 
     # ROOM QUESTION MAP
     cur.execute("""
@@ -145,14 +215,46 @@ def init_db():
     )
     """)
 
+    # RAW TELEMETRY EVENTS
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS raw_telemetry_events (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        student_email TEXT,
+        attempt_id TEXT,
+        question_id INTEGER,
+        event_type TEXT,
+        event_value TEXT,
+        timestamp TEXT
+    )
+    """)
+
+    # FEATURE STORE
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS feature_store (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        student_email TEXT,
+        attempt_id TEXT,
+        question_id INTEGER,
+        response_time REAL,
+        idle_time REAL,
+        rewrite_count INTEGER,
+        backspace_count INTEGER,
+        attempts INTEGER,
+        hover_count INTEGER,
+        same_option_clicks INTEGER,
+        reflection_length INTEGER,
+        focus_lost_count INTEGER
+    )
+    """)
+
     # RESPONSES EXPANDED
     cur.execute("""
     CREATE TABLE IF NOT EXISTS responses (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         room_code TEXT,
         student_email TEXT,
-        subject TEXT,
         attempt_id TEXT,
+        subject TEXT,
         topic TEXT,
         subtopic TEXT,
         question_id INTEGER,
@@ -174,6 +276,10 @@ def init_db():
         hover_count INTEGER,
         same_option_clicks INTEGER,
         reflection_length INTEGER,
+        behavior_model_version TEXT DEFAULT 'v2.4',
+        understanding_model_version TEXT DEFAULT 'v1.9',
+        strategy_model_version TEXT DEFAULT 'v3.1',
+        dataset_version TEXT DEFAULT 'v1.0',
         created_at TEXT
     )
     """)
@@ -184,12 +290,60 @@ def init_db():
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         student_email TEXT,
         room_code TEXT,
+        attempt_id TEXT,
         report_json TEXT,
+        dataset_version TEXT DEFAULT 'v1.0',
+        kg_version TEXT DEFAULT 'v1.0',
+        model_version TEXT DEFAULT 'v2.0',
         created_at TEXT
     )
     """)
 
-    # LONG TERM STUDENT PROFILE
+    # PERSISTENT COGNITIVE DIGITAL TWIN PROFILE
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS student_cognitive_profiles (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        student_email TEXT UNIQUE,
+        learning_velocity REAL DEFAULT 0.5,
+        conceptual_depth REAL DEFAULT 0.5,
+        confidence_stability REAL DEFAULT 0.5,
+        attention_stability REAL DEFAULT 0.5,
+        persistence REAL DEFAULT 0.5,
+        memory_dependence REAL DEFAULT 0.5,
+        transfer_ability REAL DEFAULT 0.5,
+        curiosity REAL DEFAULT 0.5,
+        attempt_count INTEGER DEFAULT 0,
+        updated_at TEXT
+    )
+    """)
+
+    # HUMAN FEEDBACK LOGS
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS human_feedback_logs (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        source_type TEXT,
+        record_id INTEGER,
+        user_email TEXT,
+        override_label TEXT,
+        override_reason TEXT,
+        submitted_at TEXT
+    )
+    """)
+
+    # EVIDENCE PIPELINE
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS evidence_pipeline (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        response_id INTEGER,
+        telemetry_summary TEXT,
+        probabilities_json TEXT,
+        triggered_overrides TEXT,
+        confidence_score REAL,
+        FOREIGN KEY (response_id) REFERENCES responses(id)
+    )
+    """)
+
+    # Fallback legacy student_profiles
     cur.execute("""
     CREATE TABLE IF NOT EXISTS student_profiles (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -201,6 +355,44 @@ def init_db():
         weak_subjects TEXT,
         tests_taken INTEGER,
         updated_at TEXT
+    )
+    """)
+
+    # TEACHER NOTES
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS teacher_notes (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        room_code TEXT,
+        teacher_email TEXT,
+        observation TEXT,
+        reason TEXT,
+        action_taken TEXT,
+        outcome TEXT,
+        created_at TEXT
+    )
+    """)
+
+    # ASSESSMENT BLUEPRINTS
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS assessment_blueprints (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT,
+        teacher_email TEXT,
+        subject TEXT,
+        topic TEXT,
+        subtopic TEXT,
+        purpose TEXT,
+        duration INTEGER,
+        question_count INTEGER,
+        conceptual_pct REAL,
+        application_pct REAL,
+        reasoning_pct REAL,
+        memory_pct REAL,
+        difficulty TEXT,
+        assessment_strategy TEXT,
+        version INTEGER DEFAULT 1,
+        parent_blueprint_id INTEGER,
+        created_at TEXT
     )
     """)
 
@@ -291,9 +483,10 @@ def create_room(data):
             difficulty,
             question_mix,
             question_count,
+            assessment_strategy,
             created_at
         )
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     """, (
         room_code,
         data["teacher_email"],
@@ -303,6 +496,7 @@ def create_room(data):
         data.get("difficulty", "mixed"),
         data.get("question_mix", "mixed"),
         data.get("question_count", 5),
+        data.get("assessment_strategy", "balanced"),
         datetime.now().isoformat()
     ))
 
@@ -381,14 +575,17 @@ def save_response(student_email, obj):
             hesitation_score, confidence_error, engagement_score,
             understanding_pred, behavior_pred, strategy_pred,
             cognitive_flag, hover_count, same_option_clicks, reflection_length,
+            behavior_model_version, understanding_model_version, strategy_model_version, dataset_version,
+            assessment_blueprint_id, assessment_version,
+            selected_option_index,
             created_at
         )
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))
     """, (
         obj.get("room_code", "solo"),
-student_email,
-obj.get("attempt_id", "default_attempt"),
-obj.get("subject", ""),
+        student_email,
+        obj.get("attempt_id", "default_attempt"),
+        obj.get("subject", ""),
         obj.get("topic", ""),
         obj.get("subtopic", ""),
         obj.get("question_id"),
@@ -410,24 +607,52 @@ obj.get("subject", ""),
         obj.get("hover_count"),
         obj.get("same_option_clicks"),
         obj.get("reflection_length"),
-        datetime.now().isoformat()
+        obj.get("behavior_model_version", "v2.4"),
+        obj.get("understanding_model_version", "v1.9"),
+        obj.get("strategy_model_version", "v3.1"),
+        obj.get("dataset_version", "v1.0"),
+        obj.get("assessment_blueprint_id"),
+        obj.get("assessment_version"),
+        obj.get("selected_option_index")
     ))
 
+    row_id = cur.lastrowid
     conn.commit()
     conn.close()
+    return row_id
+
 
 
 def save_final_report(student_email, report_obj, room_code="solo"):
     conn = get_conn()
     cur = conn.cursor()
 
+    blueprint_id = None
+    blueprint_version = None
+
+    if room_code and room_code != "solo":
+        cur.execute("SELECT assessment_blueprint_id, assessment_version FROM rooms WHERE room_code = ?", (room_code,))
+        r_row = cur.fetchone()
+        if r_row:
+            blueprint_id = r_row["assessment_blueprint_id"]
+            blueprint_version = r_row["assessment_version"]
+
     cur.execute("""
-        INSERT INTO reports (student_email, room_code, report_json, created_at)
-        VALUES (?, ?, ?, ?)
+        INSERT INTO reports (
+            student_email, room_code, attempt_id, report_json, dataset_version, kg_version, model_version,
+            assessment_blueprint_id, assessment_version, created_at
+        )
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     """, (
         student_email,
         room_code,
+        report_obj.get("attempt_id", "default_attempt"),
         json.dumps(report_obj),
+        report_obj.get("dataset_version", "v1.0"),
+        report_obj.get("kg_version", "v1.0"),
+        report_obj.get("model_version", "v2.0"),
+        blueprint_id,
+        blueprint_version,
         datetime.now().isoformat()
     ))
 
@@ -466,41 +691,55 @@ def get_subtopics(subject, topic):
     return [r["subtopic"] for r in rows]
 
 
-def get_room_questions(subject, topic, subtopic, limit_count=5):
+def get_room_questions(subject, topic, subtopic, limit_count=5, question_source="system", teacher_email=None):
     conn = get_conn()
     cur = conn.cursor()
 
-    cognitive_types = ["memory", "conceptual", "tricky", "application", "reasoning"]
-
+    cognitive_types = ["memory", "conceptual", "tricky", "application", "reasoning", "elimination"]
     final_questions = []
+
+    # Build SQL filter
+    filters = "subject=? AND topic=? AND subtopic=?"
+    params = [subject, topic, subtopic]
+    
+    if question_source == "custom" and teacher_email:
+        filters += " AND teacher_added = 1 AND teacher_email = ?"
+        params.append(teacher_email)
+    elif question_source == "system":
+        filters += " AND (teacher_added = 0 OR teacher_added IS NULL)"
+    elif question_source == "mixed":
+        if teacher_email:
+            filters += " AND ((teacher_added = 0 OR teacher_added IS NULL) OR (teacher_added = 1 AND teacher_email = ?))"
+            params.append(teacher_email)
+        else:
+            filters += " AND (teacher_added = 0 OR teacher_added IS NULL)"
 
     # 1. try cognitive distribution (1 from each type)
     for ct in cognitive_types:
-        cur.execute("""
+        cur.execute(f"""
             SELECT * FROM question_bank
-            WHERE subject=? AND topic=? AND subtopic=? AND cognitive_type=?
+            WHERE {filters} AND cognitive_type=?
             ORDER BY RANDOM()
             LIMIT 1
-        """, (subject, topic, subtopic, ct))
+        """, params + [ct])
 
         row = cur.fetchone()
-
         if row:
             final_questions.append(row)
 
     # 2. fallback if not enough questions
     if len(final_questions) < limit_count:
         remaining = limit_count - len(final_questions)
-
-        cur.execute("""
+        exclude_ids = ",".join([str(q['id']) for q in final_questions]) if final_questions else "0"
+        
+        cur.execute(f"""
             SELECT * FROM question_bank
-            WHERE subject=? AND topic=? AND subtopic=?
+            WHERE {filters} AND id NOT IN ({exclude_ids})
             ORDER BY RANDOM()
             LIMIT ?
-        """, (subject, topic, subtopic, remaining))
+        """, params + [remaining])
 
         extra_rows = cur.fetchall()
-
         final_questions.extend(extra_rows)
 
     conn.close()
@@ -517,7 +756,9 @@ def get_room_questions(subject, topic, subtopic, limit_count=5):
                 r["option_c"],
                 r["option_d"]
             ],
-            "correctIndex": r["correct_index"]
+            "correctIndex": r["correct_index"],
+            "cognitive_type": r["cognitive_type"] or "conceptual",
+            "difficulty": r["difficulty"] or "medium"
         })
 
     return formatted
@@ -714,3 +955,1223 @@ def upgrade_question_bank_schema():
 
     conn.commit()
     conn.close()
+
+
+def upgrade_database_schema():
+    conn = get_conn()
+    cur = conn.cursor()
+
+    # responses table extensions
+    alterations_responses = [
+        ("behavior_model_version", "TEXT DEFAULT 'v2.4'"),
+        ("understanding_model_version", "TEXT DEFAULT 'v1.9'"),
+        ("strategy_model_version", "TEXT DEFAULT 'v3.1'"),
+        ("dataset_version", "TEXT DEFAULT 'v1.0'"),
+        ("assessment_blueprint_id", "INTEGER"),
+        ("assessment_version", "INTEGER"),
+        ("selected_option_index", "INTEGER")
+    ]
+    for col_name, col_type in alterations_responses:
+        try:
+            cur.execute(f"ALTER TABLE responses ADD COLUMN {col_name} {col_type}")
+        except sqlite3.OperationalError:
+            pass # column already exists
+
+    # reports table extensions
+    alterations_reports = [
+        ("attempt_id", "TEXT"),
+        ("dataset_version", "TEXT DEFAULT 'v1.0'"),
+        ("kg_version", "TEXT DEFAULT 'v1.0'"),
+        ("model_version", "TEXT DEFAULT 'v2.0'"),
+        ("assessment_blueprint_id", "INTEGER"),
+        ("assessment_version", "INTEGER")
+    ]
+    for col_name, col_type in alterations_reports:
+        try:
+            cur.execute(f"ALTER TABLE reports ADD COLUMN {col_name} {col_type}")
+        except sqlite3.OperationalError:
+            pass # column already exists
+
+    # question_bank additions (concept mapping details)
+    alterations_question_bank = [
+        ("explanation", "TEXT"),
+        ("image_url", "TEXT"),
+        ("source_exam", "TEXT"),
+        ("teacher_added", "INTEGER DEFAULT 0"),
+        ("teacher_email", "TEXT"),
+        ("tags", "TEXT"),
+        ("estimated_time", "INTEGER"),
+        ("purpose", "TEXT DEFAULT 'practice'"),
+        ("cognitive_load", "TEXT DEFAULT 'medium'"),
+        ("status", "TEXT DEFAULT 'Draft'"),
+        ("version", "INTEGER DEFAULT 1"),
+        ("qqi_score", "REAL DEFAULT 80.0"),
+        ("qqi_confidence", "REAL DEFAULT 0.1"),
+        ("student_responses_count", "INTEGER DEFAULT 0"),
+        ("purity_score", "REAL DEFAULT 80.0"),
+        ("discrimination_score", "REAL DEFAULT 80.0"),
+        ("difficulty_stability_score", "REAL DEFAULT 80.0"),
+        ("guess_resistance_score", "REAL DEFAULT 80.0"),
+        ("language_quality_score", "REAL DEFAULT 80.0"),
+        ("behavior_signal_score", "REAL DEFAULT 80.0"),
+        ("kg_mapping_score", "REAL DEFAULT 80.0"),
+        ("time_stability_score", "REAL DEFAULT 80.0"),
+        ("teacher_rating_score", "REAL DEFAULT 80.0"),
+        ("historical_reliability_score", "REAL DEFAULT 80.0"),
+        ("parent_question_id", "INTEGER"),
+        ("current_version", "INTEGER DEFAULT 1"),
+        ("edited_by", "TEXT"),
+        ("edited_at", "TEXT"),
+        ("change_reason", "TEXT")
+    ]
+    for col_name, col_type in alterations_question_bank:
+        try:
+            cur.execute(f"ALTER TABLE question_bank ADD COLUMN {col_name} {col_type}")
+        except sqlite3.OperationalError:
+            pass
+
+    # rooms additions (assessment strategy)
+    alterations_rooms = [
+        ("assessment_strategy", "TEXT DEFAULT 'balanced'"),
+        ("assessment_blueprint_id", "INTEGER"),
+        ("assessment_version", "INTEGER")
+    ]
+    for col_name, col_type in alterations_rooms:
+        try:
+            cur.execute(f"ALTER TABLE rooms ADD COLUMN {col_name} {col_type}")
+        except sqlite3.OperationalError:
+            pass
+
+    # Ensure teacher_reviews table is created for existing DBs
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS teacher_reviews (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        question_id INTEGER,
+        teacher_email TEXT,
+        difficulty INTEGER,
+        concept_correct INTEGER,
+        language_rating INTEGER,
+        useful INTEGER,
+        recommended INTEGER,
+        submitted_at TEXT,
+        FOREIGN KEY (question_id) REFERENCES question_bank(id)
+    )
+    """)
+
+    # Alter teacher_reviews table extensions
+    alterations_reviews = [
+        ("estimated_solve_time", "INTEGER"),
+        ("action", "TEXT DEFAULT 'Submitted'"),
+        ("change_reason", "TEXT")
+    ]
+    for col_name, col_type in alterations_reviews:
+        try:
+            cur.execute(f"ALTER TABLE teacher_reviews ADD COLUMN {col_name} {col_type}")
+        except sqlite3.OperationalError:
+            pass
+
+    # Create qqi_history table
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS qqi_history (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        question_id INTEGER,
+        qqi_score REAL,
+        qqi_confidence REAL,
+        trigger_event TEXT,
+        timestamp TEXT,
+        score_delta REAL DEFAULT 0.0,
+        confidence_delta REAL DEFAULT 0.0,
+        sub_score_deltas TEXT,
+        FOREIGN KEY (question_id) REFERENCES question_bank(id)
+    )
+    """)
+
+    # Create question_versions table
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS question_versions (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        question_id INTEGER,
+        version INTEGER,
+        prompt TEXT,
+        option_a TEXT,
+        option_b TEXT,
+        option_c TEXT,
+        option_d TEXT,
+        correct_index INTEGER,
+        explanation TEXT,
+        difficulty TEXT,
+        cognitive_type TEXT,
+        edited_by TEXT,
+        change_reason TEXT,
+        edited_at TEXT,
+        qqi_before REAL,
+        qqi_after REAL,
+        confidence_before REAL,
+        confidence_after REAL,
+        change_summary TEXT,
+        FOREIGN KEY (question_id) REFERENCES question_bank(id)
+    )
+    """)
+
+    # Check if we need to migrate
+    cur.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='kg_nodes'")
+    table_exists = cur.fetchone() is not None
+    
+    need_migration = False
+    if table_exists:
+        cur.execute("PRAGMA table_info(kg_nodes)")
+        info = cur.fetchall()
+        for col in info:
+            if col["name"] == "id" and "INTEGER" in col["type"].upper():
+                need_migration = True
+                break
+                
+    if need_migration:
+        print("[MIGRATION] Old integer ID graph tables detected. Renaming to backup...")
+        cur.execute("DROP TABLE IF EXISTS backup_kg_nodes_v1")
+        cur.execute("DROP TABLE IF EXISTS backup_kg_edges_v1")
+        cur.execute("DROP TABLE IF EXISTS backup_student_concept_mastery_v1")
+        
+        cur.execute("ALTER TABLE kg_nodes RENAME TO backup_kg_nodes_v1")
+        cur.execute("ALTER TABLE kg_edges RENAME TO backup_kg_edges_v1")
+        cur.execute("ALTER TABLE student_concept_mastery RENAME TO backup_student_concept_mastery_v1")
+        conn.commit()
+
+    # Create new kg_nodes table with TEXT primary key
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS kg_nodes (
+        id TEXT PRIMARY KEY,
+        name TEXT,
+        type TEXT, -- 'subject', 'topic', 'subtopic', 'concept', 'micro_concept', 'learning_objective', 'skill', 'misconception', 'question'
+        description TEXT,
+        subject TEXT,
+        topic TEXT,
+        subtopic TEXT,
+        difficulty REAL DEFAULT 50.0,
+        expected_time INTEGER DEFAULT 60,
+        bloom_level TEXT DEFAULT 'remember',
+        grade TEXT DEFAULT 'undergraduate',
+        importance REAL DEFAULT 1.0,
+        version INTEGER DEFAULT 1,
+        mastery_level REAL DEFAULT 0.0,
+        created_at TEXT,
+        updated_at TEXT,
+        metadata TEXT
+    )
+    """)
+
+    # Create new kg_edges table referencing TEXT primary key and with confidence column
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS kg_edges (
+        source_id TEXT,
+        target_id TEXT,
+        relation_type TEXT, -- 'parent_of', 'prerequisite_of', 'targets_concept', 'remedies_misconception', 'strengthens', 'weakens', 'related_to', 'tested_by'
+        weight REAL DEFAULT 1.0,
+        confidence REAL DEFAULT 0.95,
+        PRIMARY KEY (source_id, target_id, relation_type),
+        FOREIGN KEY (source_id) REFERENCES kg_nodes(id),
+        FOREIGN KEY (target_id) REFERENCES kg_nodes(id)
+    )
+    """)
+
+    # Create new student_concept_mastery table referencing TEXT primary key
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS student_concept_mastery (
+        student_email TEXT,
+        node_id TEXT,
+        mastery_level REAL DEFAULT 0.0,
+        last_attempt_at TEXT,
+        PRIMARY KEY (student_email, node_id),
+        FOREIGN KEY (node_id) REFERENCES kg_nodes(id)
+    )
+    """)
+
+    # Create kg_versions table
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS kg_versions (
+        version INTEGER PRIMARY KEY AUTOINCREMENT,
+        graph_version TEXT,
+        nodes_count INTEGER,
+        edges_count INTEGER,
+        nodes_added INTEGER,
+        nodes_removed INTEGER,
+        edges_added INTEGER,
+        edges_removed INTEGER,
+        migration_type TEXT,
+        edited_by TEXT,
+        change_summary TEXT,
+        created_at TEXT
+    )
+    """)
+
+    # --- Week 5: recommendations_log lifecycle migration ---
+    # Check if recommendations_log exists with old schema (missing 'status' col)
+    cur.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='recommendations_log'")
+    rec_log_exists = cur.fetchone() is not None
+
+    if rec_log_exists:
+        cur.execute("PRAGMA table_info(recommendations_log)")
+        rec_cols = {c[1] for c in cur.fetchall()}
+        # Add any missing lifecycle columns (safe ALTER TABLE)
+        lifecycle_cols = [
+            ("status", "TEXT DEFAULT 'generated'"),
+            ("pre_score", "REAL DEFAULT 0.0"),
+            ("post_score", "REAL DEFAULT 0.0"),
+            ("improvement_percentage", "REAL DEFAULT 0.0"),
+            ("validation_window_days", "REAL DEFAULT 0.0"),
+            ("applied_at", "TEXT"),
+            ("completed_at", "TEXT"),
+            ("recommendation_confidence", "REAL DEFAULT 0.95"),
+            ("expected_mastery_gain", "REAL DEFAULT 0.20"),
+            ("actual_mastery_gain", "REAL DEFAULT 0.0"),
+            ("outcome_label", "TEXT DEFAULT 'Insufficient Evidence'"),
+            ("telemetry_audit", "TEXT"),
+        ]
+        for col_name, col_def in lifecycle_cols:
+            if col_name not in rec_cols:
+                try:
+                    cur.execute(f"ALTER TABLE recommendations_log ADD COLUMN {col_name} {col_def}")
+                except Exception:
+                    pass
+    else:
+        # Create fresh with full schema
+        cur.execute("""
+        CREATE TABLE recommendations_log (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            student_email TEXT,
+            concept_id TEXT,
+            priority TEXT,
+            reason TEXT,
+            evidence_backing TEXT,
+            suggested_action TEXT,
+            timestamp TEXT,
+            status TEXT DEFAULT 'generated',
+            pre_score REAL DEFAULT 0.0,
+            post_score REAL DEFAULT 0.0,
+            improvement_percentage REAL DEFAULT 0.0,
+            validation_window_days REAL DEFAULT 0.0,
+            applied_at TEXT,
+            completed_at TEXT,
+            recommendation_confidence REAL DEFAULT 0.95,
+            expected_mastery_gain REAL DEFAULT 0.20,
+            actual_mastery_gain REAL DEFAULT 0.0,
+            outcome_label TEXT DEFAULT 'Insufficient Evidence',
+            telemetry_audit TEXT
+        )
+        """)
+
+    # Create pilot_sessions table (Refinement 2)
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS pilot_sessions (
+        session_id INTEGER PRIMARY KEY AUTOINCREMENT,
+        classroom_id TEXT,
+        teacher TEXT,
+        subject TEXT,
+        topic TEXT,
+        total_students INTEGER DEFAULT 0,
+        total_attempts INTEGER DEFAULT 0,
+        average_latency REAL DEFAULT 0.0,
+        completion_rate REAL DEFAULT 0.0,
+        recommendation_count INTEGER DEFAULT 0,
+        created_at TEXT,
+        assessment_type TEXT,
+        device_type TEXT,
+        browser TEXT,
+        network_quality TEXT,
+        session_duration REAL
+    )
+    """)
+
+    # Create validation_snapshots table (Refinement 3)
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS validation_snapshots (
+        snapshot_id INTEGER PRIMARY KEY AUTOINCREMENT,
+        timestamp TEXT,
+        recommendation_acceptance REAL,
+        application_rate REAL,
+        success_rate REAL,
+        QQI_error REAL,
+        KG_coverage REAL,
+        report_latency REAL,
+        telemetry_events INTEGER,
+        student_count INTEGER,
+        teacher_count INTEGER
+    )
+    """)
+    conn.commit()
+
+    # Perform migration if backups exist
+    if need_migration:
+        print("[MIGRATION] Migrating data to the new schema...")
+        cur.execute("SELECT * FROM backup_kg_nodes_v1")
+        old_nodes = [dict(row) for row in cur.fetchall()]
+        
+        # Helper to generate permanent IDs
+        import re
+        def make_permanent_id(sub, top, subt, name, typ):
+            parts = []
+            if sub: parts.append(sub.lower().strip())
+            if top: parts.append(top.lower().strip())
+            if subt: parts.append(subt.lower().strip())
+            if typ not in ('subject', 'topic', 'subtopic'):
+                parts.append(name.lower().strip())
+            raw = ".".join(parts)
+            s_id = re.sub(r'[^a-z0-9._-]', '_', raw)
+            s_id = re.sub(r'\.+', '.', s_id).strip('.')
+            return s_id
+
+        # Insert migrated nodes
+        id_mapping = {} # old_int_id -> new_string_id
+        now_str = datetime.utcnow().isoformat()
+        
+        for n in old_nodes:
+            old_id = n["id"]
+            if n["type"] == "question":
+                new_id = f"question.{n['name'].replace('question_', '')}"
+            else:
+                new_id = make_permanent_id(n["subject"], n["topic"], n["subtopic"], n["name"], n["type"])
+                
+            base_new_id = new_id
+            suffix = 1
+            while new_id in id_mapping.values():
+                new_id = f"{base_new_id}_{suffix}"
+                suffix += 1
+                
+            id_mapping[old_id] = new_id
+            
+            cur.execute("""
+                INSERT OR IGNORE INTO kg_nodes (
+                    id, name, type, description, subject, topic, subtopic,
+                    difficulty, expected_time, bloom_level, grade, importance,
+                    version, mastery_level, created_at, updated_at, metadata
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """, (
+                new_id, n["name"], n["type"], n["description"], n["subject"],
+                n["topic"], n["subtopic"], n["difficulty"], n["expected_time"],
+                n["bloom_level"], n["grade"], n["importance"], n["version"],
+                n["mastery_level"], n["created_at"] or now_str, n["updated_at"] or now_str,
+                n["metadata"] or '{}'
+            ))
+
+        # Insert migrated edges
+        cur.execute("SELECT * FROM backup_kg_edges_v1")
+        old_edges = [dict(row) for row in cur.fetchall()]
+        edges_migrated = 0
+        for e in old_edges:
+            new_source = id_mapping.get(e["source_id"])
+            new_target = id_mapping.get(e["target_id"])
+            if new_source and new_target:
+                cur.execute("""
+                    INSERT OR IGNORE INTO kg_edges (source_id, target_id, relation_type, weight, confidence)
+                    VALUES (?, ?, ?, ?, 0.95)
+                """, (new_source, new_target, e["relation_type"], e["weight"]))
+                edges_migrated += 1
+
+        # Insert migrated mastery
+        cur.execute("SELECT * FROM backup_student_concept_mastery_v1")
+        old_mastery = [dict(row) for row in cur.fetchall()]
+        for m in old_mastery:
+            new_node = id_mapping.get(m["node_id"])
+            if new_node:
+                cur.execute("""
+                    INSERT OR IGNORE INTO student_concept_mastery (student_email, node_id, mastery_level, last_attempt_at)
+                    VALUES (?, ?, ?, ?)
+                """, (m["student_email"], new_node, m["mastery_level"], m["last_attempt_at"]))
+                
+        # Log version record
+        cur.execute("""
+            INSERT INTO kg_versions (
+                graph_version, nodes_count, edges_count, nodes_added, nodes_removed,
+                edges_added, edges_removed, migration_type, edited_by, change_summary, created_at
+            ) VALUES (?, ?, ?, ?, 0, ?, 0, 'database_migration', 'system', ?, ?)
+        """, (
+            "v1.0-migration", len(id_mapping), edges_migrated, len(id_mapping), edges_migrated,
+            "Migrated Knowledge Graph tables from Integer IDs to permanent Hierarchical String IDs", now_str
+        ))
+        
+        conn.commit()
+        print(f"[MIGRATION] Migration complete. Migrated {len(id_mapping)} nodes and {edges_migrated} edges successfully.")
+
+    conn.close()
+    
+    # Seed the Knowledge Graph
+    seed_knowledge_graph()
+
+
+
+def save_raw_telemetry_event(student_email, attempt_id, question_id, event_type, event_value):
+    conn = get_conn()
+    cur = conn.cursor()
+    cur.execute("""
+        INSERT INTO raw_telemetry_events (student_email, attempt_id, question_id, event_type, event_value, timestamp)
+        VALUES (?, ?, ?, ?, ?, ?)
+    """, (student_email, attempt_id, question_id, event_type, str(event_value), datetime.now().isoformat()))
+    conn.commit()
+    conn.close()
+
+
+def save_feature_store(student_email, attempt_id, question_id, features):
+    conn = get_conn()
+    cur = conn.cursor()
+    cur.execute("""
+        INSERT INTO feature_store (
+            student_email, attempt_id, question_id, response_time, idle_time,
+            rewrite_count, backspace_count, attempts, hover_count,
+            same_option_clicks, reflection_length, focus_lost_count
+        )
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    """, (
+        student_email,
+        attempt_id,
+        question_id,
+        features.get("response_time", 0.0),
+        features.get("idle_time", 0.0),
+        features.get("rewrite_count", 0),
+        features.get("backspace_count", 0),
+        features.get("attempts", 1),
+        features.get("hover_count", 0),
+        features.get("same_option_clicks", 0),
+        features.get("reflection_length", 0),
+        features.get("focus_lost_count", 0)
+    ))
+    conn.commit()
+    conn.close()
+
+
+def save_evidence_pipeline(response_id, telemetry_summary, probabilities_json, triggered_overrides, confidence_score):
+    conn = get_conn()
+    cur = conn.cursor()
+    cur.execute("""
+        INSERT INTO evidence_pipeline (response_id, telemetry_summary, probabilities_json, triggered_overrides, confidence_score)
+        VALUES (?, ?, ?, ?, ?)
+    """, (response_id, json.dumps(telemetry_summary), json.dumps(probabilities_json), json.dumps(triggered_overrides), confidence_score))
+    conn.commit()
+    conn.close()
+
+
+def get_student_cognitive_profile(student_email):
+    conn = get_conn()
+    cur = conn.cursor()
+    cur.execute("SELECT * FROM student_cognitive_profiles WHERE student_email = ?", (student_email,))
+    row = cur.fetchone()
+    conn.close()
+    return dict(row) if row else None
+
+
+def update_student_cognitive_profile(student_email, profile):
+    conn = get_conn()
+    cur = conn.cursor()
+    cur.execute("""
+        INSERT INTO student_cognitive_profiles (
+            student_email, learning_velocity, conceptual_depth, confidence_stability,
+            attention_stability, persistence, memory_dependence, transfer_ability,
+            curiosity, attempt_count, updated_at
+        )
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 1, ?)
+        ON CONFLICT(student_email) DO UPDATE SET
+            learning_velocity = excluded.learning_velocity,
+            conceptual_depth = excluded.conceptual_depth,
+            confidence_stability = excluded.confidence_stability,
+            attention_stability = excluded.attention_stability,
+            persistence = excluded.persistence,
+            memory_dependence = excluded.memory_dependence,
+            transfer_ability = excluded.transfer_ability,
+            curiosity = excluded.curiosity,
+            attempt_count = student_cognitive_profiles.attempt_count + 1,
+            updated_at = excluded.updated_at
+    """, (
+        student_email,
+        profile.get("learning_velocity", 0.5),
+        profile.get("conceptual_depth", 0.5),
+        profile.get("confidence_stability", 0.5),
+        profile.get("attention_stability", 0.5),
+        profile.get("persistence", 0.5),
+        profile.get("memory_dependence", 0.5),
+        profile.get("transfer_ability", 0.5),
+        profile.get("curiosity", 0.5),
+        datetime.now().isoformat()
+    ))
+    conn.commit()
+    conn.close()
+
+
+def save_human_feedback(source_type, record_id, user_email, override_label, override_reason):
+    conn = get_conn()
+    cur = conn.cursor()
+    cur.execute("""
+        INSERT INTO human_feedback_logs (source_type, record_id, user_email, override_label, override_reason, submitted_at)
+        VALUES (?, ?, ?, ?, ?, ?)
+    """, (source_type, record_id, user_email, override_label, override_reason, datetime.now().isoformat()))
+    conn.commit()
+    conn.close()
+
+
+def seed_dynamic_concepts():
+    conn = get_conn()
+    cur = conn.cursor()
+
+    # Define concepts
+    concepts_list = [
+        # Math Quadratic concepts
+        ("Formula Recall", "Recalling the standard quadratic formula and coefficients", "math", "algebra", "quadratic", None, "Recall standard form and coefficients"),
+        ("Discriminant", "Calculating and understanding the discriminant value", "math", "algebra", "quadratic", None, "Determine root nature using D = b^2 - 4ac"),
+        ("Roots", "Finding and determining the nature of quadratic roots", "math", "algebra", "quadratic", None, "Solve for roots and categorize real vs imaginary"),
+        ("Graph Interpretation", "Visualizing quadratic functions as parabolas", "math", "algebra", "quadratic", None, "Analyze parabolic graphs and orientation"),
+        ("Application", "Applying quadratic equations to real-world scenarios", "math", "algebra", "quadratic", None, "Solve word problems using quadratic equations"),
+
+        # Physics Mechanics concepts
+        ("Inertia", "First law concepts and rotational mass properties", "physics", "mechanics", "laws_of_motion", None, "Explain state of motion resistance"),
+        ("Force Dynamics", "Second law equation F = ma and acceleration responses", "physics", "mechanics", "laws_of_motion", None, "Calculate dynamics under net forces"),
+        ("Action Reaction", "Third law action-reaction force pair cancellation checks", "physics", "mechanics", "laws_of_motion", None, "Identify paired forces acting on separate bodies"),
+        ("Motion Graphs", "Slope and area calculations on mechanics graphs", "physics", "mechanics", "kinematics", None, "Compute velocity and acceleration from plots"),
+
+        # DSA Arrays concepts
+        ("Array Indexing", "Direct indexing limits and indexing offsets", "dsa", "arrays", "basics", None, "Access elements in O(1) complexity"),
+        ("Contiguous Memory", "Memory addressing and size allocation properties", "dsa", "arrays", "basics", None, "Contrast memory layouts of static lists"),
+        ("Complexity Analysis", "Worst case and average bounds on insertions or lookups", "dsa", "arrays", "basics", None, "Evaluate Big-O complexities"),
+        ("Searching Algorithms", "Linear search vs binary search and sorting preconditions", "dsa", "arrays", "basics", None, "Execute searches on lists")
+    ]
+
+    for name, desc, sub, top, subt, parent, outcome in concepts_list:
+        try:
+            cur.execute("""
+                INSERT INTO concepts (name, description, subject, topic, subtopic, parent_concept_id, learning_outcome)
+                VALUES (?, ?, ?, ?, ?, ?, ?)
+            """, (name, desc, sub, top, subt, parent, outcome))
+        except sqlite3.IntegrityError:
+            pass # concept already exists
+
+    # Now let's map some existing questions to these concepts!
+    cur.execute("SELECT id, prompt, tags, subject, subtopic FROM question_bank")
+    questions = cur.fetchall()
+
+    for q in questions:
+        qid = q["id"]
+        prompt = q["prompt"].lower()
+        tags = (q["tags"] or "").lower()
+        subject = q["subject"]
+        subtopic = q["subtopic"]
+
+        target_concept = None
+
+        if subject == "math" and subtopic == "quadratic":
+            if "discriminant" in prompt or "discriminant" in tags:
+                target_concept = "Discriminant"
+            elif "formula" in prompt or "formula" in tags:
+                target_concept = "Formula Recall"
+            elif "roots" in prompt or "roots" in tags:
+                target_concept = "Roots"
+            elif "graph" in prompt or "graph" in tags:
+                target_concept = "Graph Interpretation"
+            else:
+                target_concept = "Application"
+
+        elif subject == "physics" and subtopic == "laws_of_motion":
+            if "inertia" in prompt or "inertia" in tags:
+                target_concept = "Inertia"
+            elif "force" in prompt or "acceleration" in prompt or "force" in tags:
+                target_concept = "Force Dynamics"
+            elif "action" in prompt or "cancel" in prompt:
+                target_concept = "Action Reaction"
+            else:
+                target_concept = "Inertia"
+
+        elif subject == "dsa" and subtopic == "basics":
+            if "memory" in prompt or "contiguous" in prompt:
+                target_concept = "Contiguous Memory"
+            elif "index" in prompt or "indexing" in prompt:
+                target_concept = "Array Indexing"
+            elif "search" in prompt or "searching" in prompt:
+                target_concept = "Searching Algorithms"
+            elif "insert" in prompt or "complexity" in prompt or "worst case" in prompt:
+                target_concept = "Complexity Analysis"
+            else:
+                target_concept = "Array Indexing"
+
+        if target_concept:
+            # Get concept id
+            cur.execute("SELECT id FROM concepts WHERE name = ?", (target_concept,))
+            c_row = cur.fetchone()
+            if c_row:
+                cid = c_row["id"]
+                try:
+                    cur.execute("""
+                        INSERT INTO question_concepts (question_id, concept_id, weight)
+                        VALUES (?, ?, ?)
+                    """, (qid, cid, 1.0))
+                except sqlite3.IntegrityError:
+                    pass
+
+    conn.commit()
+    conn.close()
+
+
+def seed_knowledge_graph():
+    from datetime import datetime
+    import json
+    import re
+    conn = get_conn()
+    cur = conn.cursor()
+    
+    # Helper to generate permanent IDs
+    def make_permanent_id(sub, top, subt, name, typ):
+        parts = []
+        if sub: parts.append(sub.lower().strip())
+        if top: parts.append(top.lower().strip())
+        if subt: parts.append(subt.lower().strip())
+        if typ not in ('subject', 'topic', 'subtopic'):
+            parts.append(name.lower().strip())
+        raw = ".".join(parts)
+        s_id = re.sub(r'[^a-z0-9._-]', '_', raw)
+        s_id = re.sub(r'\.+', '.', s_id).strip('.')
+        return s_id
+
+    # List of nodes to seed:
+    nodes = [
+        # DSA Graph Nodes
+        ("dsa", "subject", "Data Structures and Algorithms", "dsa", "", "", 50.0, 0, "remember", "undergraduate", 100.0),
+        
+        ("arrays", "topic", "Contiguous linear memory data structures", "dsa", "arrays", "", 30.0, 600, "understand", "undergraduate", 90.0),
+        ("searching_algorithms", "topic", "Algorithms for locating items in collections", "dsa", "searching_algorithms", "", 45.0, 800, "apply", "undergraduate", 85.0),
+        
+        ("array_operations", "subtopic", "Insertions, deletions, and updates in arrays", "dsa", "arrays", "array_operations", 40.0, 300, "apply", "undergraduate", 80.0),
+        ("binary_search", "subtopic", "Logarithmic interval division search on sorted lists", "dsa", "searching_algorithms", "binary_search", 60.0, 450, "analyze", "undergraduate", 85.0),
+        
+        ("array_deletion", "concept", "Removing elements from contiguous memory arrays", "dsa", "arrays", "array_operations", 50.0, 180, "analyze", "undergraduate", 75.0),
+        ("divide_and_conquer", "concept", "Algorithmic design paradigm based on dividing problem space", "dsa", "searching_algorithms", "binary_search", 65.0, 240, "analyze", "undergraduate", 80.0),
+        
+        ("element_shifting", "micro_concept", "Moving subsequent elements to adjust index alignments after deletion", "dsa", "arrays", "array_operations", 55.0, 120, "apply", "undergraduate", 70.0),
+        ("midpoint_calculation", "micro_concept", "Locating the center element in a boundary window", "dsa", "searching_algorithms", "binary_search", 60.0, 90, "apply", "undergraduate", 75.0),
+        
+        ("understand_linear_time_shifting", "learning_objective", "Verify why deletion of a middle element takes linear time O(n)", "dsa", "arrays", "array_operations", 50.0, 60, "understand", "undergraduate", 80.0),
+        ("prevent_integer_overflow", "learning_objective", "Calculate middle index safely using low + (high - low)/2", "dsa", "searching_algorithms", "binary_search", 65.0, 90, "apply", "undergraduate", 85.0),
+        
+        ("index_manipulation_skill", "skill", "Perform manual index transformations without off-by-one errors", "dsa", "arrays", "array_operations", 60.0, 300, "apply", "undergraduate", 80.0),
+        ("binary_search_index_tuning", "skill", "Configure search windows and shift pointers properly", "dsa", "searching_algorithms", "binary_search", 70.0, 400, "create", "undergraduate", 90.0),
+        
+        ("forgetting_to_shift_subsequent_items", "misconception", "Assuming deletion automatically shifts elements or replaces with null", "dsa", "arrays", "array_operations", 40.0, 0, "remember", "undergraduate", 50.0),
+        ("midpoint_overflow_bug", "misconception", "Using (low + high) / 2 which overflows standard 32-bit integers", "dsa", "searching_algorithms", "binary_search", 55.0, 0, "understand", "undergraduate", 60.0),
+        
+        # Math Graph Nodes
+        ("math", "subject", "Mathematics", "math", "", "", 50.0, 0, "remember", "undergraduate", 100.0),
+        ("quadratic_equations", "topic", "Polynomial equations of degree 2", "math", "quadratic_equations", "", 40.0, 600, "understand", "undergraduate", 90.0),
+        ("roots_of_quadratic", "subtopic", "Analyzing solution roots to quadratic equations", "math", "quadratic_equations", "roots_of_quadratic", 45.0, 300, "apply", "undergraduate", 85.0),
+        ("discriminant_analysis", "concept", "Evaluating b^2 - 4ac to check solution nature", "math", "quadratic_equations", "roots_of_quadratic", 50.0, 180, "analyze", "undergraduate", 80.0),
+        ("negative_discriminant", "micro_concept", "Roots behavior when discriminant is strictly negative", "math", "quadratic_equations", "roots_of_quadratic", 55.0, 120, "apply", "undergraduate", 75.0),
+        ("determine_complex_roots", "learning_objective", "Solve and express complex roots in form a + bi", "math", "quadratic_equations", "roots_of_quadratic", 60.0, 90, "apply", "undergraduate", 80.0),
+        ("complex_number_parsing", "skill", "Differentiate and represent real versus imaginary parts of algebraic equations", "math", "quadratic_equations", "roots_of_quadratic", 65.0, 240, "apply", "undergraduate", 85.0),
+        ("assuming_negative_discriminant_means_no_roots", "misconception", "Believing quadratic equations have no solutions when D < 0, ignoring complex domain", "math", "quadratic_equations", "roots_of_quadratic", 45.0, 0, "understand", "undergraduate", 60.0),
+        
+        # Physics Graph Nodes
+        ("physics", "subject", "Physics Foundations", "physics", "", "", 50.0, 0, "remember", "undergraduate", 100.0),
+        ("classical_mechanics", "topic", "Study of motion of macroscopic bodies", "physics", "classical_mechanics", "", 45.0, 700, "understand", "undergraduate", 90.0),
+        ("laws_of_motion", "subtopic", "Newtonian motion principles", "physics", "classical_mechanics", "laws_of_motion", 50.0, 400, "apply", "undergraduate", 85.0),
+        ("inertia_and_mass", "concept", "Resistance to state changes of motion", "physics", "classical_mechanics", "laws_of_motion", 55.0, 200, "analyze", "undergraduate", 80.0),
+        ("rotational_mass", "micro_concept", "Moment of inertia in angular acceleration rotational systems", "physics", "classical_mechanics", "laws_of_motion", 65.0, 150, "apply", "undergraduate", 75.0),
+        ("rotational_inertia_calculation", "learning_objective", "Calculate moment of inertia for standard rigid shapes", "physics", "classical_mechanics", "laws_of_motion", 70.0, 120, "apply", "undergraduate", 80.0),
+        ("angular_momentum_balancing", "skill", "Determine torque interactions and angular dynamics equilibrium", "physics", "classical_mechanics", "laws_of_motion", 75.0, 300, "apply", "undergraduate", 85.0),
+        ("confusing_mass_with_rotational_inertia", "misconception", "Assuming moment of inertia depends purely on object mass, ignoring mass distribution", "physics", "classical_mechanics", "laws_of_motion", 50.0, 0, "understand", "undergraduate", 65.0),
+        
+        # Chemistry Graph Nodes
+        ("chemistry", "subject", "Chemical Sciences", "chemistry", "", "", 50.0, 0, "remember", "undergraduate", 100.0),
+        ("organic_chemistry", "topic", "Chemistry of carbon compound transformations", "chemistry", "organic_chemistry", "", 55.0, 700, "understand", "undergraduate", 90.0),
+        ("functional_groups", "subtopic", "Functional group reactivities", "chemistry", "organic_chemistry", "functional_groups", 60.0, 400, "apply", "undergraduate", 85.0),
+        ("isomerism", "concept", "Compounds with identical formulas but unique structural arrangements", "chemistry", "organic_chemistry", "functional_groups", 65.0, 220, "analyze", "undergraduate", 80.0),
+        ("stereoisomerism", "micro_concept", "Three-dimensional orientation isomers", "chemistry", "organic_chemistry", "functional_groups", 70.0, 180, "apply", "undergraduate", 75.0),
+        ("identify_chiral_centers", "learning_objective", "Locate chiral carbons and assign R/S stereocenters", "chemistry", "organic_chemistry", "functional_groups", 75.0, 150, "apply", "undergraduate", 80.0),
+        ("stereocenter_determination", "skill", "Trace spatial symmetry and Cahn-Ingold-Prelog priority rules", "chemistry", "organic_chemistry", "functional_groups", 80.0, 300, "apply", "undergraduate", 85.0),
+        ("confusing_enantiomers_with_diastereomers", "misconception", "Failing to distinguish between non-superimposable mirror images and non-mirror stereoisomers", "chemistry", "organic_chemistry", "functional_groups", 55.0, 0, "understand", "undergraduate", 60.0),
+        
+        # Biology Graph Nodes
+        ("biology", "subject", "Biological Systems", "biology", "", "", 50.0, 0, "remember", "undergraduate", 100.0),
+        ("genetics", "topic", "Study of heredity and genetic variation", "biology", "genetics", "", 45.0, 600, "understand", "undergraduate", 90.0),
+        ("mendelian_inheritance", "subtopic", "Gregor Mendel laws of segregation and inheritance", "biology", "genetics", "mendelian_inheritance", 50.0, 300, "apply", "undergraduate", 85.0),
+        ("punnett_squares", "concept", "Predicting genetic cross outcomes visually", "biology", "genetics", "mendelian_inheritance", 55.0, 180, "analyze", "undergraduate", 80.0),
+        ("dihybrid_crosses", "micro_concept", "Genotypic distributions involving two independent traits", "biology", "genetics", "mendelian_inheritance", 65.0, 120, "apply", "undergraduate", 75.0),
+        ("predict_genotypic_ratios", "learning_objective", "Calculate phenotypic ratios for dihybrid crossings", "biology", "genetics", "mendelian_inheritance", 70.0, 90, "apply", "undergraduate", 80.0),
+        ("probability_multiplication_in_genetics", "skill", "Apply probability product rule for compound genetic events", "biology", "genetics", "mendelian_inheritance", 75.0, 200, "apply", "undergraduate", 85.0),
+        ("assuming_independent_assortment_for_linked_genes", "misconception", "Ignoring linkage distance and assuming genes on the same chromosome assort independently", "biology", "genetics", "mendelian_inheritance", 50.0, 0, "understand", "undergraduate", 65.0),
+        
+        # English Graph Nodes
+        ("english", "subject", "English Language and Linguistics", "english", "", "", 30.0, 0, "remember", "undergraduate", 100.0),
+        ("grammar", "topic", "Rules governing sentence composition syntax", "english", "grammar", "", 35.0, 400, "understand", "undergraduate", 90.0),
+        ("sentence_structure", "subtopic", "Phrase clauses construction clauses structure", "english", "grammar", "sentence_structure", 40.0, 200, "apply", "undergraduate", 85.0),
+        ("modifiers", "concept", "Words/phrases modifying structural elements of sentences", "english", "grammar", "sentence_structure", 45.0, 120, "analyze", "undergraduate", 80.0),
+        ("dangling_modifiers", "micro_concept", "Modifiers whose intended subject is missing or ambiguous", "english", "grammar", "sentence_structure", 50.0, 90, "apply", "undergraduate", 75.0),
+        ("identify_modifier_placement", "learning_objective", "Detect and restructure dangling and misplaced clauses", "english", "grammar", "sentence_structure", 55.0, 60, "apply", "undergraduate", 80.0),
+        ("modifier_dangling_correction", "skill", "Reconstruct sentences by inserting logical actor subjects", "english", "grammar", "sentence_structure", 60.0, 180, "apply", "undergraduate", 85.0),
+        ("assuming_subject_is_implied", "misconception", "Assuming the reader naturally infers the missing subject in a modifier clause", "english", "grammar", "sentence_structure", 40.0, 0, "understand", "undergraduate", 60.0)
+    ]
+    
+    # Save Nodes with their permanent IDs
+    now_str = datetime.now().isoformat()
+    id_map = {} # name -> generated_id
+    for row in nodes:
+        node_id = make_permanent_id(row[3], row[4], row[5], row[0], row[1])
+        id_map[row[0]] = node_id
+        
+        cur.execute("""
+            INSERT OR IGNORE INTO kg_nodes (
+                id, name, type, description, subject, topic, subtopic,
+                difficulty, expected_time, bloom_level, grade, importance,
+                version, mastery_level, created_at, updated_at, metadata
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, 0.0, ?, ?, '{}')
+        """, (node_id, row[0], row[1], row[2], row[3], row[4], row[5], row[6], row[7], row[8], row[9], row[10], now_str, now_str))
+        
+    conn.commit()
+    
+    # Edges: (source_name, target_name, relation_type, weight)
+    edges = [
+        # DSA Hierarchy
+        ("dsa", "arrays", "parent_of", 1.0),
+        ("dsa", "searching_algorithms", "parent_of", 1.0),
+        ("arrays", "array_operations", "parent_of", 1.0),
+        ("searching_algorithms", "binary_search", "parent_of", 1.0),
+        ("array_operations", "array_deletion", "parent_of", 1.0),
+        ("binary_search", "divide_and_conquer", "parent_of", 1.0),
+        ("array_deletion", "element_shifting", "parent_of", 1.0),
+        ("divide_and_conquer", "midpoint_calculation", "parent_of", 1.0),
+        ("element_shifting", "understand_linear_time_shifting", "parent_of", 1.0),
+        ("midpoint_calculation", "prevent_integer_overflow", "parent_of", 1.0),
+        ("understand_linear_time_shifting", "index_manipulation_skill", "parent_of", 1.0),
+        ("prevent_integer_overflow", "binary_search_index_tuning", "parent_of", 1.0),
+        ("index_manipulation_skill", "forgetting_to_shift_subsequent_items", "parent_of", 1.0),
+        ("binary_search_index_tuning", "midpoint_overflow_bug", "parent_of", 1.0),
+        
+        # DSA Prerequisites
+        ("array_operations", "binary_search", "prerequisite_of", 1.0),
+        ("index_manipulation_skill", "binary_search_index_tuning", "prerequisite_of", 1.0),
+        
+        # Math Hierarchy
+        ("math", "quadratic_equations", "parent_of", 1.0),
+        ("quadratic_equations", "roots_of_quadratic", "parent_of", 1.0),
+        ("roots_of_quadratic", "discriminant_analysis", "parent_of", 1.0),
+        ("discriminant_analysis", "negative_discriminant", "parent_of", 1.0),
+        ("negative_discriminant", "determine_complex_roots", "parent_of", 1.0),
+        ("determine_complex_roots", "complex_number_parsing", "parent_of", 1.0),
+        ("complex_number_parsing", "assuming_negative_discriminant_means_no_roots", "parent_of", 1.0),
+        
+        # Physics Hierarchy
+        ("physics", "classical_mechanics", "parent_of", 1.0),
+        ("classical_mechanics", "laws_of_motion", "parent_of", 1.0),
+        ("laws_of_motion", "inertia_and_mass", "parent_of", 1.0),
+        ("inertia_and_mass", "rotational_mass", "parent_of", 1.0),
+        ("rotational_mass", "rotational_inertia_calculation", "parent_of", 1.0),
+        ("rotational_mass", "angular_momentum_balancing", "parent_of", 1.0),
+        ("angular_momentum_balancing", "confusing_mass_with_rotational_inertia", "parent_of", 1.0),
+        
+        # Chemistry Hierarchy
+        ("chemistry", "organic_chemistry", "parent_of", 1.0),
+        ("organic_chemistry", "functional_groups", "parent_of", 1.0),
+        ("functional_groups", "isomerism", "parent_of", 1.0),
+        ("isomerism", "stereoisomerism", "parent_of", 1.0),
+        ("stereoisomerism", "identify_chiral_centers", "parent_of", 1.0),
+        ("identify_chiral_centers", "stereocenter_determination", "parent_of", 1.0),
+        ("stereocenter_determination", "confusing_enantiomers_with_diastereomers", "parent_of", 1.0),
+        
+        # Biology Hierarchy
+        ("biology", "genetics", "parent_of", 1.0),
+        ("genetics", "mendelian_inheritance", "parent_of", 1.0),
+        ("mendelian_inheritance", "punnett_squares", "parent_of", 1.0),
+        ("punnett_squares", "dihybrid_crosses", "parent_of", 1.0),
+        ("dihybrid_crosses", "predict_genotypic_ratios", "parent_of", 1.0),
+        ("predict_genotypic_ratios", "probability_multiplication_in_genetics", "parent_of", 1.0),
+        ("probability_multiplication_in_genetics", "assuming_independent_assortment_for_linked_genes", "parent_of", 1.0),
+        
+        # English Hierarchy
+        ("english", "grammar", "parent_of", 1.0),
+        ("grammar", "sentence_structure", "parent_of", 1.0),
+        ("sentence_structure", "modifiers", "parent_of", 1.0),
+        ("modifiers", "dangling_modifiers", "parent_of", 1.0),
+        ("dangling_modifiers", "identify_modifier_placement", "parent_of", 1.0),
+        ("identify_modifier_placement", "modifier_dangling_correction", "parent_of", 1.0),
+        ("modifier_dangling_correction", "assuming_subject_is_implied", "parent_of", 1.0)
+    ]
+    
+    # Save Edges with edge confidence defaulting to 0.95
+    for src, tgt, rel, wt in edges:
+        src_id = id_map.get(src)
+        tgt_id = id_map.get(tgt)
+        if src_id and tgt_id:
+            cur.execute("""
+                INSERT OR IGNORE INTO kg_edges (source_id, target_id, relation_type, weight, confidence)
+                VALUES (?, ?, ?, ?, 0.95)
+            """, (src_id, tgt_id, rel, wt))
+            
+    conn.commit()
+    
+    # Connect existing question_bank questions to the graph dynamically!
+    cur.execute("SELECT id, prompt, subject, subtopic, topic FROM question_bank")
+    questions = cur.fetchall()
+    
+    for q in questions:
+        qid = q["id"]
+        prompt = q["prompt"].lower()
+        subject = q["subject"]
+        subtopic = q["subtopic"]
+        
+        # Create a unique node name for this question (following period separator style)
+        q_node_name = f"question.{qid}"
+        
+        # Check if question node already exists in kg_nodes
+        cur.execute("SELECT id FROM kg_nodes WHERE id = ?", (q_node_name,))
+        qn_row = cur.fetchone()
+        
+        if qn_row:
+            qn_id = qn_row["id"]
+        else:
+            cur.execute("""
+                INSERT INTO kg_nodes (
+                    id, name, type, description, subject, topic, subtopic,
+                    difficulty, expected_time, bloom_level, grade, importance,
+                    version, mastery_level, created_at, updated_at, metadata
+                ) VALUES (?, ?, 'question', ?, ?, ?, ?, 50.0, 45, 'apply', 'undergraduate', 1.0, 1, 0.0, ?, ?, '{}')
+            """, (q_node_name, q_node_name, q["prompt"], subject, q["topic"], subtopic, now_str, now_str))
+            qn_id = q_node_name
+            
+        # Determine which concept node in the graph this question targets
+        target_concept = None
+        
+        if subject == "math" and subtopic == "quadratic":
+            target_concept = "determine_complex_roots"
+        elif subject == "physics" and subtopic == "laws_of_motion":
+            target_concept = "rotational_inertia_calculation"
+        elif subject == "dsa":
+            if "index" in prompt or "indexing" in prompt or "delete" in prompt:
+                target_concept = "understand_linear_time_shifting"
+            else:
+                target_concept = "prevent_integer_overflow"
+        elif subject == "chemistry":
+            target_concept = "identify_chiral_centers"
+        elif subject == "biology":
+            target_concept = "predict_genotypic_ratios"
+        elif subject == "english":
+            target_concept = "identify_modifier_placement"
+            
+        # Create tested_by relation between concept and question node
+        if target_concept and target_concept in id_map:
+            concept_nid = id_map[target_concept]
+            # Relation: Concept is tested_by Question
+            cur.execute("""
+                INSERT OR IGNORE INTO kg_edges (source_id, target_id, relation_type, weight, confidence)
+                VALUES (?, ?, ?, ?, 0.95)
+            """, (concept_nid, qn_id, 'tested_by', 1.0))
+            
+    conn.commit()
+    conn.close()
+    print("[OK] Seeding of living Knowledge Graph completed successfully.")
+
+
+def save_teacher_notes(room_code, teacher_email, observation, reason, action_taken, outcome):
+    conn = get_conn()
+    cur = conn.cursor()
+    cur.execute("""
+        INSERT INTO teacher_notes (room_code, teacher_email, observation, reason, action_taken, outcome, created_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?)
+    """, (room_code, teacher_email, observation, reason, action_taken, outcome, datetime.now().isoformat()))
+    conn.commit()
+    conn.close()
+
+
+def get_teacher_notes(room_code):
+    conn = get_conn()
+    cur = conn.cursor()
+    cur.execute("SELECT * FROM teacher_notes WHERE room_code = ? ORDER BY id DESC", (room_code,))
+    rows = cur.fetchall()
+    conn.close()
+    return [dict(r) for r in rows]
+
+
+# =========================
+# ASSESSMENT BLUEPRINTS & LIFECYCLE
+# =========================
+def create_assessment_blueprint(data):
+    conn = get_conn()
+    cur = conn.cursor()
+
+    name = data["name"]
+    teacher_email = data["teacher_email"]
+
+    # Check version history
+    cur.execute("""
+        SELECT id, version, parent_blueprint_id FROM assessment_blueprints
+        WHERE name = ? AND teacher_email = ?
+        ORDER BY version DESC LIMIT 1
+    """, (name, teacher_email))
+    row = cur.fetchone()
+
+    if row:
+        version = row["version"] + 1
+        parent_id = row["parent_blueprint_id"] if row["parent_blueprint_id"] else row["id"]
+    else:
+        version = 1
+        parent_id = None
+
+    cur.execute("""
+        INSERT INTO assessment_blueprints (
+            name, teacher_email, subject, topic, subtopic, purpose, duration, question_count,
+            conceptual_pct, application_pct, reasoning_pct, memory_pct, difficulty,
+            assessment_strategy, version, parent_blueprint_id, created_at
+        )
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    """, (
+        name,
+        teacher_email,
+        data["subject"],
+        data["topic"],
+        data["subtopic"],
+        data["purpose"],
+        int(data.get("duration", 30)),
+        int(data.get("question_count", 10)),
+        float(data.get("conceptual_pct", 25.0)),
+        float(data.get("application_pct", 25.0)),
+        float(data.get("reasoning_pct", 25.0)),
+        float(data.get("memory_pct", 25.0)),
+        data["difficulty"],
+        data.get("assessment_strategy", "balanced"),
+        version,
+        parent_id,
+        datetime.now().isoformat()
+    ))
+
+    blueprint_id = cur.lastrowid
+
+    # If this was the first version, update its parent_blueprint_id to point to itself
+    if parent_id is None:
+        cur.execute("""
+            UPDATE assessment_blueprints SET parent_blueprint_id = ? WHERE id = ?
+        """, (blueprint_id, blueprint_id))
+
+    conn.commit()
+    conn.close()
+    return blueprint_id
+
+
+def get_assessment_blueprints(email):
+    conn = get_conn()
+    cur = conn.cursor()
+    # Fetch only latest version of each blueprint name
+    cur.execute("""
+        SELECT b1.* FROM assessment_blueprints b1
+        INNER JOIN (
+            SELECT name, MAX(version) as max_ver FROM assessment_blueprints
+            WHERE teacher_email = ?
+            GROUP BY name
+        ) b2 ON b1.name = b2.name AND b1.version = b2.max_ver
+        WHERE b1.teacher_email = ?
+        ORDER BY b1.id DESC
+    """, (email, email))
+    rows = cur.fetchall()
+    conn.close()
+    return [dict(r) for r in rows]
+
+
+def get_blueprint_versions(parent_id):
+    conn = get_conn()
+    cur = conn.cursor()
+    cur.execute("""
+        SELECT * FROM assessment_blueprints
+        WHERE parent_blueprint_id = ?
+        ORDER BY version DESC
+    """, (parent_id,))
+    rows = cur.fetchall()
+    conn.close()
+    return [dict(r) for r in rows]
+
+
+def update_question_status(question_id, status):
+    conn = get_conn()
+    cur = conn.cursor()
+    cur.execute("""
+        UPDATE question_bank SET status = ? WHERE id = ?
+    """, (status, question_id))
+    conn.commit()
+    conn.close()
+
+
+def get_questions_by_status(status):
+    conn = get_conn()
+    cur = conn.cursor()
+    cur.execute("""
+        SELECT * FROM question_bank WHERE status = ? ORDER BY id DESC
+    """, (status,))
+    rows = cur.fetchall()
+    conn.close()
+    return [dict(r) for r in rows]
+
+
+def get_room_questions_from_blueprint(blueprint_id):
+    conn = get_conn()
+    cur = conn.cursor()
+    cur.execute("SELECT * FROM assessment_blueprints WHERE id = ?", (blueprint_id,))
+    bp = cur.fetchone()
+    if not bp:
+        conn.close()
+        return []
+
+    subject = bp["subject"]
+    topic = bp["topic"]
+    subtopic = bp["subtopic"]
+    q_count = bp["question_count"] or 5
+    strategy = bp["assessment_strategy"] or "balanced"
+    difficulty = bp["difficulty"] or "medium"
+
+    conceptual_pct = bp["conceptual_pct"] or 25.0
+    application_pct = bp["application_pct"] or 25.0
+    reasoning_pct = bp["reasoning_pct"] or 25.0
+    memory_pct = bp["memory_pct"] or 25.0
+
+    # Calculate target counts
+    target_conceptual = max(0, round(q_count * conceptual_pct / 100))
+    target_application = max(0, round(q_count * application_pct / 100))
+    target_reasoning = max(0, round(q_count * reasoning_pct / 100))
+    target_memory = max(0, round(q_count * memory_pct / 100))
+
+    # Adjust to sum up to q_count if rounding caused offsets
+    diff_sum = q_count - (target_conceptual + target_application + target_reasoning + target_memory)
+    if diff_sum != 0:
+        target_conceptual = max(0, target_conceptual + diff_sum)
+
+    # Status must be 'Approved'
+    filters = "subject=? AND topic=? AND subtopic=? AND status='Approved'"
+    params = [subject, topic, subtopic]
+
+    final_questions = []
+    
+    # 1. Fetch conceptual
+    if target_conceptual > 0:
+        cur.execute(f"SELECT * FROM question_bank WHERE {filters} AND cognitive_type='conceptual' ORDER BY RANDOM() LIMIT {target_conceptual}", params)
+        final_questions.extend(cur.fetchall())
+    # 2. Fetch application
+    if target_application > 0:
+        cur.execute(f"SELECT * FROM question_bank WHERE {filters} AND cognitive_type='application' ORDER BY RANDOM() LIMIT {target_application}", params)
+        final_questions.extend(cur.fetchall())
+    # 3. Fetch reasoning
+    if target_reasoning > 0:
+        cur.execute(f"SELECT * FROM question_bank WHERE {filters} AND cognitive_type='reasoning' ORDER BY RANDOM() LIMIT {target_reasoning}", params)
+        final_questions.extend(cur.fetchall())
+    # 4. Fetch memory
+    if target_memory > 0:
+        cur.execute(f"SELECT * FROM question_bank WHERE {filters} AND cognitive_type='memory' ORDER BY RANDOM() LIMIT {target_memory}", params)
+        final_questions.extend(cur.fetchall())
+
+    # Fallback if not enough questions
+    if len(final_questions) < q_count:
+        remaining = q_count - len(final_questions)
+        exclude_ids = ",".join([str(q['id']) for q in final_questions]) if final_questions else "0"
+        cur.execute(f"SELECT * FROM question_bank WHERE {filters} AND id NOT IN ({exclude_ids}) ORDER BY RANDOM() LIMIT {remaining}", params)
+        final_questions.extend(cur.fetchall())
+
+    conn.close()
+
+    formatted = []
+    for r in final_questions:
+        formatted.append({
+            "id": r["id"],
+            "prompt": r["prompt"],
+            "options": [
+                r["option_a"],
+                r["option_b"],
+                r["option_c"],
+                r["option_d"]
+            ],
+            "correctIndex": r["correct_index"],
+            "cognitive_type": r["cognitive_type"] or "conceptual",
+            "difficulty": r["difficulty"] or "medium"
+        })
+
+    return formatted
+
+
+def check_duplicate_question(prompt, subject, topic, subtopic):
+    conn = get_conn()
+    cur = conn.cursor()
+    cur.execute("""
+        SELECT prompt FROM question_bank
+        WHERE subject = ? AND topic = ? AND subtopic = ? AND status = 'Approved'
+    """, (subject, topic, subtopic))
+    rows = cur.fetchall()
+    conn.close()
+
+    p_clean = "".join(c for c in prompt.lower() if c.isalnum())
+    for r in rows:
+        existing_clean = "".join(c for c in r["prompt"].lower() if c.isalnum())
+        if p_clean in existing_clean or existing_clean in p_clean:
+            return True
+    return False
+
+
+def get_field_diff_summary(old_state, new_state):
+    diffs = []
+    if old_state.get("prompt") != new_state.get("prompt"):
+        diffs.append(f"Prompt changed from '{old_state.get('prompt')}' to '{new_state.get('prompt')}'")
+    if old_state.get("option_a") != new_state.get("option_a"):
+        diffs.append(f"Option A changed from '{old_state.get('option_a')}' to '{new_state.get('option_a')}'")
+    if old_state.get("option_b") != new_state.get("option_b"):
+        diffs.append(f"Option B changed from '{old_state.get('option_b')}' to '{new_state.get('option_b')}'")
+    if old_state.get("option_c") != new_state.get("option_c"):
+        diffs.append(f"Option C changed from '{old_state.get('option_c')}' to '{new_state.get('option_c')}'")
+    if old_state.get("option_d") != new_state.get("option_d"):
+        diffs.append(f"Option D changed from '{old_state.get('option_d')}' to '{new_state.get('option_d')}'")
+    try:
+        old_idx = int(old_state.get("correct_index", 0))
+        new_idx = int(new_state.get("correct_index", 0))
+        if old_idx != new_idx:
+            old_opt = ["A", "B", "C", "D"][old_idx]
+            new_opt = ["A", "B", "C", "D"][new_idx]
+            diffs.append(f"Correct option changed from {old_opt} to {new_opt}")
+    except:
+        pass
+    if old_state.get("difficulty") != new_state.get("difficulty"):
+        diffs.append(f"Difficulty changed from '{old_state.get('difficulty')}' to '{new_state.get('difficulty')}'")
+    if old_state.get("cognitive_type") != new_state.get("cognitive_type"):
+        diffs.append(f"Cognitive type changed from '{old_state.get('cognitive_type')}' to '{new_state.get('cognitive_type')}'")
+    if old_state.get("explanation") != new_state.get("explanation"):
+        diffs.append("Explanation updated")
+    return " | ".join(diffs) if diffs else "No material changes"
+
+
+def save_question_version(question_id, edited_by, change_reason, qqi_before=None, qqi_after=None, confidence_before=None, confidence_after=None, change_summary=None):
+    conn = get_conn()
+    cur = conn.cursor()
+    
+    # Fetch current values of the question
+    cur.execute("SELECT * FROM question_bank WHERE id = ?", (question_id,))
+    row = cur.fetchone()
+    if not row:
+        conn.close()
+        return False
+        
+    current_version = row["version"] or 1
+    
+    cur.execute("""
+        INSERT INTO question_versions (
+            question_id, version, prompt, option_a, option_b, option_c, option_d,
+            correct_index, explanation, difficulty, cognitive_type,
+            edited_by, change_reason, edited_at,
+            qqi_before, qqi_after, confidence_before, confidence_after, change_summary
+        )
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'), ?, ?, ?, ?, ?)
+    """, (
+        question_id,
+        current_version,
+        row["prompt"],
+        row["option_a"],
+        row["option_b"],
+        row["option_c"],
+        row["option_d"],
+        row["correct_index"],
+        row["explanation"],
+        row["difficulty"],
+        row["cognitive_type"],
+        edited_by,
+        change_reason,
+        qqi_before,
+        qqi_after,
+        confidence_before,
+        confidence_after,
+        change_summary
+    ))
+    conn.commit()
+    conn.close()
+    return True
