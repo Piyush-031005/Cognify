@@ -59,6 +59,8 @@ def init_db():
         confidence_score REAL,
         explanation TEXT,
         last_recomputed TEXT,
+        conflict_detected BOOLEAN DEFAULT 0,
+        conflict_details TEXT,
         FOREIGN KEY (source_id, target_id, relation_type) REFERENCES kg_edges(source_id, target_id, relation_type)
     )
     """)
@@ -1220,6 +1222,10 @@ def upgrade_database_schema():
         validation_count INTEGER DEFAULT 0,
         status TEXT DEFAULT 'production',
         stability_score REAL DEFAULT 1.0,
+        statistical_confidence REAL DEFAULT 0.0,
+        teacher_confidence REAL DEFAULT 0.0,
+        historical_stability REAL DEFAULT 1.0,
+        overall_confidence REAL DEFAULT 0.0,
         PRIMARY KEY (source_id, target_id, relation_type),
         FOREIGN KEY (source_id) REFERENCES kg_nodes(id),
         FOREIGN KEY (target_id) REFERENCES kg_nodes(id)
@@ -1232,7 +1238,11 @@ def upgrade_database_schema():
         ("discovery_date", "TEXT"),
         ("validation_count", "INTEGER DEFAULT 0"),
         ("status", "TEXT DEFAULT 'production'"),
-        ("stability_score", "REAL DEFAULT 1.0")
+        ("stability_score", "REAL DEFAULT 1.0"),
+        ("statistical_confidence", "REAL DEFAULT 0.0"),
+        ("teacher_confidence", "REAL DEFAULT 0.0"),
+        ("historical_stability", "REAL DEFAULT 1.0"),
+        ("overall_confidence", "REAL DEFAULT 0.0")
     ]
     for col_name, col_type in alterations_kg_edges:
         try:

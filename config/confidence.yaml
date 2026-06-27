@@ -1,0 +1,24 @@
+version: "1.0.0"
+effective_from: "2026-06-27"
+
+weights:
+  statistical: 0.5
+  teacher: 0.3
+  historical: 0.2
+
+decay_rates:
+  Math: 0.01
+  Physics: 0.02
+  AI: 0.1
+  ComputerScience: 0.05
+  Default: 0.05
+
+teacher_reliability:
+  senior_reviewer: 1.0
+  regular_reviewer: 0.8
+  new_reviewer: 0.4
+
+thresholds:
+  min_evidence_sample: 50
+  min_stability_for_production: 0.5
+  retirement_confidence: 0.3
