@@ -91,7 +91,7 @@ def process_question(data):
     ),
     3
 )
-    understanding_pred = predict_understanding({
+    understanding_pred, understanding_conf = predict_understanding({
         "response_time": response_time,
         "attempts": attempts,
         "confidence": confidence,
@@ -99,7 +99,7 @@ def process_question(data):
         "correct": correct
     })
 
-    behavior_pred = predict_behavior({
+    behavior_pred, behavior_conf = predict_behavior({
         "time_taken": response_time,
         "idle_time": idle_time,
         "rewrite_count": rewrite_count,
@@ -107,28 +107,35 @@ def process_question(data):
         "skipped": skipped
     })
 
-    strategy_pred = predict_strategy({
+    strategy_pred, strategy_conf = predict_strategy({
         "confidence": confidence,
         "time_taken": response_time,
         "correct": correct
     })
 
     # ---------------- HUMAN TELEMETRY OVERRIDE V2 ----------------
+    # If a rule-based override triggers, set confidence to 0.95 (override certainty)
     if hesitation_score > 0.42 or hover_count >= 6 or same_option_clicks >= 3:
         behavior_pred = "overthinking"
+        behavior_conf = 0.95
 
     if confidence_error > 0.50:
         understanding_pred = 2
+        understanding_conf = 0.95
 
     if reflection_length > 0 and reflection_length < 15:
         understanding_pred = 2
+        understanding_conf = 0.95
 
     if attempts > 1 or same_option_clicks > 1:
         strategy_pred = "trial-based"
+        strategy_conf = 0.95
 
     if correct == 1 and hesitation_score < 0.18 and confidence > 0.78:
         understanding_pred = 1
+        understanding_conf = 0.95
         strategy_pred = "concept-based"
+        strategy_conf = 0.95
 
     cognitive_flag = build_cognitive_flag(
         understanding_pred,
@@ -154,8 +161,11 @@ def process_question(data):
         "confidence_error": confidence_error,
         "engagement_score": engagement_score,
         "understanding_pred": understanding_pred,
+        "understanding_conf": understanding_conf,
         "behavior_pred": behavior_pred,
+        "behavior_conf": behavior_conf,
         "strategy_pred": strategy_pred,
+        "strategy_conf": strategy_conf,
         "cognitive_flag": cognitive_flag,
         "hover_count": hover_count,
         "same_option_clicks": same_option_clicks,

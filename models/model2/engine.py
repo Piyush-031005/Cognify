@@ -13,9 +13,9 @@ def predict_strategy(data):
         "time_taken": float,
         "correct": int
     }
+    returns (str_pred, float_confidence)
     """
-
-    # 🔥 Feature engineering (same as training)
+    # Feature engineering (same as training)
     confidence_error = data["confidence"] * (1 - data["correct"])
     speed_score = 10 / data["time_taken"] if data["time_taken"] > 0 else 0
     fake_confidence = 1 if (data["confidence"] >= 4 and data["correct"] == 0) else 0
@@ -31,5 +31,11 @@ def predict_strategy(data):
     }])
 
     pred = model.predict(df)[0]
+    
+    # Calculate probability/confidence of the predicted class
+    probs = model.predict_proba(df)[0]
+    classes = list(model.classes_)
+    pred_idx = classes.index(pred)
+    conf = float(probs[pred_idx])
 
-    return str(pred)
+    return str(pred), round(conf, 3)

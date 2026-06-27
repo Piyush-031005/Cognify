@@ -1,8 +1,6 @@
 import joblib
 import pandas as pd
-
 import os
-import joblib
 
 BASE_DIR = os.path.dirname(__file__)
 
@@ -18,11 +16,17 @@ def predict_understanding(data):
         "is_application": int,
         "correct": int
     }
+    returns (int_pred, float_confidence)
     """
-
     df = pd.DataFrame([data])
     df_scaled = scaler.transform(df)
 
     pred = model.predict(df_scaled)[0]
+    
+    # Calculate probability/confidence of the predicted class
+    probs = model.predict_proba(df_scaled)[0]
+    classes = list(model.classes_)
+    pred_idx = classes.index(pred)
+    conf = float(probs[pred_idx])
 
-    return int(pred)
+    return int(pred), round(conf, 3)
