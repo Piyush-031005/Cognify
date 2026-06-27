@@ -445,6 +445,25 @@ def init_db():
     )
     """)
 
+
+    # Append-only Cognitive Memory Events
+    cur.execute('''
+    CREATE TABLE IF NOT EXISTS student_memory_events (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        student_email TEXT,
+        node_id TEXT,
+        memory_type TEXT, -- 'concept', 'misconception', 'intervention'
+        retrieval_strength REAL,
+        storage_strength REAL,
+        confidence REAL,
+        update_reason TEXT,
+        evidence_count INTEGER,
+        effectiveness_delta REAL,
+        memory_model_version TEXT DEFAULT 'v1.0',
+        timestamp TEXT
+    )
+    ''')
+
     conn.commit()
     conn.close()
 
@@ -1213,7 +1232,9 @@ def upgrade_database_schema():
         teacher_confidence REAL DEFAULT 0.0,
         historical_stability REAL DEFAULT 1.0,
         overall_confidence REAL DEFAULT 0.0,
-        canonical_id TEXT
+        canonical_id TEXT,
+        severity TEXT DEFAULT 'moderate',
+        recommended_intervention TEXT
     )
     """)
 
