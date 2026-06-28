@@ -11,9 +11,9 @@
 ## ===================================
 
 * **Architecture Status:** Frozen
-* **Current Version:** `v1.5.0`
-* **Current Sprint:** Week 7 (Concept-Level Cognitive Error Intelligence)
-* **Current Focus:** Cross-module Integration & Regression Sprint
+* **Current Version:** `v1.6.0`
+* **Current Sprint:** Week 8 (Educational Memory v2)
+* **Current Focus:** Educational Memory v2.0
 
 ### 🚫 DO NOT:
 * Redesign architecture
@@ -154,11 +154,11 @@ $$\text{Generated} \rightarrow \text{Viewed} \rightarrow \text{Accepted} \righta
 * **Week 5:** Pilot Analytics & Statistical Validation Engine
 
 ### Current/Next Sprint (Phase 2: Self Improving Intelligence)
-We are currently entering **Week 7 (Concept-Level Cognitive Error Intelligence)**. The priority tasks in order are:
+We are currently entering **Week 8 (Educational Memory v2)**. The priority tasks in order are:
 1. **Automatic Prerequisite Discovery (APD) v2.0** [Completed ✅]
 2. **Misconception Discovery v2.0** [Completed ✅]
-3. **Cross-module Integration & Regression Sprint** [Next Focus ➔]
-4. **Educational Memory v2.0**
+3. **Cross-module Integration & Regression Sprint (v2.0)** [Completed ✅]
+4. **Educational Memory v2.0** [Next Focus ➔]
 5. **Context Engine v2.0**
 6. **QQI Calibration Feedback Loop**
 *No other tasks are permitted in this sprint.*

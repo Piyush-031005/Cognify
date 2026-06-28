@@ -5,6 +5,14 @@ All notable changes to the Cognify platform will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to Semantic Versioning.
 
+## [1.6.0] - 2026-06-28
+
+### Added
+- Created central test runner `run_regression.py` validating schema migration idempotency, executing all 13 tests sequentially, compiling performance benchmarks, and outputting structured execution reports.
+- Created `tests/test_e2e_integration.py` to programmatically verify the end-to-end learning lifecycle (Student Telemetry Ingestion ➔ QQI calculations ➔ Student Mastery Updates ➔ APD Candidate Generation & Approvals ➔ Misconception Discovery & Confirmations ➔ Digital Twin profiles ➔ Recommendations ➔ Recommendation execution logs ➔ Pilot Analytics outcomes evaluation).
+- Created `docs/PERFORMANCE_BASELINE.md` establishing runtime baselines for engines, database read/writes, schema migrations, and test suites.
+- Created `regression_report.md` artifact representing the detailed cross-module validation and regression status summary.
+
 ## [1.5.0] - 2026-06-28
 
 ### Added
