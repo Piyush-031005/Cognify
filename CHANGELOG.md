@@ -5,6 +5,25 @@ All notable changes to the Cognify platform will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to Semantic Versioning.
 
+## [1.9.0] - 2026-06-28
+
+### Added (Week 10 — QQI Calibration Feedback Loop)
+- **Closed-Loop QQI Calibration Engine** (`qqi_engine.py`): Dynamically evaluates student question response correctness against active cognitive digital twin storage strength and confidence profiles to calibrate item difficulty and quality metrics.
+- **Asynchronous Replay Job Queue** (`replay_jobs`): Prevents SQLite database write locks during bulk student memory updates by enqueuing, staging, and executing projection replays asynchronously. Supported by a state machine (`pending` -> `running` -> `completed` / `failed` -> `retrying`).
+- **Calibration Run Ledger** (`calibration_runs`): Establishes a reproducible audit ledger tracking every execution run, configuration parameters, timing metrics, and counts of processed questions, alerts created/resolved, and replay jobs.
+- **Calibration Version History** (`qqi_calibration_history`): Append-only database table tracking old/new QQI scores, old/new difficulty levels, and reasoning text for every calibration shift.
+- **Automated QQI Alerts** (`qqi_alerts`): Triggers teacher-actionable alerts for questions exhibiting severe calibration drift or falling below configured quarantine thresholds.
+- **Closed-Loop Resolution Pipeline**: Resolving alerts (e.g., 'quarantine') updates question status, marks all past student responses to the question as invalidated (appending `response_invalidated` to `memory_events`), and enqueues replay jobs to reconstruct affected student profiles.
+- **New API Endpoints**:
+  - `POST /qqi/calibrate` — Run full system calibration pass
+  - `GET /qqi/alerts` — Fetch active/resolved calibration alerts
+  - `POST /qqi/alerts/<id>/resolve` — Resolve a calibration alert
+  - `POST /qqi/jobs/process` — Process a batch of pending replay jobs
+  - `GET/POST /qqi/config` — View and edit calibration parameters
+  - `GET /qqi/runs` — Fetch calibration run history
+- **DB Migrations**: Safe, idempotent migrations adding tables for configurations, runs, history, alerts, and replay queue jobs.
+- **Integration Tests**: 12 test cases in `tests/test_qqi_feedback_loop.py` validating all states of the calibration engine, replay worker, version history, ledger, and state machine.
+
 ## [1.8.0] - 2026-06-28
 
 ### Added (Week 9 — Context Engine v2.0)

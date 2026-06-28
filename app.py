@@ -3992,8 +3992,154 @@ def api_recommendations_config():
         return jsonify({"status": "error", "error": str(e)}), 500
 
 
+# =============================================================================
+# WEEK 10: QQI CALIBRATION FEEDBACK LOOP ENDPOINTS
+# =============================================================================
+
+@app.route('/qqi/calibrate', methods=['POST'])
+def api_qqi_calibrate():
+    """
+    POST /qqi/calibrate
+    Triggers a full QQI calibration pass across all eligible questions.
+    Optional body: { "run_id": "<custom-id>" }
+    Returns a run summary including questions processed, alerts created, and execution time.
+    """
+    try:
+        import qqi_engine
+        data = request.get_json(silent=True) or {}
+        run_id = data.get("run_id")
+        result = qqi_engine.run_full_calibration_pass(run_id=run_id)
+        return jsonify({"status": "success", "data": result})
+    except Exception as e:
+        return jsonify({"status": "error", "error": str(e)}), 500
+
+
+@app.route('/qqi/alerts', methods=['GET'])
+def api_qqi_alerts():
+    """
+    GET /qqi/alerts
+    Returns list of active QQI calibration alerts sorted by severity.
+    Optional query params: ?status=active|resolved|all
+    """
+    try:
+        from database import get_conn
+        conn = get_conn()
+        cur = conn.cursor()
+        status_filter = request.args.get("status", "active")
+        if status_filter == "all":
+            cur.execute("""
+                SELECT a.*, qb.qqi_score, qb.calibrated_qqi_score, qb.difficulty
+                FROM qqi_alerts a
+                LEFT JOIN question_bank qb ON qb.id = a.question_id
+                ORDER BY a.created_at DESC
+            """)
+        else:
+            cur.execute("""
+                SELECT a.*, qb.qqi_score, qb.calibrated_qqi_score, qb.difficulty
+                FROM qqi_alerts a
+                LEFT JOIN question_bank qb ON qb.id = a.question_id
+                WHERE a.status = ?
+                ORDER BY a.created_at DESC
+            """, (status_filter,))
+        rows = [dict(r) for r in cur.fetchall()]
+        conn.close()
+        return jsonify({"status": "success", "count": len(rows), "data": rows})
+    except Exception as e:
+        return jsonify({"status": "error", "error": str(e)}), 500
+
+
+@app.route('/qqi/alerts/<int:alert_id>/resolve', methods=['POST'])
+def api_qqi_alert_resolve(alert_id):
+    """
+    POST /qqi/alerts/<alert_id>/resolve
+    Resolves a QQI alert with a given action.
+    Body: { "action": "quarantine" | "ignore" | "edit", "resolved_by": "<teacher_email>" }
+    - quarantine: Sets question to Low QQI, appends response_invalidated events,
+      enqueues async replay jobs for affected students.
+    - ignore: Marks alert resolved with no further action.
+    - edit: Marks alert resolved (teacher handles content edit separately).
+    """
+    try:
+        import qqi_engine
+        data = request.get_json(silent=True) or {}
+        action = data.get("action", "ignore")
+        resolved_by = data.get("resolved_by", "teacher")
+        if action not in ("quarantine", "ignore", "edit"):
+            return jsonify({"status": "error", "error": f"Invalid action '{action}'. Must be quarantine|ignore|edit"}), 400
+        result = qqi_engine.resolve_qqi_alert(alert_id, action, resolved_by=resolved_by)
+        if "error" in result:
+            return jsonify({"status": "error", "error": result["error"]}), 404
+        return jsonify({"status": "success", "data": result})
+    except Exception as e:
+        return jsonify({"status": "error", "error": str(e)}), 500
+
+
+@app.route('/qqi/jobs/process', methods=['POST'])
+def api_qqi_jobs_process():
+    """
+    POST /qqi/jobs/process
+    Triggers a batch of pending replay jobs to process.
+    Optional body: { "batch_size": 50, "worker_id": "<id>" }
+    Returns: jobs_processed, completed, failed, average_replay_time_ms.
+    """
+    try:
+        import qqi_engine
+        data = request.get_json(silent=True) or {}
+        batch_size = int(data.get("batch_size", 50))
+        worker_id = data.get("worker_id")
+        result = qqi_engine.process_replay_jobs(worker_id=worker_id, batch_size=batch_size)
+        return jsonify({"status": "success", "data": result})
+    except Exception as e:
+        return jsonify({"status": "error", "error": str(e)}), 500
+
+
+@app.route('/qqi/config', methods=['GET', 'POST'])
+def api_qqi_config():
+    """
+    GET /qqi/config - Returns all QQI calibration configuration parameters.
+    POST /qqi/config - Updates one or more configuration parameters.
+    Body for POST: { "key": "value", ... }
+    """
+    try:
+        import qqi_engine
+        if request.method == 'POST':
+            data = request.get_json(silent=True) or {}
+            updated = []
+            for key, val in data.items():
+                result = qqi_engine.update_qqi_config(key, val)
+                updated.append(result)
+            return jsonify({"status": "success", "updated": updated})
+        else:
+            rows = qqi_engine.get_qqi_config()
+            return jsonify({"status": "success", "data": rows})
+    except Exception as e:
+        return jsonify({"status": "error", "error": str(e)}), 500
+
+
+@app.route('/qqi/runs', methods=['GET'])
+def api_qqi_runs():
+    """
+    GET /qqi/runs
+    Returns calibration run history with operational metrics.
+    Optional: ?limit=20
+    """
+    try:
+        from database import get_conn
+        conn = get_conn()
+        cur = conn.cursor()
+        limit = int(request.args.get("limit", 20))
+        cur.execute("""
+            SELECT * FROM calibration_runs
+            ORDER BY started_at DESC LIMIT ?
+        """, (limit,))
+        rows = [dict(r) for r in cur.fetchall()]
+        conn.close()
+        return jsonify({"status": "success", "count": len(rows), "data": rows})
+    except Exception as e:
+        return jsonify({"status": "error", "error": str(e)}), 500
+
+
 if __name__ == "__main__":
     upgrade_question_bank_schema()
     upgrade_semantic_schema()
     app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 10000)))
-

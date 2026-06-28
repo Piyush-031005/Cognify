@@ -748,6 +748,80 @@ def init_db():
     )
     """)
 
+    # --- Week 10: QQI Calibration Feedback Loop ---
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS qqi_calibration_config (
+        key TEXT PRIMARY KEY,
+        value REAL,
+        config_version TEXT DEFAULT 'v1.0',
+        updated_by TEXT DEFAULT 'system',
+        updated_at TEXT
+    )
+    """)
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS calibration_runs (
+        run_id TEXT PRIMARY KEY,
+        started_at TEXT,
+        completed_at TEXT,
+        config_version TEXT DEFAULT 'v1.0',
+        questions_processed INTEGER DEFAULT 0,
+        alerts_created INTEGER DEFAULT 0,
+        questions_quarantined INTEGER DEFAULT 0,
+        execution_time_ms REAL DEFAULT 0.0,
+        status TEXT DEFAULT 'running',
+        alerts_resolved INTEGER DEFAULT 0,
+        replay_jobs_created INTEGER DEFAULT 0,
+        replay_jobs_completed INTEGER DEFAULT 0,
+        replay_jobs_failed INTEGER DEFAULT 0,
+        average_replay_time_ms REAL DEFAULT 0.0
+    )
+    """)
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS qqi_calibration_history (
+        history_id INTEGER PRIMARY KEY AUTOINCREMENT,
+        question_id INTEGER,
+        old_qqi REAL,
+        new_qqi REAL,
+        old_difficulty TEXT,
+        new_difficulty TEXT,
+        reason TEXT,
+        calibration_run_id TEXT,
+        config_version TEXT DEFAULT 'v1.0',
+        timestamp TEXT
+    )
+    """)
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS qqi_alerts (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        question_id INTEGER,
+        alert_type TEXT,
+        severity TEXT DEFAULT 'medium',
+        description TEXT,
+        calibration_run_id TEXT,
+        status TEXT DEFAULT 'active',
+        resolved_by TEXT,
+        resolution_action TEXT,
+        resolved_at TEXT,
+        created_at TEXT
+    )
+    """)
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS replay_jobs (
+        job_id TEXT PRIMARY KEY,
+        question_id INTEGER,
+        student_email TEXT,
+        status TEXT DEFAULT 'pending',
+        attempts INTEGER DEFAULT 0,
+        max_retries INTEGER DEFAULT 3,
+        retry_count INTEGER DEFAULT 0,
+        created_at TEXT,
+        started_at TEXT,
+        completed_at TEXT,
+        last_error TEXT,
+        worker_id TEXT
+    )
+    """)
+
     conn.commit()
     conn.close()
 
@@ -2165,6 +2239,112 @@ def upgrade_database_schema():
             """, (k, val, now_str_ctx))
         except Exception:
             pass
+
+    # --- Week 10: QQI Calibration Feedback Loop ---
+
+    # QQI Calibration Configuration table (all thresholds read from DB)
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS qqi_calibration_config (
+        key TEXT PRIMARY KEY,
+        value REAL,
+        config_version TEXT DEFAULT 'v1.0',
+        updated_by TEXT DEFAULT 'system',
+        updated_at TEXT
+    )
+    """)
+
+    qqi_cal_defaults = {
+        "min_responses_for_calibration": 10.0,
+        "high_memory_threshold": 0.8,
+        "low_memory_threshold": 0.3,
+        "high_memory_failure_rate_limit": 0.20,
+        "low_memory_success_rate_limit": 0.20,
+        "qqi_quarantine_threshold": 70.0,
+        "drift_alert_threshold": 15.0,
+        "max_replay_retries": 3.0,
+    }
+    now_str_qqi = datetime.now().isoformat()
+    for k, val in qqi_cal_defaults.items():
+        try:
+            cur.execute("""
+                INSERT OR IGNORE INTO qqi_calibration_config (key, value, config_version, updated_by, updated_at)
+                VALUES (?, ?, 'v1.0', 'system', ?)
+            """, (k, val, now_str_qqi))
+        except Exception:
+            pass
+
+    # Calibration Run Ledger
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS calibration_runs (
+        run_id TEXT PRIMARY KEY,
+        started_at TEXT,
+        completed_at TEXT,
+        config_version TEXT DEFAULT 'v1.0',
+        questions_processed INTEGER DEFAULT 0,
+        alerts_created INTEGER DEFAULT 0,
+        questions_quarantined INTEGER DEFAULT 0,
+        execution_time_ms REAL DEFAULT 0.0,
+        status TEXT DEFAULT 'running',
+        alerts_resolved INTEGER DEFAULT 0,
+        replay_jobs_created INTEGER DEFAULT 0,
+        replay_jobs_completed INTEGER DEFAULT 0,
+        replay_jobs_failed INTEGER DEFAULT 0,
+        average_replay_time_ms REAL DEFAULT 0.0
+    )
+    """)
+
+    # QQI Calibration History (append-only, never overwritten)
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS qqi_calibration_history (
+        history_id INTEGER PRIMARY KEY AUTOINCREMENT,
+        question_id INTEGER,
+        old_qqi REAL,
+        new_qqi REAL,
+        old_difficulty TEXT,
+        new_difficulty TEXT,
+        reason TEXT,
+        calibration_run_id TEXT,
+        config_version TEXT DEFAULT 'v1.0',
+        timestamp TEXT,
+        FOREIGN KEY (calibration_run_id) REFERENCES calibration_runs(run_id)
+    )
+    """)
+
+    # QQI Alerts for teacher review
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS qqi_alerts (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        question_id INTEGER,
+        alert_type TEXT,
+        severity TEXT DEFAULT 'medium',
+        description TEXT,
+        calibration_run_id TEXT,
+        status TEXT DEFAULT 'active',
+        resolved_by TEXT,
+        resolution_action TEXT,
+        resolved_at TEXT,
+        created_at TEXT,
+        FOREIGN KEY (calibration_run_id) REFERENCES calibration_runs(run_id)
+    )
+    """)
+
+    # Replay Jobs Queue (asynchronous, never synchronous during quarantine)
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS replay_jobs (
+        job_id TEXT PRIMARY KEY,
+        question_id INTEGER,
+        student_email TEXT,
+        status TEXT DEFAULT 'pending',
+        attempts INTEGER DEFAULT 0,
+        max_retries INTEGER DEFAULT 3,
+        retry_count INTEGER DEFAULT 0,
+        created_at TEXT,
+        started_at TEXT,
+        completed_at TEXT,
+        last_error TEXT,
+        worker_id TEXT
+    )
+    """)
 
     conn.commit()
     conn.close()
