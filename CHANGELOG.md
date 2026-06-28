@@ -5,6 +5,35 @@ All notable changes to the Cognify platform will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to Semantic Versioning.
 
+## [1.7.0] - 2026-06-28
+
+### Added (Week 8 — Educational Memory v2.0)
+- **Event Sourcing Architecture**: `memory_events` is now the append-only, immutable source of truth. Every interaction appends an immutable event with full provenance metadata (`event_version`, `source_module`, `algorithm_version`, `qqi_version`, `twin_version`, `config_version`).
+- **Deterministic Projector**: `project_concept_memory()` replays all events for a `(student, concept)` pair deterministically to rebuild `concept_memory`. Rule 11 guaranteed: identical events + identical config → identical final state.
+- **Memory State Machine**: Six-state machine (`Unknown → Learning → Stable → At Risk → Forgotten → Recovered`) driven strictly by evidence. No direct jumps. All transitions logged in `memory_state_transitions`.
+- **Ebbinghaus Decay Engine**: Retrieval strength `R(t) = e^(−t·f/S)`, next review scheduling via `t = S·ln(1/R_threshold)/f`, and 7/14/30-day decay predictions with uncertainty estimates.
+- **Explainability**: `concept_memory.memory_explanation` stores human-readable JSON rationale (positives, negatives, decay_days, decay_retrieval_strength).
+- **Provenance Tracking**: Every projection records `derived_from` (list of contributing source modules) and `trigger_event_id`.
+- **Alert Generation**: `memory_alerts` table auto-populated when concept enters `At Risk` or `Forgotten` state; `prerequisite_failure` alert raised when a prerequisite concept is forgotten.
+- **Dynamic Review Scheduling**: `review_schedule` updated on every projection with configurable priority formula: `priority = memory_risk + misconception_severity + prerequisite_importance + teacher_priority + exam_weight`.
+- **Configuration Versioning**: All thresholds and weights stored in `memory_config` with `config_version`. No hardcoded weights anywhere.
+- **REST API Suite** (`/memory/...`):
+  - `GET /memory/student/<student>` — full longitudinal profile (mastered/at_risk/forgetting/misconceptions)
+  - `GET /memory/concept/<student>/<concept>` — projection detail with explainability
+  - `GET /memory/review_queue/<student>` — priority-sorted review queue
+  - `GET /memory/statistics` — platform-wide aggregated statistics
+  - `GET /memory/health` — engine health and config snapshot (computation-only, no business logic)
+  - `GET /memory/replay/<student>/<concept>` — full chronological event log + state transition audit (Rule 11 support)
+  - `POST /memory/update` — record new memory event and trigger projection
+  - `POST /memory/review_complete` — mark scheduled review complete and record outcome
+- **Integration Tests**: `tests/test_memory_v2.py` — 35 tests covering DB migration idempotency, event sourcing, state machine, Ebbinghaus decay, deterministic replay, review scheduling, alerts, config isolation, full student profile, and all 8 REST APIs.
+- **ADR-011**: Documents Event Sourcing decision for Educational Memory.
+- **ADR-012**: Documents `concept_memory` as a derived projection, not source of truth.
+
+### Changed
+- `api_student_memory` route (`GET /memory/student/<email>`) upgraded to return standardized `{"status": "success", "data": {...}}` response envelope (backward-compatible).
+- `tests/test_memory_integration.py` and `tests/test_qqi_calibration.py` updated to seed v2.0 memory tables (`memory_config`, `memory_events`, `concept_memory`, `memory_state_transitions`, `review_schedule`, `memory_alerts`) in their in-memory mock DBs for regression compatibility.
+
 ## [1.6.0] - 2026-06-28
 
 ### Added

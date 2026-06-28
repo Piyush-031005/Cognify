@@ -11,9 +11,9 @@
 ## ===================================
 
 * **Architecture Status:** Frozen
-* **Current Version:** `v1.6.0`
-* **Current Sprint:** Week 8 (Educational Memory v2)
-* **Current Focus:** Educational Memory v2.0
+* **Current Version:** `v1.7.0`
+* **Current Sprint:** Week 8 Complete (Educational Memory v2.0 ✅)
+* **Current Focus:** Preparing for Week 9 — Context Engine v2.0
 
 ### 🚫 DO NOT:
 * Redesign architecture
@@ -141,6 +141,8 @@ $$\text{Generated} \rightarrow \text{Viewed} \rightarrow \text{Accepted} \righta
 * **[ADR 006](file:///f:/Cognify/docs/ADR/ADR-006-Automatic-Prerequisite-Discovery.md) / [008](file:///f:/Cognify/docs/ADR/ADR-008-Why-Candidate-Edge-Pipeline.md) / [009](file:///f:/Cognify/docs/ADR/ADR-009-Why-Statistical-Discovery-First.md): APD Pipeline** — Statistical discovery of prerequisite links using struggle data, verified by a candidate edge pipeline.
 * **[ADR 007](file:///f:/Cognify/docs/ADR/ADR-007-Why-Human-Validation.md): Human-in-the-Loop Validation** — Ensures AI-discovered relationships are reviewed by teachers/experts to reject pedagogically unsound statistical anomalies.
 * **[ADR 010](file:///f:/Cognify/docs/ADR/ADR-010-Misconceptions-Belong-To-Concepts.md): Misconceptions Belong to Concepts, Not Questions** — Decoupled cognitive gaps from individual questions to ensure stable tracking across question banks.
+* **[ADR 011](file:///f:/Cognify/docs/ADR/ADR-011-Educational-Memory-Uses-Event-Sourcing.md): Educational Memory Uses Event Sourcing** — `memory_events` is the immutable append-only source of truth; `concept_memory` is a derived projection. Guarantees deterministic replay (Rule 11).
+* **[ADR 012](file:///f:/Cognify/docs/ADR/ADR-012-Concept-Memory-Is-Derived-Projection.md): Concept Memory Is a Derived Projection** — `concept_memory` is never directly written; the projector function `project_concept_memory()` rebuilds it from `memory_events` after every event append.
 
 ---
 
@@ -154,14 +156,14 @@ $$\text{Generated} \rightarrow \text{Viewed} \rightarrow \text{Accepted} \righta
 * **Week 5:** Pilot Analytics & Statistical Validation Engine
 
 ### Current/Next Sprint (Phase 2: Self Improving Intelligence)
-We are currently entering **Week 8 (Educational Memory v2)**. The priority tasks in order are:
+We are currently in **Week 9 (Context Engine v2.0)**. The Phase 2 task order is:
 1. **Automatic Prerequisite Discovery (APD) v2.0** [Completed ✅]
 2. **Misconception Discovery v2.0** [Completed ✅]
 3. **Cross-module Integration & Regression Sprint (v2.0)** [Completed ✅]
-4. **Educational Memory v2.0** [Next Focus ➔]
-5. **Context Engine v2.0**
+4. **Educational Memory v2.0** [Completed ✅]
+5. **Context Engine v2.0** [Next Focus ➔]
 6. **QQI Calibration Feedback Loop**
-*No other tasks are permitted in this sprint.*
+*No other tasks are permitted until Context Engine v2.0 is complete.*
 
 ---
 

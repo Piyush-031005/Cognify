@@ -70,7 +70,7 @@ def setup_test_db():
         correct INTEGER
     )
     ''')
-    # Student Memory Events
+    # Student Memory Events (v1.0 legacy table)
     cur.execute('''
     CREATE TABLE IF NOT EXISTS student_memory_events (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -87,11 +87,74 @@ def setup_test_db():
         timestamp TEXT
     )
     ''')
+    # Week 8: v2.0 tables required by memory_engine
+    cur.execute('''
+    CREATE TABLE IF NOT EXISTS memory_config (
+        key TEXT PRIMARY KEY,
+        value REAL,
+        config_version TEXT DEFAULT 'v1.0',
+        updated_by TEXT DEFAULT 'system',
+        updated_at TEXT
+    )
+    ''')
+    cur.execute('''
+    CREATE TABLE IF NOT EXISTS memory_events (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        student_email TEXT, concept_id TEXT, event_type TEXT, payload TEXT,
+        event_version TEXT DEFAULT 'v2.0', source_module TEXT,
+        algorithm_version TEXT DEFAULT 'v2.0', qqi_version TEXT DEFAULT 'v1.2',
+        twin_version TEXT DEFAULT 'v2.0', config_version TEXT DEFAULT 'v1.0', timestamp TEXT
+    )
+    ''')
+    cur.execute('''
+    CREATE TABLE IF NOT EXISTS concept_memory (
+        id INTEGER PRIMARY KEY AUTOINCREMENT, student_email TEXT, concept_id TEXT,
+        memory_strength REAL, forgetting_rate REAL, memory_state TEXT,
+        memory_confidence REAL, memory_explanation TEXT, derived_from TEXT,
+        trigger_event_id INTEGER, config_version TEXT DEFAULT 'v1.0',
+        reinforcement_count INTEGER, retrieval_success_rate REAL,
+        last_success TEXT, last_failure TEXT, next_review_date TEXT, last_updated TEXT,
+        UNIQUE(student_email, concept_id)
+    )
+    ''')
+    cur.execute('''
+    CREATE TABLE IF NOT EXISTS memory_state_transitions (
+        id INTEGER PRIMARY KEY AUTOINCREMENT, student_email TEXT, concept_id TEXT,
+        old_state TEXT, new_state TEXT, trigger_event_id INTEGER, reason TEXT, timestamp TEXT
+    )
+    ''')
+    cur.execute('''
+    CREATE TABLE IF NOT EXISTS review_schedule (
+        id INTEGER PRIMARY KEY AUTOINCREMENT, student_email TEXT, concept_id TEXT,
+        scheduled_date TEXT, status TEXT, priority REAL, created_at TEXT,
+        UNIQUE(student_email, concept_id)
+    )
+    ''')
+    cur.execute('''
+    CREATE TABLE IF NOT EXISTS memory_alerts (
+        id INTEGER PRIMARY KEY AUTOINCREMENT, student_email TEXT, concept_id TEXT,
+        alert_type TEXT, severity TEXT, description TEXT, status TEXT DEFAULT 'active', timestamp TEXT
+    )
+    ''')
+    from datetime import datetime as _dt
+    now_s = _dt.now().isoformat()
+    defaults = [
+        ("DEFAULT_DECAY_RATE", 0.05), ("DEFAULT_INITIAL_STRENGTH", 0.3),
+        ("REINFORCE_BOOST", 0.15), ("FAILURE_PENALTY", 0.2),
+        ("FORGETTING_THRESHOLD", 0.4), ("ALERT_THRESHOLD_STRENGTH", 0.3),
+        ("REVIEW_INTERVAL_FACTOR", 7.0), ("WEIGHT_MEMORY_RISK", 0.3),
+        ("WEIGHT_MISCONCEPTION_SEVERITY", 0.2), ("WEIGHT_PREREQUISITE_IMPORTANCE", 0.2),
+        ("WEIGHT_TEACHER_PRIORITY", 0.15), ("WEIGHT_EXAM_WEIGHT", 0.15)
+    ]
+    for k, v in defaults:
+        cur.execute("INSERT OR IGNORE INTO memory_config (key, value, config_version, updated_by, updated_at) VALUES (?,?,?,?,?)",
+                    (k, v, 'v1.0', 'system', now_s))
     # Seed data
     cur.execute("INSERT INTO question_bank (id, qqi_score, difficulty) VALUES ('q1', 80.0, 'medium')")
     cur.execute("INSERT INTO question_concepts (question_id, concept_id) VALUES ('q1', 'c1')")
     conn.commit()
     return conn
+
 
 def test_high_memory_failure_calibration():
     # Insert high memory student events

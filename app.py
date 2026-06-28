@@ -3169,8 +3169,12 @@ def api_similar_misconceptions(node_id):
 
 @app.route('/memory/student/<email>', methods=['GET'])
 def api_student_memory(email):
-    memory = get_full_student_memory(email)
-    return jsonify(memory)
+    try:
+        memory = get_full_student_memory(email)
+        return jsonify({"status": "success", "data": memory})
+    except Exception as e:
+        return jsonify({"status": "error", "error": str(e)}), 500
+
 
 @app.route('/memory/student/<email>/timeline/<node_id>', methods=['GET'])
 def api_student_memory_timeline(email, node_id):
@@ -3603,7 +3607,313 @@ def api_reject_misconception():
     return jsonify({"status": "success", "cluster_id": cluster_id, "new_status": "rejected", "new_confidence": new_conf})
 
 
+
+# ==========================================
+# EDUCATIONAL MEMORY v2.0 APIs  (Week 8)
+# ==========================================
+
+import memory_engine
+
+@app.route('/memory/concept/<student>/<concept_id>', methods=['GET'])
+def api_memory_concept(student, concept_id):
+    """
+    GET /memory/concept/<student>/<concept_id>
+    Returns derived concept_memory projection with explainability for one concept.
+    """
+    try:
+        conn = get_conn()
+        cur = conn.cursor()
+        cur.execute(
+            "SELECT * FROM concept_memory WHERE student_email=? AND concept_id=?",
+            (student, concept_id)
+        )
+        row = cur.fetchone()
+        conn.close()
+
+        if not row:
+            # Trigger projection if not yet derived
+            memory_engine.project_concept_memory(student, concept_id)
+            conn = get_conn()
+            cur = conn.cursor()
+            cur.execute(
+                "SELECT * FROM concept_memory WHERE student_email=? AND concept_id=?",
+                (student, concept_id)
+            )
+            row = cur.fetchone()
+            conn.close()
+
+        if not row:
+            return jsonify({"status": "not_found", "message": "No memory events found for this concept"}), 404
+
+        data = dict(row)
+        try:
+            data["memory_explanation"] = json.loads(data["memory_explanation"]) if data["memory_explanation"] else {}
+            data["derived_from"] = json.loads(data["derived_from"]) if data["derived_from"] else []
+        except Exception:
+            pass
+
+        return jsonify({"status": "success", "data": data})
+    except Exception as e:
+        return jsonify({"status": "error", "error": str(e)}), 500
+
+
+@app.route('/memory/review_queue/<student>', methods=['GET'])
+def api_memory_review_queue(student):
+    """
+    GET /memory/review_queue/<student>
+    Returns the student's prioritised review queue, sorted by priority desc.
+    """
+    try:
+        conn = get_conn()
+        cur = conn.cursor()
+        cur.execute("""
+            SELECT rs.*, cm.memory_state, cm.memory_strength, cm.memory_confidence
+            FROM review_schedule rs
+            LEFT JOIN concept_memory cm
+              ON rs.student_email = cm.student_email AND rs.concept_id = cm.concept_id
+            WHERE rs.student_email = ?
+            ORDER BY rs.priority DESC, rs.scheduled_date ASC
+        """, (student,))
+        rows = [dict(r) for r in cur.fetchall()]
+        conn.close()
+        return jsonify({"status": "success", "data": rows, "total": len(rows)})
+    except Exception as e:
+        return jsonify({"status": "error", "error": str(e)}), 500
+
+
+@app.route('/memory/statistics', methods=['GET'])
+def api_memory_statistics():
+    """
+    GET /memory/statistics
+    Returns aggregated platform-level memory statistics.
+    """
+    try:
+        conn = get_conn()
+        cur = conn.cursor()
+
+        cur.execute("SELECT COUNT(DISTINCT student_email) as students FROM memory_events")
+        total_students = cur.fetchone()["students"]
+
+        cur.execute("SELECT COUNT(*) as events FROM memory_events")
+        total_events = cur.fetchone()["events"]
+
+        cur.execute("""
+            SELECT memory_state, COUNT(*) as count
+            FROM concept_memory
+            GROUP BY memory_state
+        """)
+        state_dist = {r["memory_state"]: r["count"] for r in cur.fetchall()}
+
+        cur.execute("SELECT AVG(memory_strength) as avg_s FROM concept_memory")
+        avg_strength = cur.fetchone()["avg_s"] or 0.0
+
+        cur.execute("SELECT COUNT(*) as alerts FROM memory_alerts WHERE status='active'")
+        active_alerts = cur.fetchone()["alerts"]
+
+        cur.execute("SELECT COUNT(*) as overdue FROM review_schedule WHERE status='overdue'")
+        overdue_reviews = cur.fetchone()["overdue"]
+
+        conn.close()
+
+        return jsonify({
+            "status": "success",
+            "data": {
+                "total_students": total_students,
+                "total_memory_events": total_events,
+                "state_distribution": state_dist,
+                "average_memory_strength": round(avg_strength, 3),
+                "active_alerts": active_alerts,
+                "overdue_reviews": overdue_reviews
+            }
+        })
+    except Exception as e:
+        return jsonify({"status": "error", "error": str(e)}), 500
+
+
+@app.route('/memory/health', methods=['GET'])
+def api_memory_health():
+    """
+    GET /memory/health
+    Returns platform health metrics — computation only, no business logic.
+    """
+    try:
+        conn = get_conn()
+        cur = conn.cursor()
+
+        cur.execute("SELECT COUNT(*) as total FROM memory_events")
+        total_events = cur.fetchone()["total"]
+
+        cur.execute("SELECT COUNT(*) as total FROM concept_memory")
+        total_projections = cur.fetchone()["total"]
+
+        cur.execute("SELECT COUNT(*) as total FROM memory_state_transitions")
+        total_transitions = cur.fetchone()["total"]
+
+        cur.execute("SELECT COUNT(*) as total FROM memory_alerts WHERE status='active'")
+        active_alerts = cur.fetchone()["total"]
+
+        cur.execute("""
+            SELECT key, value, config_version FROM memory_config
+        """)
+        config_rows = [dict(r) for r in cur.fetchall()]
+
+        conn.close()
+
+        return jsonify({
+            "status": "success",
+            "engine_version": memory_engine.MEMORY_MODEL_VERSION,
+            "data": {
+                "total_events_recorded": total_events,
+                "total_concept_projections": total_projections,
+                "total_state_transitions": total_transitions,
+                "active_alerts": active_alerts,
+                "config_snapshot": config_rows
+            }
+        })
+    except Exception as e:
+        return jsonify({"status": "error", "error": str(e)}), 500
+
+
+@app.route('/memory/replay/<student>/<concept_id>', methods=['GET'])
+def api_memory_replay(student, concept_id):
+    """
+    GET /memory/replay/<student>/<concept_id>
+    Returns the full chronological event log + state transition audit trail for
+    deterministic replay (Rule 11).
+    """
+    try:
+        conn = get_conn()
+        cur = conn.cursor()
+
+        cur.execute("""
+            SELECT * FROM memory_events
+            WHERE student_email=? AND concept_id=?
+            ORDER BY timestamp ASC, id ASC
+        """, (student, concept_id))
+        events = [dict(r) for r in cur.fetchall()]
+
+        cur.execute("""
+            SELECT * FROM memory_state_transitions
+            WHERE student_email=? AND concept_id=?
+            ORDER BY timestamp ASC, id ASC
+        """, (student, concept_id))
+        transitions = [dict(r) for r in cur.fetchall()]
+
+        # Parse payload blobs for readability
+        for ev in events:
+            try:
+                ev["payload"] = json.loads(ev["payload"]) if ev["payload"] else {}
+            except Exception:
+                pass
+
+        conn.close()
+
+        return jsonify({
+            "status": "success",
+            "student_email": student,
+            "concept_id": concept_id,
+            "event_count": len(events),
+            "transition_count": len(transitions),
+            "events": events,
+            "state_transitions": transitions
+        })
+    except Exception as e:
+        return jsonify({"status": "error", "error": str(e)}), 500
+
+
+@app.route('/memory/update', methods=['POST'])
+def api_memory_update():
+    """
+    POST /memory/update
+    Records a new memory event and triggers projector.
+
+    Required JSON body:
+    {
+        "student_email": str,
+        "concept_id":    str,
+        "event_type":    str,   # e.g. 'correct_answer', 'wrong_answer', 'review_completed'
+        "source_module": str,   # e.g. 'qqi', 'misconception', 'teacher'
+        "payload":       dict   # optional additional context
+    }
+    """
+    try:
+        data = request.get_json(silent=True) or {}
+        student = data.get("student_email")
+        concept_id = data.get("concept_id")
+        event_type = data.get("event_type")
+        source_module = data.get("source_module", "unknown")
+        payload = data.get("payload", {})
+
+        if not student or not concept_id or not event_type:
+            return jsonify({
+                "status": "error",
+                "error": "Missing required fields: student_email, concept_id, event_type"
+            }), 400
+
+        result = memory_engine.record_memory_event(
+            email=student,
+            node_id=concept_id,
+            memory_type_or_event_type=event_type,
+            update_reason_or_payload=payload,
+            source_module=source_module
+        )
+
+        return jsonify({"status": "success", "projection": result})
+    except Exception as e:
+        return jsonify({"status": "error", "error": str(e)}), 500
+
+
+@app.route('/memory/review_complete', methods=['POST'])
+def api_memory_review_complete():
+    """
+    POST /memory/review_complete
+    Marks a scheduled review as completed and records the outcome event.
+
+    Required JSON body:
+    {
+        "student_email": str,
+        "concept_id":    str,
+        "outcome":       str   # 'success' | 'failure'
+    }
+    """
+    try:
+        data = request.get_json(silent=True) or {}
+        student = data.get("student_email")
+        concept_id = data.get("concept_id")
+        outcome = data.get("outcome", "success")
+
+        if not student or not concept_id:
+            return jsonify({
+                "status": "error",
+                "error": "Missing required fields: student_email, concept_id"
+            }), 400
+
+        event_type = "correct_answer" if outcome == "success" else "wrong_answer"
+        result = memory_engine.record_memory_event(
+            email=student,
+            node_id=concept_id,
+            memory_type_or_event_type=event_type,
+            update_reason_or_payload={"trigger": "review_complete", "outcome": outcome},
+            source_module="review_scheduler"
+        )
+
+        # Update review_schedule row status
+        conn = get_conn()
+        cur = conn.cursor()
+        cur.execute("""
+            UPDATE review_schedule SET status='completed'
+            WHERE student_email=? AND concept_id=?
+        """, (student, concept_id))
+        conn.commit()
+        conn.close()
+
+        return jsonify({"status": "success", "outcome": outcome, "projection": result})
+    except Exception as e:
+        return jsonify({"status": "error", "error": str(e)}), 500
+
+
 if __name__ == "__main__":
     upgrade_question_bank_schema()
     upgrade_semantic_schema()
     app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 10000)))
+
