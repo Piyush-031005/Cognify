@@ -1604,7 +1604,7 @@ def upgrade_database_schema():
     if rec_log_exists:
         cur.execute("PRAGMA table_info(recommendations_log)")
         rec_cols = {c[1] for c in cur.fetchall()}
-        # Add any missing lifecycle columns (safe ALTER TABLE)
+        # Add any missing lifecycle and Context Engine v2 columns (safe ALTER TABLE)
         lifecycle_cols = [
             ("status", "TEXT DEFAULT 'generated'"),
             ("pre_score", "REAL DEFAULT 0.0"),
@@ -1618,6 +1618,15 @@ def upgrade_database_schema():
             ("actual_mastery_gain", "REAL DEFAULT 0.0"),
             ("outcome_label", "TEXT DEFAULT 'Insufficient Evidence'"),
             ("telemetry_audit", "TEXT"),
+            ("context_device_type", "TEXT DEFAULT 'desktop'"),
+            ("context_network_quality", "TEXT DEFAULT 'excellent'"),
+            ("context_session_hour", "INTEGER DEFAULT 10"),
+            ("context_class_size", "INTEGER DEFAULT 25"),
+            ("scoring_breakdown", "TEXT"),
+            ("config_version", "TEXT DEFAULT 'v2.0'"),
+            ("context_quality", "TEXT DEFAULT 'FALLBACK'"),
+            ("confidence_score", "REAL DEFAULT 1.0"),
+            ("confidence_reason", "TEXT"),
         ]
         for col_name, col_def in lifecycle_cols:
             if col_name not in rec_cols:
@@ -1648,7 +1657,16 @@ def upgrade_database_schema():
             expected_mastery_gain REAL DEFAULT 0.20,
             actual_mastery_gain REAL DEFAULT 0.0,
             outcome_label TEXT DEFAULT 'Insufficient Evidence',
-            telemetry_audit TEXT
+            telemetry_audit TEXT,
+            context_device_type TEXT DEFAULT 'desktop',
+            context_network_quality TEXT DEFAULT 'excellent',
+            context_session_hour INTEGER DEFAULT 10,
+            context_class_size INTEGER DEFAULT 25,
+            scoring_breakdown TEXT,
+            config_version TEXT DEFAULT 'v2.0',
+            context_quality TEXT DEFAULT 'FALLBACK',
+            confidence_score REAL DEFAULT 1.0,
+            confidence_reason TEXT
         )
         """)
 
@@ -1658,6 +1676,7 @@ def upgrade_database_schema():
         session_id INTEGER PRIMARY KEY AUTOINCREMENT,
         classroom_id TEXT,
         teacher TEXT,
+
         subject TEXT,
         topic TEXT,
         total_students INTEGER DEFAULT 0,
@@ -2072,8 +2091,84 @@ def upgrade_database_schema():
     )
     """)
 
+    # --- Week 9: Context Engine v2.0 Configuration ---
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS context_recommendations_config (
+        key TEXT PRIMARY KEY,
+        value REAL,
+        config_version TEXT DEFAULT 'v2.0',
+        updated_by TEXT DEFAULT 'system',
+        updated_at TEXT
+    )
+    """)
+
+    context_defaults = {
+        # Cognitive weights (must sum to 1.0)
+        "WEIGHT_MEMORY_RISK": 0.3,
+        "WEIGHT_PREREQUISITE_IMPORTANCE": 0.2,
+        "WEIGHT_MISCONCEPTION_SEVERITY": 0.2,
+        "WEIGHT_QQI_CONFIDENCE": 0.1,
+        "WEIGHT_TEACHER_PRIORITY": 0.1,
+        "WEIGHT_EXAM_WEIGHT": 0.1,
+        
+        # Device multipliers
+        "MULTIPLIER_DEVICE_MOBILE_REMEDIATION": 0.6,
+        "MULTIPLIER_DEVICE_MOBILE_PRACTICE": 0.8,
+        "MULTIPLIER_DEVICE_MOBILE_REVIEW": 1.2,
+        "MULTIPLIER_DEVICE_TABLET_REMEDIATION": 0.9,
+        "MULTIPLIER_DEVICE_TABLET_PRACTICE": 1.0,
+        "MULTIPLIER_DEVICE_TABLET_REVIEW": 1.1,
+        "MULTIPLIER_DEVICE_DESKTOP_REMEDIATION": 1.0,
+        "MULTIPLIER_DEVICE_DESKTOP_PRACTICE": 1.0,
+        "MULTIPLIER_DEVICE_DESKTOP_REVIEW": 1.0,
+        
+        # Network multipliers
+        "MULTIPLIER_NETWORK_POOR_REMEDIATION": 0.2,
+        "MULTIPLIER_NETWORK_POOR_PRACTICE": 0.7,
+        "MULTIPLIER_NETWORK_POOR_REVIEW": 1.1,
+        "MULTIPLIER_NETWORK_AVERAGE_REMEDIATION": 0.7,
+        "MULTIPLIER_NETWORK_AVERAGE_PRACTICE": 0.9,
+        "MULTIPLIER_NETWORK_AVERAGE_REVIEW": 1.0,
+        "MULTIPLIER_NETWORK_GOOD_REMEDIATION": 1.0,
+        "MULTIPLIER_NETWORK_GOOD_PRACTICE": 1.0,
+        "MULTIPLIER_NETWORK_GOOD_REVIEW": 1.0,
+        "MULTIPLIER_NETWORK_EXCELLENT_REMEDIATION": 1.0,
+        "MULTIPLIER_NETWORK_EXCELLENT_PRACTICE": 1.0,
+        "MULTIPLIER_NETWORK_EXCELLENT_REVIEW": 1.0,
+        
+        # Time-of-day multipliers
+        "MULTIPLIER_TIME_LATE_NIGHT_REMEDIATION": 0.5,
+        "MULTIPLIER_TIME_LATE_NIGHT_PRACTICE": 0.8,
+        "MULTIPLIER_TIME_LATE_NIGHT_REVIEW": 1.2,
+        "MULTIPLIER_TIME_SCHOOL_HOURS_REMEDIATION": 1.1,
+        "MULTIPLIER_TIME_SCHOOL_HOURS_PRACTICE": 1.1,
+        "MULTIPLIER_TIME_SCHOOL_HOURS_REVIEW": 0.9,
+        "MULTIPLIER_TIME_STANDARD_REMEDIATION": 1.0,
+        "MULTIPLIER_TIME_STANDARD_PRACTICE": 1.0,
+        "MULTIPLIER_TIME_STANDARD_REVIEW": 1.0,
+        
+        # Class-size multipliers
+        "MULTIPLIER_CLASS_LARGE_REMEDIATION": 0.8,
+        "MULTIPLIER_CLASS_LARGE_PRACTICE": 1.1,
+        "MULTIPLIER_CLASS_LARGE_REVIEW": 1.0,
+        "MULTIPLIER_CLASS_SMALL_REMEDIATION": 1.1,
+        "MULTIPLIER_CLASS_SMALL_PRACTICE": 1.0,
+        "MULTIPLIER_CLASS_SMALL_REVIEW": 1.0,
+    }
+
+    now_str_ctx = datetime.now().isoformat()
+    for k, val in context_defaults.items():
+        try:
+            cur.execute("""
+                INSERT OR IGNORE INTO context_recommendations_config (key, value, config_version, updated_by, updated_at)
+                VALUES (?, ?, 'v2.0', 'system', ?)
+            """, (k, val, now_str_ctx))
+        except Exception:
+            pass
+
     conn.commit()
     conn.close()
+
     
     # Seed the Knowledge Graph
     seed_knowledge_graph()

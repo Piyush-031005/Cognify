@@ -11,9 +11,9 @@
 ## ===================================
 
 * **Architecture Status:** Frozen
-* **Current Version:** `v1.7.0`
-* **Current Sprint:** Week 8 Complete (Educational Memory v2.0 ✅)
-* **Current Focus:** Preparing for Week 9 — Context Engine v2.0
+* **Current Version:** `v1.8.0`
+* **Current Sprint:** Week 9 Complete (Context Engine v2.0 ✅)
+* **Current Focus:** Week 10 – QQI Calibration Feedback Loop
 
 ### 🚫 DO NOT:
 * Redesign architecture

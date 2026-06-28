@@ -5,6 +5,22 @@ All notable changes to the Cognify platform will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to Semantic Versioning.
 
+## [1.8.0] - 2026-06-28
+
+### Added (Week 9 — Context Engine v2.0)
+- **Stateless Recommendation Engine** (`context_engine.py`): Generates personalized concept recommendations per student with deterministic, reproducible scoring.
+- **Eligibility / Conflict Resolution Gate**: Hard blocking rules applied before scoring — unmet prerequisites (Forgotten/At Risk state), teacher-blocked concepts, recently-completed concepts, and concepts already at Mastered state are excluded.
+- **Multi-Signal Scoring Formula**: Each concept's score is computed from six weighted components — Educational Memory (retention × mastery), APD prerequisite readiness, Misconception penalty, QQI calibration alignment, Teacher Priority override, and Curriculum/Exam weight.
+- **Context Multipliers**: `session_start_hour`, `device_type`, `network_quality` telemetry signals applied as multiplicative context multipliers with graceful fallback (`context_quality` field: FULL/PARTIAL/FALLBACK).
+- **Explainability Trace**: Every recommendation includes `score_breakdown`, `context_quality`, `missing_signals`, `confidence`, and `confidence_reason` fields for full teacher auditability.
+- **Configuration-Driven Weights**: All scoring weights and multipliers live in `context_recommendations_config` table; no hard-coded values in engine logic.
+- **New API Endpoints**:
+  - `POST /memory/recommendations` — Generate ranked recommendations for a student
+  - `GET /memory/recommendations/config` — View all active scoring configuration
+  - `POST /memory/recommendations/config` — Update scoring configuration at runtime
+- **DB Migrations**: `recommendations_log` enriched with 9 metadata columns; `context_recommendations_config` table created and seeded with defaults.
+- **Integration Tests**: 12 tests in `tests/test_context_engine_v2.py` covering scoring, eligibility gating, determinism, context fallback, and API endpoints.
+
 ## [1.7.0] - 2026-06-28
 
 ### Added (Week 8 — Educational Memory v2.0)

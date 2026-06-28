@@ -3171,9 +3171,24 @@ def api_similar_misconceptions(node_id):
 def api_student_memory(email):
     try:
         memory = get_full_student_memory(email)
+        # Generate recommendations using default fallbacks
+        import context_engine
+        recs = context_engine.generate_contextual_recommendations(email)
+        
+        # Merge recommendations into the student memory profile
+        memory["contextual_recommendations"] = recs["recommendations"]
+        memory["blocked_recommendation_candidates"] = recs["blocked_candidates"]
+        memory["context_telemetry_status"] = {
+            "quality": recs["context_quality"],
+            "confidence": recs["confidence"],
+            "confidence_reason": recs["confidence_reason"],
+            "missing_telemetry_signals": recs["missing_telemetry_signals"]
+        }
+        
         return jsonify({"status": "success", "data": memory})
     except Exception as e:
         return jsonify({"status": "error", "error": str(e)}), 500
+
 
 
 @app.route('/memory/student/<email>/timeline/<node_id>', methods=['GET'])
@@ -3908,6 +3923,71 @@ def api_memory_review_complete():
         conn.close()
 
         return jsonify({"status": "success", "outcome": outcome, "projection": result})
+    except Exception as e:
+        return jsonify({"status": "error", "error": str(e)}), 500
+
+
+# ==========================================
+# CONTEXT ENGINE v2.0 APIs (Week 9)
+# ==========================================
+
+import context_engine
+
+@app.route('/memory/recommendations', methods=['POST'])
+def api_get_recommendations():
+    """
+    POST /memory/recommendations
+    Generates real-time, context-calibrated recommendations for a student.
+    Accepts overrides: device_type, network_quality, session_start_hour, class_size.
+    """
+    try:
+        data = request.get_json(silent=True) or {}
+        student_email = data.get("student_email")
+        if not student_email:
+            return jsonify({"status": "error", "error": "Missing student_email"}), 400
+            
+        overrides = {
+            "device_type": data.get("device_type"),
+            "network_quality": data.get("network_quality"),
+            "session_start_hour": data.get("session_start_hour"),
+            "class_size": data.get("class_size")
+        }
+        # Filter out None values to keep only overrides
+        overrides = {k: v for k, v in overrides.items() if v is not None}
+        
+        result = context_engine.generate_contextual_recommendations(student_email, overrides)
+        return jsonify({"status": "success", "data": result})
+    except Exception as e:
+        return jsonify({"status": "error", "error": str(e)}), 500
+
+@app.route('/memory/recommendations/config', methods=['GET', 'POST'])
+def api_recommendations_config():
+    """
+    GET /memory/recommendations/config: Returns active weights & multipliers
+    POST /memory/recommendations/config: Updates weight & multiplier configuration parameters
+    """
+    try:
+        from database import get_conn
+        conn = get_conn()
+        cur = conn.cursor()
+        
+        if request.method == 'POST':
+            data = request.get_json(silent=True) or {}
+            now_str = datetime.now().isoformat()
+            
+            for key, val in data.items():
+                cur.execute("""
+                    INSERT OR REPLACE INTO context_recommendations_config (key, value, config_version, updated_by, updated_at)
+                    VALUES (?, ?, 'v2.0', 'admin', ?)
+                """, (key, float(val), now_str))
+            conn.commit()
+            conn.close()
+            return jsonify({"status": "success", "message": "Configuration updated successfully"})
+        else:
+            cur.execute("SELECT key, value, config_version, updated_at FROM context_recommendations_config")
+            rows = [dict(r) for r in cur.fetchall()]
+            conn.close()
+            return jsonify({"status": "success", "data": rows})
     except Exception as e:
         return jsonify({"status": "error", "error": str(e)}), 500
 
