@@ -88,7 +88,8 @@ def init_db():
         old_state TEXT,
         new_state TEXT,
         actor TEXT,
-        timestamp TEXT
+        timestamp TEXT,
+        confidence_delta REAL DEFAULT 0.0
     )
     """)
 
@@ -1406,6 +1407,13 @@ def upgrade_database_schema():
         teacher_count INTEGER
     )
     """)
+
+    # Ensure kg_evolution_log has confidence_delta column
+    try:
+        cur.execute("ALTER TABLE kg_evolution_log ADD COLUMN confidence_delta REAL DEFAULT 0.0")
+    except sqlite3.OperationalError:
+        pass
+
     conn.commit()
 
     # Perform migration if backups exist

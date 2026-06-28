@@ -15,14 +15,28 @@ def setup_test_db():
     conn = sqlite3.connect(':memory:', check_same_thread=False)
     conn.row_factory = sqlite3.Row
     
+    class MockConn:
+        def __init__(self, c):
+            self.conn = c
+        def cursor(self):
+            return self.conn.cursor()
+        def commit(self):
+            self.conn.commit()
+        def close(self):
+            pass
+        def __getattr__(self, name):
+            return getattr(self.conn, name)
+            
+    mock_conn = MockConn(conn)
+    
     import database
     database.DB_PATH = ':memory:'
-    database.get_conn = lambda: conn
+    database.get_conn = lambda: mock_conn
     
     import apd_engine
     import app
-    apd_engine.get_conn = lambda: conn
-    app.get_conn = lambda: conn
+    apd_engine.get_conn = lambda: mock_conn
+    app.get_conn = lambda: mock_conn
 
     upgrade_database_schema()
 
@@ -62,6 +76,10 @@ def test_low_sample_rejection(test_db):
 
 def test_discovery_and_duplicate_handling(test_db):
     print("Running test_discovery_and_duplicate_handling...")
+    cur = test_db.cursor()
+    cur.execute("DELETE FROM kg_edges")
+    cur.execute("DELETE FROM kg_edge_evidence")
+    test_db.commit()
     run_apd_discovery('Math', min_sample=50)
     cur = test_db.cursor()
     cur.execute("SELECT * FROM kg_edges WHERE source_id='c1' AND target_id='c2'")

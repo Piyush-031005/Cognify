@@ -10,14 +10,30 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')
 conn = sqlite3.connect(':memory:', check_same_thread=False)
 conn.row_factory = sqlite3.Row
 
+class ConnectionWrapper:
+    def __init__(self, c):
+        self._conn = c
+    def cursor(self, *args, **kwargs):
+        return self._conn.cursor(*args, **kwargs)
+    def commit(self):
+        self._conn.commit()
+    def rollback(self):
+        self._conn.rollback()
+    def close(self):
+        pass
+    def __getattr__(self, name):
+        return getattr(self._conn, name)
+
+wrapped_conn = ConnectionWrapper(conn)
+
 import database
 database.DB_PATH = ':memory:'
-database.get_conn = lambda: conn
+database.get_conn = lambda: wrapped_conn
 
 import md_engine
 import app
-md_engine.get_conn = lambda: conn
-app.get_conn = lambda: conn
+md_engine.get_conn = lambda: wrapped_conn
+app.get_conn = lambda: wrapped_conn
 
 def setup_test_db():
     database.upgrade_database_schema()
@@ -63,7 +79,7 @@ def test_behavior_triggers_discovery():
     res = md_engine.discover_misconceptions()
     assert res["candidates_generated"] == 1, "Failed to generate candidate for genuine misconception behavior!"
     
-    cur.execute("SELECT * FROM kg_nodes WHERE type='misconception'")
+    cur.execute("SELECT * FROM kg_nodes WHERE type='misconception' AND status='candidate'")
     node = cur.fetchone()
     assert node is not None
     assert node["status"] == 'candidate'
