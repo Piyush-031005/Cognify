@@ -1,0 +1,5 @@
+[33m5f3b30d[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m, [m[1;33mtag: [m[1;33mv2.0.0[m[33m, [m[1;31morigin/main[m[33m)[m feat(nbirt): implement Neural Bayesian Item Response Theory 2PL engine
+[33m4c3a80c[m[33m ([m[1;33mtag: [m[1;33mv1.9.0[m[33m)[m feat(qqi): implement QQI Calibration Feedback Loop with async replay jobs queue
+[33me28c199[m feat(context): implement Context Engine v2.0 with multi-signal recommendation scoring
+[33m2085056[m[33m ([m[1;33mtag: [m[1;33mv1.8.0[m[33m)[m feat(context): implement Context Engine v2.0 with multi-signal recommendation scoring
+[33mf6c660e[m[33m ([m[1;33mtag: [m[1;33mv1.7.0[m[33m)[m feat(memory): implement Educational Memory v2.0 with Event Sourcing
