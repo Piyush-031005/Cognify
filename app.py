@@ -2725,6 +2725,300 @@ def api_apd_metrics():
         "recent_runs": runs
     })
 
+# =========================
+# APD V2.0 APIS
+# =========================
+
+@app.route('/apd/config', methods=['GET', 'POST'])
+def api_apd_config():
+    if request.method == 'GET':
+        from database import get_apd_config
+        return jsonify(get_apd_config())
+    else:
+        # POST to update configurations
+        data = request.json or {}
+        conn = get_conn()
+        cur = conn.cursor()
+        for k, v in data.items():
+            cur.execute("INSERT OR REPLACE INTO apd_config (key, value) VALUES (?, ?)", (k, str(v)))
+        conn.commit()
+        conn.close()
+        from database import get_apd_config
+        return jsonify({"success": True, "config": get_apd_config()})
+
+@app.route('/apd/discovered', methods=['GET'])
+def api_apd_discovered():
+    conn = get_conn()
+    cur = conn.cursor()
+    cur.execute("""
+        SELECT e.source_id, e.target_id, e.relation_type, e.overall_confidence, e.status, e.edge_id,
+               n1.name as source_name, n2.name as target_name
+        FROM kg_edges e
+        JOIN kg_nodes n1 ON e.source_id = n1.id
+        JOIN kg_nodes n2 ON e.target_id = n2.id
+        WHERE e.relation_type = 'prerequisite_of'
+    """)
+    edges = [dict(r) for r in cur.fetchall()]
+    conn.close()
+    return jsonify({"discovered_edges": edges})
+
+@app.route('/apd/evidence/<edge_id>', methods=['GET'])
+def api_apd_evidence(edge_id):
+    conn = get_conn()
+    cur = conn.cursor()
+    
+    # If edge_id has a colon, treat it as source_id:target_id
+    if ":" in edge_id:
+        parts = edge_id.split(":")
+        source_id, target_id = parts[0], parts[1]
+        cur.execute("SELECT * FROM kg_edge_evidence WHERE source_id=? AND target_id=? ORDER BY last_updated DESC", (source_id, target_id))
+    else:
+        cur.execute("SELECT * FROM kg_edge_evidence WHERE edge_id=? ORDER BY last_updated DESC", (edge_id,))
+        
+    evidence_rows = [dict(r) for r in cur.fetchall()]
+    conn.close()
+    
+    if not evidence_rows:
+        return jsonify({"error": f"No evidence found for edge {edge_id}"}), 404
+        
+    return jsonify({"edge_id": edge_id, "evidence_history": evidence_rows})
+
+@app.route('/apd/evolution', methods=['GET'])
+def api_apd_evolution():
+    conn = get_conn()
+    cur = conn.cursor()
+    cur.execute("SELECT * FROM kg_evolution_log ORDER BY id DESC LIMIT 100")
+    logs = [dict(r) for r in cur.fetchall()]
+    conn.close()
+    return jsonify({"evolution_logs": logs})
+
+@app.route('/apd/replay/<edge_id>', methods=['GET'])
+def api_apd_replay(edge_id):
+    conn = get_conn()
+    cur = conn.cursor()
+    
+    # If edge_id has a colon, treat it as source_id:target_id
+    if ":" in edge_id:
+        parts = edge_id.split(":")
+        source_id, target_id = parts[0], parts[1]
+        cur.execute("""
+            SELECT * FROM kg_evolution_log 
+            WHERE (entity_id=? OR edge_id=?) 
+            ORDER BY id ASC
+        """, (f"{source_id}->{target_id}", edge_id))
+    else:
+        cur.execute("SELECT * FROM kg_evolution_log WHERE edge_id=? ORDER BY id ASC", (edge_id,))
+        
+    replay_logs = [dict(r) for r in cur.fetchall()]
+    conn.close()
+    return jsonify({"edge_id": edge_id, "replay_history": replay_logs})
+
+@app.route('/apd/statistics', methods=['GET'])
+def api_apd_statistics():
+    conn = get_conn()
+    cur = conn.cursor()
+    
+    cur.execute("SELECT COUNT(*) FROM kg_edges WHERE relation_type = 'prerequisite_of' AND status = 'validated'")
+    validated_count = cur.fetchone()[0]
+    
+    cur.execute("SELECT COUNT(*) FROM kg_edges WHERE relation_type = 'prerequisite_of' AND status = 'candidate'")
+    candidate_count = cur.fetchone()[0]
+    
+    cur.execute("SELECT COUNT(*) FROM kg_edges WHERE relation_type = 'prerequisite_of' AND status = 'deprecated'")
+    deprecated_count = cur.fetchone()[0]
+    
+    cur.execute("SELECT AVG(overall_confidence) FROM kg_edges WHERE relation_type = 'prerequisite_of'")
+    avg_confidence = cur.fetchone()[0] or 0.0
+    
+    cur.execute("SELECT COUNT(DISTINCT student_email) FROM student_concept_mastery")
+    total_students = cur.fetchone()[0]
+    
+    cur.execute("SELECT COUNT(*) FROM apd_batch_runs")
+    total_runs = cur.fetchone()[0]
+    
+    conn.close()
+    
+    return jsonify({
+        "statistics": {
+            "validated_edges": validated_count,
+            "candidate_edges": candidate_count,
+            "deprecated_edges": deprecated_count,
+            "average_confidence": round(avg_confidence, 3),
+            "total_students_analyzed": total_students,
+            "total_runs": total_runs
+        }
+    })
+
+@app.route('/apd/run', methods=['POST'])
+def api_apd_run():
+    data = request.json or {}
+    subject = data.get("subject", "Math")
+    min_sample = data.get("min_sample")
+    
+    from apd_engine import run_apd_discovery
+    result = run_apd_discovery(subject, min_sample)
+    return jsonify(result)
+
+@app.route('/apd/approve', methods=['POST'])
+def api_apd_approve():
+    data = request.json or {}
+    edge_id = data.get("edge_id")
+    source_id = data.get("source_id")
+    target_id = data.get("target_id")
+    teacher_email = data.get("teacher_email", "teacher@school.edu")
+    
+    conn = get_conn()
+    cur = conn.cursor()
+    now_str = datetime.utcnow().isoformat()
+    
+    if edge_id:
+        cur.execute("SELECT * FROM kg_edges WHERE edge_id=?", (edge_id,))
+    else:
+        cur.execute("SELECT * FROM kg_edges WHERE source_id=? AND target_id=? AND relation_type='prerequisite_of'", (source_id, target_id))
+        
+    edge = cur.fetchone()
+    if not edge:
+        conn.close()
+        return jsonify({"error": "Edge not found"}), 404
+        
+    s_id, t_id, e_id, old_overall = edge["source_id"], edge["target_id"], edge["edge_id"], edge["overall_confidence"]
+    
+    # Update teacher support in the latest evidence row, or insert a new one
+    cur.execute("SELECT id FROM kg_edge_evidence WHERE source_id=? AND target_id=? ORDER BY last_updated DESC LIMIT 1", (s_id, t_id))
+    latest_ev = cur.fetchone()
+    
+    if latest_ev:
+        cur.execute("UPDATE kg_edge_evidence SET teacher_support = teacher_support + 1 WHERE id=?", (latest_ev["id"],))
+    else:
+        ev_id = str(uuid.uuid4())
+        cur.execute("""
+            INSERT INTO kg_edge_evidence (id, edge_id, source_id, target_id, relation_type, teacher_support, teacher_rejections, last_updated)
+            VALUES (?, ?, ?, ?, 'prerequisite_of', 1, 0, ?)
+        """, (ev_id, e_id, s_id, t_id, now_str))
+        
+    # Recalculate teacher confidence
+    cur.execute("SELECT SUM(teacher_support) as support, SUM(teacher_rejections) as rejections FROM kg_edge_evidence WHERE source_id=? AND target_id=?", (s_id, t_id))
+    votes = cur.fetchone()
+    support = votes["support"] or 0
+    rejections = votes["rejections"] or 0
+    teacher_conf = support / (support + rejections) if (support + rejections) > 0 else 0.5
+    
+    # Load config and recalculate overall confidence
+    from apd_engine import load_config
+    cfg = load_config()
+    stat_weight = cfg.get("STAT_WEIGHT", 0.4)
+    teacher_weight = cfg.get("TEACHER_WEIGHT", 0.3)
+    history_weight = cfg.get("HISTORY_WEIGHT", 0.2)
+    sample_weight = cfg.get("SAMPLE_WEIGHT", 0.1)
+    
+    cur.execute("SELECT confidence_score, sample_size FROM kg_edge_evidence WHERE source_id=? AND target_id=? ORDER BY last_updated DESC LIMIT 1", (s_id, t_id))
+    ev = cur.fetchone()
+    stat_conf = ev["confidence_score"] if ev else 0.5
+    total_samples = ev["sample_size"] if ev else 0
+    
+    min_sample = cfg.get("MIN_SAMPLE_SIZE", 30)
+    sample_reliability = min(1.0, total_samples / min_sample) if min_sample > 0 else 1.0
+    
+    new_overall = (stat_weight * stat_conf) + (teacher_weight * teacher_conf) + (history_weight * edge["historical_stability"]) + (sample_weight * sample_reliability)
+    
+    # Update status to validated
+    cur.execute("""
+        UPDATE kg_edges
+        SET overall_confidence = ?, status = 'validated', validation_count = validation_count + 1
+        WHERE source_id=? AND target_id=?
+    """, (new_overall, s_id, t_id))
+    
+    # Log evolution
+    cur.execute("""
+        INSERT INTO kg_evolution_log (operation, entity_id, edge_id, old_confidence, new_confidence, reason, actor, timestamp, model_version, confidence_delta, teacher_action)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'v2.0', ?, ?)
+    """, ('teacher_approved', f"{s_id}->{t_id}", e_id, old_overall, new_overall, 'Teacher approved discovered prerequisite.', teacher_email, now_str, new_overall - old_overall, 'approve'))
+    
+    conn.commit()
+    conn.close()
+    
+    return jsonify({"success": True, "status": "validated", "overall_confidence": new_overall})
+
+@app.route('/apd/reject', methods=['POST'])
+def api_apd_reject():
+    data = request.json or {}
+    edge_id = data.get("edge_id")
+    source_id = data.get("source_id")
+    target_id = data.get("target_id")
+    teacher_email = data.get("teacher_email", "teacher@school.edu")
+    
+    conn = get_conn()
+    cur = conn.cursor()
+    now_str = datetime.utcnow().isoformat()
+    
+    if edge_id:
+        cur.execute("SELECT * FROM kg_edges WHERE edge_id=?", (edge_id,))
+    else:
+        cur.execute("SELECT * FROM kg_edges WHERE source_id=? AND target_id=? AND relation_type='prerequisite_of'", (source_id, target_id))
+        
+    edge = cur.fetchone()
+    if not edge:
+        conn.close()
+        return jsonify({"error": "Edge not found"}), 404
+        
+    s_id, t_id, e_id, old_overall = edge["source_id"], edge["target_id"], edge["edge_id"], edge["overall_confidence"]
+    
+    # Update teacher rejections
+    cur.execute("SELECT id FROM kg_edge_evidence WHERE source_id=? AND target_id=? ORDER BY last_updated DESC LIMIT 1", (s_id, t_id))
+    latest_ev = cur.fetchone()
+    
+    if latest_ev:
+        cur.execute("UPDATE kg_edge_evidence SET teacher_rejections = teacher_rejections + 1 WHERE id=?", (latest_ev["id"],))
+    else:
+        ev_id = str(uuid.uuid4())
+        cur.execute("""
+            INSERT INTO kg_edge_evidence (id, edge_id, source_id, target_id, relation_type, teacher_support, teacher_rejections, last_updated)
+            VALUES (?, ?, ?, ?, 'prerequisite_of', 0, 1, ?)
+        """, (ev_id, e_id, s_id, t_id, now_str))
+        
+    # Recalculate teacher confidence
+    cur.execute("SELECT SUM(teacher_support) as support, SUM(teacher_rejections) as rejections FROM kg_edge_evidence WHERE source_id=? AND target_id=?", (s_id, t_id))
+    votes = cur.fetchone()
+    support = votes["support"] or 0
+    rejections = votes["rejections"] or 0
+    teacher_conf = support / (support + rejections) if (support + rejections) > 0 else 0.5
+    
+    # Load config and recalculate overall confidence
+    from apd_engine import load_config
+    cfg = load_config()
+    stat_weight = cfg.get("STAT_WEIGHT", 0.4)
+    teacher_weight = cfg.get("TEACHER_WEIGHT", 0.3)
+    history_weight = cfg.get("HISTORY_WEIGHT", 0.2)
+    sample_weight = cfg.get("SAMPLE_WEIGHT", 0.1)
+    
+    cur.execute("SELECT confidence_score, sample_size FROM kg_edge_evidence WHERE source_id=? AND target_id=? ORDER BY last_updated DESC LIMIT 1", (s_id, t_id))
+    ev = cur.fetchone()
+    stat_conf = ev["confidence_score"] if ev else 0.5
+    total_samples = ev["sample_size"] if ev else 0
+    
+    min_sample = cfg.get("MIN_SAMPLE_SIZE", 30)
+    sample_reliability = min(1.0, total_samples / min_sample) if min_sample > 0 else 1.0
+    
+    new_overall = (stat_weight * stat_conf) + (teacher_weight * teacher_conf) + (history_weight * edge["historical_stability"]) + (sample_weight * sample_reliability)
+    
+    # Update status to rejected
+    cur.execute("""
+        UPDATE kg_edges
+        SET overall_confidence = ?, status = 'rejected'
+        WHERE source_id=? AND target_id=?
+    """, (new_overall, s_id, t_id))
+    
+    # Log evolution
+    cur.execute("""
+        INSERT INTO kg_evolution_log (operation, entity_id, edge_id, old_confidence, new_confidence, reason, actor, timestamp, model_version, confidence_delta, teacher_action)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'v2.0', ?, ?)
+    """, ('teacher_rejected', f"{s_id}->{t_id}", e_id, old_overall, new_overall, 'Teacher rejected discovered prerequisite.', teacher_email, now_str, new_overall - old_overall, 'reject'))
+    
+    conn.commit()
+    conn.close()
+    
+    return jsonify({"success": True, "status": "rejected", "overall_confidence": new_overall})
+
 @app.route('/kg/export-training-data', methods=['GET'])
 def api_export_training_data():
     conn = get_conn()

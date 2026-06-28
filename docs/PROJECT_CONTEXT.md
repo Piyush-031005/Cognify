@@ -11,9 +11,9 @@
 ## ===================================
 
 * **Architecture Status:** Frozen
-* **Current Version:** `v1.3`
+* **Current Version:** `v1.4.0`
 * **Current Sprint:** Week 6 (Intelligence Evolution)
-* **Current Focus:** Automatic Prerequisite Discovery (APD)
+* **Current Focus:** Misconception Discovery v2
 
 ### 🚫 DO NOT:
 * Redesign architecture
@@ -154,12 +154,11 @@ $$\text{Generated} \rightarrow \text{Viewed} \rightarrow \text{Accepted} \righta
 
 ### Current/Next Sprint (Phase 2: Self Improving Intelligence)
 We are currently entering **Week 6 (Intelligence Evolution)**. The priority tasks in order are:
-1. **Automatic Prerequisite Discovery (APD)**
-2. **Misconception Discovery**
-3. **QQI Calibration Feedback Loop**
-4. **Context Engine Expansion**
-5. **Educational Memory**
-6. **NBIRT Prototype**
+1. **Automatic Prerequisite Discovery (APD) v2.0** [Completed ✅]
+2. **Misconception Discovery v2** [Next Priority ➔]
+3. **Educational Memory v2**
+4. **Context Engine v2**
+5. **QQI Calibration Feedback Loop**
 *No other tasks are permitted in this sprint.*
 
 ---

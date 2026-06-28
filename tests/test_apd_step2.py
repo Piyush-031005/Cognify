@@ -4,6 +4,7 @@ import uuid
 import os
 import sys
 import yaml
+import math
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
@@ -68,11 +69,23 @@ def test_adaptive_confidence_and_decay(test_db):
     cur.execute("SELECT * FROM kg_edges WHERE source_id='c1' AND target_id='c2'")
     edge = cur.fetchone()
     
-    w = apd_engine.config["weights"]
-    expected_overall = (w["statistical"] * edge["statistical_confidence"]) + (w["teacher"] * edge["teacher_confidence"]) + (w["historical"] * edge["historical_stability"])
+    cfg = apd_engine.load_config()
+    stat_weight = cfg.get("STAT_WEIGHT", 0.4)
+    teacher_weight = cfg.get("TEACHER_WEIGHT", 0.3)
+    history_weight = cfg.get("HISTORY_WEIGHT", 0.2)
+    sample_weight = cfg.get("SAMPLE_WEIGHT", 0.1)
+    
+    # In test, total students = 55, MIN_SAMPLE_SIZE = 30, so sample_reliability = 1.0
+    sample_reliability = 1.0
+    expected_overall = (stat_weight * edge["statistical_confidence"]) + (teacher_weight * edge["teacher_confidence"]) + (history_weight * edge["historical_stability"]) + (sample_weight * sample_reliability)
     assert abs(edge["overall_confidence"] - expected_overall) < 0.001, "Overall confidence not computing correctly from weights."
     
     initial_stability = edge["historical_stability"]
+    
+    # Simulate 50 days of inactivity
+    from datetime import datetime, timedelta
+    cur.execute("UPDATE kg_edge_evidence SET last_updated = ? WHERE source_id='c1' AND target_id='c2'", ((datetime.now() - timedelta(days=50)).isoformat(),))
+    test_db.commit()
     
     # Run manual decay
     apd_engine.apply_confidence_decay('Math')
@@ -80,8 +93,10 @@ def test_adaptive_confidence_and_decay(test_db):
     cur.execute("SELECT * FROM kg_edges WHERE source_id='c1' AND target_id='c2'")
     edge_decayed = cur.fetchone()
     
-    decay_rate = apd_engine.config["decay_rates"]["Math"]
-    assert abs(edge_decayed["historical_stability"] - (initial_stability - decay_rate)) < 0.001, "Domain specific decay not applied correctly."
+    cfg = apd_engine.load_config()
+    decay_lambda = cfg.get("DECAY_LAMBDA", 0.005)
+    expected_decayed = initial_stability * math.exp(-decay_lambda * 50.0)
+    assert abs(edge_decayed["historical_stability"] - expected_decayed) < 0.001, "Domain specific decay not applied correctly."
 
 def test_promotion_policy_blocks_conflict(test_db):
     print("Running test_promotion_policy_blocks_conflict...")

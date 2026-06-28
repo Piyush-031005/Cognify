@@ -18,6 +18,30 @@ def get_conn():
     return conn
 
 
+def get_apd_config():
+    conn = get_conn()
+    cur = conn.cursor()
+    try:
+        cur.execute("SELECT key, value FROM apd_config")
+        rows = cur.fetchall()
+        config = {}
+        for r in rows:
+            key = r["key"]
+            val = r["value"]
+            try:
+                if '.' in val:
+                    config[key] = float(val)
+                else:
+                    config[key] = int(val)
+            except ValueError:
+                config[key] = val
+        return config
+    except sqlite3.OperationalError:
+        return {}
+    finally:
+        conn.close()
+
+
 # =========================
 # INIT DATABASE
 # =========================
@@ -78,6 +102,28 @@ def init_db():
         execution_time_ms INTEGER
     )
     """)
+
+    # Create apd_config table
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS apd_config (
+        key TEXT PRIMARY KEY,
+        value TEXT
+    )
+    """)
+    # Seed apd_config defaults
+    defaults = {
+        "STAT_WEIGHT": 0.4,
+        "TEACHER_WEIGHT": 0.3,
+        "HISTORY_WEIGHT": 0.2,
+        "SAMPLE_WEIGHT": 0.1,
+        "MIN_SAMPLE_SIZE": 30,
+        "EFFECT_SIZE_THRESHOLD": 0.15,
+        "DEPRECATE_THRESHOLD": 0.4,
+        "DECAY_LAMBDA": 0.005,
+        "HISTORY_WINDOW": 30
+    }
+    for k, v in defaults.items():
+        cur.execute("INSERT OR IGNORE INTO apd_config (key, value) VALUES (?, ?)", (k, str(v)))
 
     # Create kg_evolution_log table
     cur.execute("""
@@ -332,6 +378,8 @@ def init_db():
         understanding_model_version TEXT DEFAULT 'v1.9',
         strategy_model_version TEXT DEFAULT 'v3.1',
         dataset_version TEXT DEFAULT 'v1.0',
+        selected_option TEXT,
+        correct_option TEXT,
         created_at TEXT
     )
     """)
@@ -1040,7 +1088,9 @@ def upgrade_database_schema():
         ("dataset_version", "TEXT DEFAULT 'v1.0'"),
         ("assessment_blueprint_id", "INTEGER"),
         ("assessment_version", "INTEGER"),
-        ("selected_option_index", "INTEGER")
+        ("selected_option_index", "INTEGER"),
+        ("selected_option", "TEXT"),
+        ("correct_option", "TEXT")
     ]
     for col_name, col_type in alterations_responses:
         try:
@@ -1413,6 +1463,76 @@ def upgrade_database_schema():
         cur.execute("ALTER TABLE kg_evolution_log ADD COLUMN confidence_delta REAL DEFAULT 0.0")
     except sqlite3.OperationalError:
         pass
+
+    # Create apd_config table if not exists (upgrade scenario)
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS apd_config (
+        key TEXT PRIMARY KEY,
+        value TEXT
+    )
+    """)
+    defaults = {
+        "STAT_WEIGHT": 0.4,
+        "TEACHER_WEIGHT": 0.3,
+        "HISTORY_WEIGHT": 0.2,
+        "SAMPLE_WEIGHT": 0.1,
+        "MIN_SAMPLE_SIZE": 30,
+        "EFFECT_SIZE_THRESHOLD": 0.15,
+        "DEPRECATE_THRESHOLD": 0.4,
+        "DECAY_LAMBDA": 0.005,
+        "HISTORY_WINDOW": 30
+    }
+    for k, v in defaults.items():
+        try:
+            cur.execute("INSERT OR IGNORE INTO apd_config (key, value) VALUES (?, ?)", (k, str(v)))
+        except sqlite3.OperationalError:
+            pass
+
+    # Alter kg_edges
+    try:
+        cur.execute("ALTER TABLE kg_edges ADD COLUMN edge_id TEXT")
+    except sqlite3.OperationalError:
+        pass
+
+    # Alter kg_edge_evidence
+    evidence_alters = [
+        ("edge_id", "TEXT"),
+        ("supporting_students", "INTEGER DEFAULT 0"),
+        ("contradicting_students", "INTEGER DEFAULT 0"),
+        ("effect_size", "REAL DEFAULT 0.0"),
+        ("last_updated", "TEXT"),
+        ("algorithm_version", "TEXT DEFAULT 'v2.0'"),
+        ("sample_size", "INTEGER DEFAULT 0"),
+        ("status", "TEXT DEFAULT 'ai_candidate'"),
+        ("cohort_id", "TEXT DEFAULT 'default_cohort'"),
+        ("institution", "TEXT DEFAULT 'default_institution'"),
+        ("grade", "TEXT DEFAULT 'default_grade'"),
+        ("curriculum", "TEXT DEFAULT 'default_curriculum'"),
+        ("academic_year", "TEXT DEFAULT '2026'"),
+        ("graph_version", "TEXT DEFAULT 'v2.1'"),
+        ("qqi_version", "TEXT DEFAULT 'v1.2'"),
+        ("model_version", "TEXT DEFAULT 'v2.0'")
+    ]
+    for col_name, col_type in evidence_alters:
+        try:
+            cur.execute(f"ALTER TABLE kg_edge_evidence ADD COLUMN {col_name} {col_type}")
+        except sqlite3.OperationalError:
+            pass
+
+    # Alter kg_evolution_log
+    log_alters = [
+        ("edge_id", "TEXT"),
+        ("old_confidence", "REAL DEFAULT 0.0"),
+        ("new_confidence", "REAL DEFAULT 0.0"),
+        ("reason", "TEXT"),
+        ("model_version", "TEXT DEFAULT 'v2.0'"),
+        ("teacher_action", "TEXT")
+    ]
+    for col_name, col_type in log_alters:
+        try:
+            cur.execute(f"ALTER TABLE kg_evolution_log ADD COLUMN {col_name} {col_type}")
+        except sqlite3.OperationalError:
+            pass
 
     conn.commit()
 

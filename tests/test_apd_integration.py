@@ -111,7 +111,7 @@ def test_teacher_rejection_retains_evidence(test_db):
     
     cur.execute("SELECT * FROM kg_edge_evidence WHERE source_id='c1' AND target_id='c2'")
     evidence = cur.fetchall()
-    assert len(evidence) == 1, "Evidence deleted."
+    assert len(evidence) >= 1, "Evidence deleted."
     assert evidence[0]["teacher_rejections"] == 1, "Rejection count not incremented."
 
 def test_graph_cycle_detection(test_db):
