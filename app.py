@@ -3276,6 +3276,333 @@ def api_pilot_evaluate_outcomes():
             
     return jsonify({"evaluated": len(results), "results": results})
 
+
+# ==========================================
+# MISCONCEPTION DISCOVERY V2.0 APIS
+# ==========================================
+
+from database import get_misconception_config
+
+@app.route('/misconceptions/discovered', methods=['GET'])
+def api_get_discovered_misconceptions():
+    conn = get_conn()
+    cur = conn.cursor()
+    cur.execute("SELECT * FROM misconception_clusters")
+    rows = [dict(row) for row in cur.fetchall()]
+    conn.close()
+    return jsonify(rows)
+
+@app.route('/misconceptions/<cluster_id>', methods=['GET'])
+def api_get_misconception_by_id(cluster_id):
+    conn = get_conn()
+    cur = conn.cursor()
+    cur.execute("SELECT * FROM misconception_clusters WHERE cluster_id=?", (cluster_id,))
+    row = cur.fetchone()
+    if not row:
+        conn.close()
+        return jsonify({"error": "Misconception cluster not found"}), 404
+    cluster = dict(row)
+    cur.execute("SELECT * FROM misconception_evidence WHERE cluster_id=?", (cluster_id,))
+    evidence = [dict(r) for r in cur.fetchall()]
+    conn.close()
+    return jsonify({"cluster": cluster, "evidence": evidence})
+
+@app.route('/misconceptions/by-concept/<concept_id>', methods=['GET'])
+def api_get_misconceptions_by_concept(concept_id):
+    conn = get_conn()
+    cur = conn.cursor()
+    cur.execute("SELECT * FROM misconception_clusters WHERE concept_id=?", (concept_id,))
+    rows = [dict(row) for row in cur.fetchall()]
+    conn.close()
+    return jsonify(rows)
+
+@app.route('/misconceptions/by-question/<int:question_id>', methods=['GET'])
+def api_get_misconceptions_by_question(question_id):
+    conn = get_conn()
+    cur = conn.cursor()
+    cur.execute("""
+        SELECT DISTINCT c.* 
+        FROM misconception_clusters c
+        JOIN misconception_evidence e ON c.cluster_id = e.cluster_id
+        WHERE e.question_id = ?
+    """, (question_id,))
+    rows = [dict(row) for row in cur.fetchall()]
+    conn.close()
+    return jsonify(rows)
+
+@app.route('/misconceptions/statistics', methods=['GET'])
+def api_get_misconceptions_statistics():
+    conn = get_conn()
+    cur = conn.cursor()
+    cur.execute("SELECT COUNT(*) as count FROM misconception_clusters WHERE status='validated'")
+    val_cnt = cur.fetchone()["count"]
+    cur.execute("SELECT COUNT(*) as count FROM misconception_clusters WHERE status='candidate'")
+    cand_cnt = cur.fetchone()["count"]
+    cur.execute("SELECT COUNT(*) as count FROM misconception_clusters WHERE status='rejected'")
+    rej_cnt = cur.fetchone()["count"]
+    cur.execute("SELECT COUNT(*) as count FROM misconception_clusters WHERE status='deprecated'")
+    dep_cnt = cur.fetchone()["count"]
+    
+    cur.execute("SELECT severity, COUNT(*) as count FROM misconception_clusters GROUP BY severity")
+    severity_rows = cur.fetchall()
+    severity_breakdown = {r["severity"]: r["count"] for r in severity_rows}
+    
+    conn.close()
+    return jsonify({
+        "validated_count": val_cnt,
+        "candidate_count": cand_cnt,
+        "rejected_count": rej_cnt,
+        "deprecated_count": dep_cnt,
+        "severity_breakdown": severity_breakdown
+    })
+
+@app.route('/misconceptions/replay/<cluster_id>', methods=['GET'])
+def api_get_misconception_replay(cluster_id):
+    conn = get_conn()
+    cur = conn.cursor()
+    cur.execute("SELECT * FROM misconception_evolution_log WHERE cluster_id=? ORDER BY id ASC", (cluster_id,))
+    rows = [dict(row) for row in cur.fetchall()]
+    conn.close()
+    return jsonify({"cluster_id": cluster_id, "replay_history": rows})
+
+@app.route('/misconceptions/config', methods=['GET', 'POST'])
+def api_mcp_config():
+    if request.method == 'GET':
+        return jsonify(get_misconception_config())
+    else:
+        data = request.get_json() or {}
+        conn = get_conn()
+        cur = conn.cursor()
+        for k, v in data.items():
+            cur.execute("INSERT OR REPLACE INTO misconception_config (key, value) VALUES (?, ?)", (k, str(v)))
+        conn.commit()
+        conn.close()
+        return jsonify({"status": "success", "config": get_misconception_config()})
+
+@app.route('/misconceptions/run', methods=['POST'])
+def api_run_misconception_discovery():
+    from md_engine import discover_misconceptions
+    res = discover_misconceptions()
+    return jsonify(res)
+
+@app.route('/misconceptions/confirm', methods=['POST'])
+def api_confirm_misconception():
+    data = request.get_json() or {}
+    cluster_id = data.get("cluster_id")
+    teacher_email = data.get("teacher_email", "teacher@school.edu")
+    
+    if not cluster_id:
+        return jsonify({"error": "Missing cluster_id"}), 400
+        
+    conn = get_conn()
+    cur = conn.cursor()
+    cur.execute("SELECT * FROM misconception_clusters WHERE cluster_id=?", (cluster_id,))
+    cluster = cur.fetchone()
+    if not cluster:
+        conn.close()
+        return jsonify({"error": "Misconception cluster not found"}), 404
+        
+    now_str = datetime.now().isoformat()
+    old_status = cluster["status"]
+    old_conf = cluster["cluster_confidence"]
+    
+    # Add new evolution row first so votes query captures it
+    cur.execute("""
+        INSERT INTO misconception_evolution_log (
+            cluster_id, old_status, new_status, old_confidence, new_confidence, reason, actor, timestamp, teacher_action
+        ) VALUES (?, ?, 'validated', ?, ?, ?, ?, ?, 'approve')
+    """, (cluster_id, old_status, old_conf, old_conf, f"Teacher approved misconception cluster.", teacher_email, now_str))
+    
+    # Recalculate teacher confidence
+    cur.execute("""
+        SELECT COUNT(CASE WHEN teacher_action = 'approve' THEN 1 END) as approvals,
+               COUNT(CASE WHEN teacher_action = 'reject' THEN 1 END) as rejections
+        FROM misconception_evolution_log
+        WHERE cluster_id = ?
+    """, (cluster_id,))
+    votes = cur.fetchone()
+    approvals = votes["approvals"] or 0
+    rejections = votes["rejections"] or 0
+    teacher_conf = approvals / (approvals + rejections) if (approvals + rejections) > 0 else 1.0
+    
+    # Recalculate overall confidence
+    cfg = get_misconception_config()
+    cluster_size_weight = cfg.get("CLUSTER_SIZE_WEIGHT", 0.3)
+    behavior_consistency_weight = cfg.get("BEHAVIOR_CONSISTENCY_WEIGHT", 0.3)
+    mastery_consistency_weight = cfg.get("MASTERY_CONSISTENCY_WEIGHT", 0.2)
+    teacher_agreement_weight = cfg.get("TEACHER_AGREEMENT_WEIGHT", 0.2)
+    
+    size_conf = cluster["confidence_size"] or 0.5
+    behavior_conf = cluster["confidence_behavior"] or 0.5
+    mastery_conf = cluster["confidence_mastery"] or 0.5
+    
+    new_conf = (
+        (cluster_size_weight * size_conf) + 
+        (behavior_consistency_weight * behavior_conf) + 
+        (mastery_consistency_weight * mastery_conf) + 
+        (teacher_agreement_weight * teacher_conf)
+    )
+    
+    if new_conf < 0.5:
+        confidence_level = "Low"
+    elif new_conf < 0.75:
+        confidence_level = "Medium"
+    else:
+        confidence_level = "High"
+        
+    # Update cluster status
+    cur.execute("""
+        UPDATE misconception_clusters
+        SET status = 'validated', confidence_teacher = ?, cluster_confidence = ?, confidence_level = ?, last_updated = ?
+        WHERE cluster_id = ?
+    """, (teacher_conf, new_conf, confidence_level, now_str, cluster_id))
+    
+    # Update latest evolution log's new_confidence
+    cur.execute("""
+        UPDATE misconception_evolution_log
+        SET new_confidence = ?
+        WHERE cluster_id = ? AND timestamp = ? AND teacher_action = 'approve'
+    """, (new_conf, cluster_id, now_str))
+    
+    # Promote to Knowledge Graph nodes/edges
+    cur.execute("SELECT id FROM kg_nodes WHERE canonical_id = ?", (cluster_id,))
+    existing_node = cur.fetchone()
+    node_uuid = existing_node["id"] if existing_node else str(uuid.uuid4())
+    
+    name = cluster["misconception_name"]
+    desc = cluster["description"]
+    concept_id = cluster["concept_id"]
+    
+    if not existing_node:
+        cur.execute("""
+            INSERT INTO kg_nodes (
+                id, name, type, description, subject, topic, 
+                status, discovery_method, statistical_confidence, historical_stability, canonical_id
+            ) VALUES (?, ?, 'misconception', ?, 'Unknown', 'Unknown', 'validated', 'md_engine', ?, 0.5, ?)
+        """, (node_uuid, name, desc, new_conf, cluster_id))
+        
+        cur.execute("""
+            INSERT INTO kg_edges (
+                source_id, target_id, relation_type, weight, confidence,
+                discovery_method, discovery_date, status, stability_score,
+                statistical_confidence, teacher_confidence, historical_stability, overall_confidence
+            ) VALUES (?, ?, 'causes_misconception', 1.0, ?, 'md_engine', ?, 'validated', 0.5, ?, ?, 0.5, ?)
+        """, (concept_id, node_uuid, new_conf, now_str, new_conf, teacher_conf, new_conf))
+    else:
+        cur.execute("""
+            UPDATE kg_nodes
+            SET status = 'validated', name = ?, description = ?, statistical_confidence = ?
+            WHERE id = ?
+        """, (name, desc, new_conf, node_uuid))
+        
+        cur.execute("""
+            UPDATE kg_edges
+            SET status = 'validated', confidence = ?, overall_confidence = ?, teacher_confidence = ?
+            WHERE source_id = ? AND target_id = ?
+        """, (new_conf, new_conf, teacher_conf, concept_id, node_uuid))
+        
+    # Log evolution log for Knowledge Graph
+    cur.execute("""
+        INSERT INTO kg_evolution_log (operation, entity_id, old_state, new_state, actor, timestamp, confidence_delta)
+        VALUES ('node_promoted', ?, ?, ?, ?, ?, ?)
+    """, (node_uuid, json.dumps({"status": old_status}), json.dumps({"status": "validated"}), teacher_email, now_str, new_conf - old_conf))
+    
+    conn.commit()
+    conn.close()
+    return jsonify({"status": "success", "cluster_id": cluster_id, "new_status": "validated", "new_confidence": new_conf})
+
+@app.route('/misconceptions/reject', methods=['POST'])
+def api_reject_misconception():
+    data = request.get_json() or {}
+    cluster_id = data.get("cluster_id")
+    teacher_email = data.get("teacher_email", "teacher@school.edu")
+    
+    if not cluster_id:
+        return jsonify({"error": "Missing cluster_id"}), 400
+        
+    conn = get_conn()
+    cur = conn.cursor()
+    cur.execute("SELECT * FROM misconception_clusters WHERE cluster_id=?", (cluster_id,))
+    cluster = cur.fetchone()
+    if not cluster:
+        conn.close()
+        return jsonify({"error": "Misconception cluster not found"}), 404
+        
+    now_str = datetime.now().isoformat()
+    old_status = cluster["status"]
+    old_conf = cluster["cluster_confidence"]
+    
+    # Add new evolution row first so votes query captures it
+    cur.execute("""
+        INSERT INTO misconception_evolution_log (
+            cluster_id, old_status, new_status, old_confidence, new_confidence, reason, actor, timestamp, teacher_action
+        ) VALUES (?, ?, 'rejected', ?, ?, ?, ?, ?, 'reject')
+    """, (cluster_id, old_status, old_conf, old_conf, f"Teacher rejected misconception cluster.", teacher_email, now_str))
+    
+    # Recalculate teacher confidence
+    cur.execute("""
+        SELECT COUNT(CASE WHEN teacher_action = 'approve' THEN 1 END) as approvals,
+               COUNT(CASE WHEN teacher_action = 'reject' THEN 1 END) as rejections
+        FROM misconception_evolution_log
+        WHERE cluster_id = ?
+    """, (cluster_id,))
+    votes = cur.fetchone()
+    approvals = votes["approvals"] or 0
+    rejections = votes["rejections"] or 0
+    teacher_conf = approvals / (approvals + rejections) if (approvals + rejections) > 0 else 0.0
+    
+    # Recalculate overall confidence
+    cfg = get_misconception_config()
+    cluster_size_weight = cfg.get("CLUSTER_SIZE_WEIGHT", 0.3)
+    behavior_consistency_weight = cfg.get("BEHAVIOR_CONSISTENCY_WEIGHT", 0.3)
+    mastery_consistency_weight = cfg.get("MASTERY_CONSISTENCY_WEIGHT", 0.2)
+    teacher_agreement_weight = cfg.get("TEACHER_AGREEMENT_WEIGHT", 0.2)
+    
+    size_conf = cluster["confidence_size"] or 0.5
+    behavior_conf = cluster["confidence_behavior"] or 0.5
+    mastery_conf = cluster["confidence_mastery"] or 0.5
+    
+    new_conf = (
+        (cluster_size_weight * size_conf) + 
+        (behavior_consistency_weight * behavior_conf) + 
+        (mastery_consistency_weight * mastery_conf) + 
+        (teacher_agreement_weight * teacher_conf)
+    )
+    
+    if new_conf < 0.5:
+        confidence_level = "Low"
+    elif new_conf < 0.75:
+        confidence_level = "Medium"
+    else:
+        confidence_level = "High"
+        
+    # Update cluster status
+    cur.execute("""
+        UPDATE misconception_clusters
+        SET status = 'rejected', confidence_teacher = ?, cluster_confidence = ?, confidence_level = ?, last_updated = ?
+        WHERE cluster_id = ?
+    """, (teacher_conf, new_conf, confidence_level, now_str, cluster_id))
+    
+    # Update latest evolution log's new_confidence
+    cur.execute("""
+        UPDATE misconception_evolution_log
+        SET new_confidence = ?
+        WHERE cluster_id = ? AND timestamp = ? AND teacher_action = 'reject'
+    """, (new_conf, cluster_id, now_str))
+    
+    # Update Knowledge Graph if exists
+    cur.execute("SELECT id FROM kg_nodes WHERE canonical_id = ?", (cluster_id,))
+    existing_node = cur.fetchone()
+    if existing_node:
+        node_uuid = existing_node["id"]
+        cur.execute("UPDATE kg_nodes SET status = 'rejected' WHERE id = ?", (node_uuid,))
+        cur.execute("UPDATE kg_edges SET status = 'rejected' WHERE target_id = ?", (node_uuid,))
+        
+    conn.commit()
+    conn.close()
+    return jsonify({"status": "success", "cluster_id": cluster_id, "new_status": "rejected", "new_confidence": new_conf})
+
+
 if __name__ == "__main__":
     upgrade_question_bank_schema()
     upgrade_semantic_schema()

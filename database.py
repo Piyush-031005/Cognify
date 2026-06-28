@@ -42,6 +42,30 @@ def get_apd_config():
         conn.close()
 
 
+def get_misconception_config():
+    conn = get_conn()
+    cur = conn.cursor()
+    try:
+        cur.execute("SELECT key, value FROM misconception_config")
+        rows = cur.fetchall()
+        config = {}
+        for r in rows:
+            key = r["key"]
+            val = r["value"]
+            try:
+                if '.' in val:
+                    config[key] = float(val)
+                else:
+                    config[key] = int(val)
+            except ValueError:
+                config[key] = val
+        return config
+    except sqlite3.OperationalError:
+        return {}
+    finally:
+        conn.close()
+
+
 # =========================
 # INIT DATABASE
 # =========================
@@ -136,6 +160,100 @@ def init_db():
         actor TEXT,
         timestamp TEXT,
         confidence_delta REAL DEFAULT 0.0
+    )
+    """)
+
+    # Create misconception_config table
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS misconception_config (
+        key TEXT PRIMARY KEY,
+        value TEXT
+    )
+    """)
+    # Seed misconception_config defaults
+    mcp_defaults = {
+        "MIN_STUDENT_COUNT": 5,
+        "MIN_WRONG_ANSWERS": 10,
+        "CONFIDENCE_THRESHOLD": 0.5,
+        "SEVERITY_THRESHOLD": 0.5,
+        "CLUSTER_SIZE_WEIGHT": 0.3,
+        "BEHAVIOR_CONSISTENCY_WEIGHT": 0.3,
+        "MASTERY_CONSISTENCY_WEIGHT": 0.2,
+        "TEACHER_AGREEMENT_WEIGHT": 0.2
+    }
+    for k, v in mcp_defaults.items():
+        cur.execute("INSERT OR IGNORE INTO misconception_config (key, value) VALUES (?, ?)", (k, str(v)))
+
+    # Create misconception_clusters table
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS misconception_clusters (
+        cluster_id TEXT PRIMARY KEY,
+        concept_id TEXT,
+        misconception_name TEXT,
+        description TEXT,
+        selected_option TEXT,
+        correct_option TEXT,
+        confidence_size REAL,
+        confidence_behavior REAL,
+        confidence_mastery REAL,
+        confidence_teacher REAL,
+        cluster_confidence REAL,
+        confidence_level TEXT,
+        severity TEXT,
+        status TEXT DEFAULT 'candidate',
+        parent_cluster_id TEXT,
+        canonical_cluster_id TEXT,
+        recommended_intervention_id TEXT,
+        intervention_confidence REAL,
+        intervention_source TEXT,
+        memory_event_id TEXT,
+        memory_status TEXT DEFAULT 'pending',
+        created_at TEXT,
+        last_updated TEXT,
+        algorithm_version TEXT DEFAULT 'v2.0',
+        graph_version TEXT DEFAULT 'v2.1',
+        qqi_version TEXT DEFAULT 'v1.2',
+        assessment_version TEXT DEFAULT 'v1.0',
+        model_version TEXT DEFAULT 'v2.0',
+        FOREIGN KEY (concept_id) REFERENCES kg_nodes(id)
+    )
+    """)
+
+    # Create misconception_evidence table
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS misconception_evidence (
+        id TEXT PRIMARY KEY,
+        cluster_id TEXT,
+        question_id INTEGER,
+        student_count INTEGER,
+        wrong_answer_count INTEGER,
+        avg_hesitation REAL,
+        avg_response_time REAL,
+        cohort_id TEXT,
+        institution TEXT,
+        grade TEXT,
+        curriculum TEXT,
+        academic_year TEXT,
+        explanation TEXT,
+        created_at TEXT,
+        FOREIGN KEY (cluster_id) REFERENCES misconception_clusters(cluster_id)
+    )
+    """)
+
+    # Create misconception_evolution_log table
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS misconception_evolution_log (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        cluster_id TEXT,
+        old_status TEXT,
+        new_status TEXT,
+        old_confidence REAL,
+        new_confidence REAL,
+        reason TEXT,
+        actor TEXT,
+        timestamp TEXT,
+        teacher_action TEXT,
+        FOREIGN KEY (cluster_id) REFERENCES misconception_clusters(cluster_id)
     )
     """)
 
@@ -1533,6 +1651,102 @@ def upgrade_database_schema():
             cur.execute(f"ALTER TABLE kg_evolution_log ADD COLUMN {col_name} {col_type}")
         except sqlite3.OperationalError:
             pass
+
+    # Create misconception_config table if not exists (upgrade scenario)
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS misconception_config (
+        key TEXT PRIMARY KEY,
+        value TEXT
+    )
+    """)
+    mcp_defaults = {
+        "MIN_STUDENT_COUNT": 5,
+        "MIN_WRONG_ANSWERS": 10,
+        "CONFIDENCE_THRESHOLD": 0.5,
+        "SEVERITY_THRESHOLD": 0.5,
+        "CLUSTER_SIZE_WEIGHT": 0.3,
+        "BEHAVIOR_CONSISTENCY_WEIGHT": 0.3,
+        "MASTERY_CONSISTENCY_WEIGHT": 0.2,
+        "TEACHER_AGREEMENT_WEIGHT": 0.2
+    }
+    for k, v in mcp_defaults.items():
+        try:
+            cur.execute("INSERT OR IGNORE INTO misconception_config (key, value) VALUES (?, ?)", (k, str(v)))
+        except sqlite3.OperationalError:
+            pass
+
+    # Create misconception_clusters table if not exists
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS misconception_clusters (
+        cluster_id TEXT PRIMARY KEY,
+        concept_id TEXT,
+        misconception_name TEXT,
+        description TEXT,
+        selected_option TEXT,
+        correct_option TEXT,
+        confidence_size REAL,
+        confidence_behavior REAL,
+        confidence_mastery REAL,
+        confidence_teacher REAL,
+        cluster_confidence REAL,
+        confidence_level TEXT,
+        severity TEXT,
+        status TEXT DEFAULT 'candidate',
+        parent_cluster_id TEXT,
+        canonical_cluster_id TEXT,
+        recommended_intervention_id TEXT,
+        intervention_confidence REAL,
+        intervention_source TEXT,
+        memory_event_id TEXT,
+        memory_status TEXT DEFAULT 'pending',
+        created_at TEXT,
+        last_updated TEXT,
+        algorithm_version TEXT DEFAULT 'v2.0',
+        graph_version TEXT DEFAULT 'v2.1',
+        qqi_version TEXT DEFAULT 'v1.2',
+        assessment_version TEXT DEFAULT 'v1.0',
+        model_version TEXT DEFAULT 'v2.0',
+        FOREIGN KEY (concept_id) REFERENCES kg_nodes(id)
+    )
+    """)
+
+    # Create misconception_evidence table if not exists
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS misconception_evidence (
+        id TEXT PRIMARY KEY,
+        cluster_id TEXT,
+        question_id INTEGER,
+        student_count INTEGER,
+        wrong_answer_count INTEGER,
+        avg_hesitation REAL,
+        avg_response_time REAL,
+        cohort_id TEXT,
+        institution TEXT,
+        grade TEXT,
+        curriculum TEXT,
+        academic_year TEXT,
+        explanation TEXT,
+        created_at TEXT,
+        FOREIGN KEY (cluster_id) REFERENCES misconception_clusters(cluster_id)
+    )
+    """)
+
+    # Create misconception_evolution_log table if not exists
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS misconception_evolution_log (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        cluster_id TEXT,
+        old_status TEXT,
+        new_status TEXT,
+        old_confidence REAL,
+        new_confidence REAL,
+        reason TEXT,
+        actor TEXT,
+        timestamp TEXT,
+        teacher_action TEXT,
+        FOREIGN KEY (cluster_id) REFERENCES misconception_clusters(cluster_id)
+    )
+    """)
 
     conn.commit()
 

@@ -11,9 +11,9 @@
 ## ===================================
 
 * **Architecture Status:** Frozen
-* **Current Version:** `v1.4.0`
-* **Current Sprint:** Week 6 (Intelligence Evolution)
-* **Current Focus:** Misconception Discovery v2
+* **Current Version:** `v1.5.0`
+* **Current Sprint:** Week 7 (Concept-Level Cognitive Error Intelligence)
+* **Current Focus:** Cross-module Integration & Regression Sprint
 
 ### 🚫 DO NOT:
 * Redesign architecture
@@ -140,6 +140,7 @@ $$\text{Generated} \rightarrow \text{Viewed} \rightarrow \text{Accepted} \righta
 * **[ADR 005](file:///f:/Cognify/docs/ADR/ADR-005-Why-EWMA.md): EWMA for Evidence Fusion** — Uses an exponential moving average ($\alpha=0.7$) to update the digital twin smoothly and resist noise.
 * **[ADR 006](file:///f:/Cognify/docs/ADR/ADR-006-Automatic-Prerequisite-Discovery.md) / [008](file:///f:/Cognify/docs/ADR/ADR-008-Why-Candidate-Edge-Pipeline.md) / [009](file:///f:/Cognify/docs/ADR/ADR-009-Why-Statistical-Discovery-First.md): APD Pipeline** — Statistical discovery of prerequisite links using struggle data, verified by a candidate edge pipeline.
 * **[ADR 007](file:///f:/Cognify/docs/ADR/ADR-007-Why-Human-Validation.md): Human-in-the-Loop Validation** — Ensures AI-discovered relationships are reviewed by teachers/experts to reject pedagogically unsound statistical anomalies.
+* **[ADR 010](file:///f:/Cognify/docs/ADR/ADR-010-Misconceptions-Belong-To-Concepts.md): Misconceptions Belong to Concepts, Not Questions** — Decoupled cognitive gaps from individual questions to ensure stable tracking across question banks.
 
 ---
 
@@ -153,12 +154,13 @@ $$\text{Generated} \rightarrow \text{Viewed} \rightarrow \text{Accepted} \righta
 * **Week 5:** Pilot Analytics & Statistical Validation Engine
 
 ### Current/Next Sprint (Phase 2: Self Improving Intelligence)
-We are currently entering **Week 6 (Intelligence Evolution)**. The priority tasks in order are:
+We are currently entering **Week 7 (Concept-Level Cognitive Error Intelligence)**. The priority tasks in order are:
 1. **Automatic Prerequisite Discovery (APD) v2.0** [Completed ✅]
-2. **Misconception Discovery v2** [Next Priority ➔]
-3. **Educational Memory v2**
-4. **Context Engine v2**
-5. **QQI Calibration Feedback Loop**
+2. **Misconception Discovery v2.0** [Completed ✅]
+3. **Cross-module Integration & Regression Sprint** [Next Focus ➔]
+4. **Educational Memory v2.0**
+5. **Context Engine v2.0**
+6. **QQI Calibration Feedback Loop**
 *No other tasks are permitted in this sprint.*
 
 ---

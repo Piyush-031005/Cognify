@@ -5,6 +5,21 @@ All notable changes to the Cognify platform will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to Semantic Versioning.
 
+## [1.5.0] - 2026-06-28
+
+### Added
+- Implemented Misconception Discovery v2.0 (Research Grade) with stable misconception cluster identifiers (`mcp_000001` format) and append-only evidence tracking.
+- Added multi-dimensional normalized behavioral consistency aggregation (combining hesitation, response time, hovers, and backspaces).
+- Implemented four-component explainable confidence engine (Cluster Size, Behavioral Consistency, Mastery Consistency, and Teacher Agreement) dynamically weighted via `misconception_config`.
+- Implemented cohort-isolated misconception discovery and cohort severity rating (Low, Medium, High, Critical).
+- Added canonical cluster linking, recommended interventions library hooks, and version replication attributes.
+- Implemented complete REST API suite under `/misconceptions/...` including statistics, configuration, run, confirmation, rejection, and chronological replay log histories.
+- Created ADR-010 detailing the architectural decision of mapping misconceptions to concepts instead of individual questions (Rule #9).
+- Created a comprehensive integration test suite `tests/test_misconception_v2.py` with 12 distinct test cases.
+
+### Changed
+- Refactored `md_engine.py` to support v2.0 explainable clustering, backward-compatible default fallback options, and automated promotions to Knowledge Graph tables on teacher confirmation.
+
 ## [1.4.0] - 2026-06-28
 
 ### Added
