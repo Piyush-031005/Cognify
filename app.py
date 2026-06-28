@@ -4139,6 +4139,106 @@ def api_qqi_runs():
         return jsonify({"status": "error", "error": str(e)}), 500
 
 
+# =============================================================================
+# WEEK 11: NBIRT (NEURAL BAYESIAN ITEM RESPONSE THEORY) ENDPOINTS
+# =============================================================================
+
+@app.route('/nbirt/run', methods=['POST'])
+def api_nbirt_run():
+    """
+    POST /nbirt/run
+    Triggers an asynchronous or synchronous batch 2PL EM optimization run.
+    Optional body: { "run_id": "<uuid>" }
+    """
+    try:
+        import nbirt_engine
+        data = request.get_json(silent=True) or {}
+        run_id = data.get("run_id")
+        result = nbirt_engine.run_nbirt_estimation(run_id=run_id)
+        return jsonify({"status": "success", "data": result})
+    except Exception as e:
+        return jsonify({"status": "error", "error": str(e)}), 500
+
+
+@app.route('/nbirt/student/<email>/ability', methods=['GET'])
+def api_nbirt_student_ability(email):
+    """
+    GET /nbirt/student/<email>/ability
+    Returns the student's latent ability (theta), standard error, percentile,
+    estimation confidence, and responses count details.
+    """
+    try:
+        import nbirt_engine
+        result = nbirt_engine.estimate_student_ability(email)
+        return jsonify({"status": "success", "data": result})
+    except Exception as e:
+        return jsonify({"status": "error", "error": str(e)}), 500
+
+
+@app.route('/nbirt/question/<int:question_id>/parameters', methods=['GET'])
+def api_nbirt_question_parameters(question_id):
+    """
+    GET /nbirt/question/<question_id>/parameters
+    Returns item parameter estimates (difficulty b, discrimination a, guessing c).
+    """
+    try:
+        from database import get_conn
+        conn = get_conn()
+        cur = conn.cursor()
+        cur.execute("""
+            SELECT irt_difficulty, irt_discrimination, irt_guessing, irt_confidence, irt_run_id, irt_version
+            FROM question_bank WHERE id = ?
+        """, (question_id,))
+        row = cur.fetchone()
+        conn.close()
+        if not row:
+            return jsonify({"status": "error", "error": f"Question {question_id} not found"}), 404
+        return jsonify({"status": "success", "data": dict(row)})
+    except Exception as e:
+        return jsonify({"status": "error", "error": str(e)}), 500
+
+
+@app.route('/nbirt/runs', methods=['GET'])
+def api_nbirt_runs():
+    """
+    GET /nbirt/runs
+    Returns historical batch estimation runs ledger records.
+    """
+    try:
+        from database import get_conn
+        conn = get_conn()
+        cur = conn.cursor()
+        limit = int(request.args.get("limit", 20))
+        cur.execute("SELECT * FROM nbirt_runs ORDER BY started_at DESC LIMIT ?", (limit,))
+        rows = [dict(r) for r in cur.fetchall()]
+        conn.close()
+        return jsonify({"status": "success", "count": len(rows), "data": rows})
+    except Exception as e:
+        return jsonify({"status": "error", "error": str(e)}), 500
+
+
+@app.route('/nbirt/config', methods=['GET', 'POST'])
+def api_nbirt_config():
+    """
+    GET /nbirt/config - Returns active configurations.
+    POST /nbirt/config - Updates one or more config keys.
+    """
+    try:
+        import nbirt_engine
+        if request.method == 'POST':
+            data = request.get_json(silent=True) or {}
+            updated = []
+            for key, val in data.items():
+                result = nbirt_engine.update_nbirt_config(key, val)
+                updated.append(result)
+            return jsonify({"status": "success", "updated": updated})
+        else:
+            rows = nbirt_engine.get_nbirt_config()
+            return jsonify({"status": "success", "data": rows})
+    except Exception as e:
+        return jsonify({"status": "error", "error": str(e)}), 500
+
+
 if __name__ == "__main__":
     upgrade_question_bank_schema()
     upgrade_semantic_schema()

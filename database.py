@@ -822,6 +822,89 @@ def init_db():
     )
     """)
 
+    # --- Week 11: NBIRT (Neural Bayesian Item Response Theory) ---
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS nbirt_config (
+        key TEXT PRIMARY KEY,
+        value REAL,
+        config_version TEXT DEFAULT 'v1.0',
+        updated_by TEXT DEFAULT 'system',
+        updated_at TEXT
+    )
+    """)
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS nbirt_runs (
+        run_id TEXT PRIMARY KEY,
+        started_at TEXT,
+        completed_at TEXT,
+        items_estimated INTEGER DEFAULT 0,
+        students_estimated INTEGER DEFAULT 0,
+        em_iterations INTEGER DEFAULT 0,
+        max_parameter_delta REAL DEFAULT 0.0,
+        status TEXT DEFAULT 'running',
+        config_version TEXT DEFAULT 'v1.0',
+        execution_time_ms REAL DEFAULT 0.0
+    )
+    """)
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS nbirt_item_history (
+        history_id INTEGER PRIMARY KEY AUTOINCREMENT,
+        question_id INTEGER,
+        run_id TEXT,
+        old_b REAL,
+        new_b REAL,
+        old_a REAL,
+        new_a REAL,
+        irt_confidence REAL,
+        n_responses INTEGER,
+        algorithm_version TEXT DEFAULT 'v1.0',
+        config_version TEXT DEFAULT 'v1.0',
+        timestamp TEXT
+    )
+    """)
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS nbirt_ability_history (
+        history_id INTEGER PRIMARY KEY AUTOINCREMENT,
+        student_email TEXT,
+        run_id TEXT,
+        old_ability REAL,
+        new_ability REAL,
+        old_se REAL,
+        new_se REAL,
+        old_percentile REAL,
+        new_percentile REAL,
+        prior_used TEXT,
+        n_items_used INTEGER,
+        irt_confidence REAL,
+        algorithm_version TEXT DEFAULT 'v1.0',
+        config_version TEXT DEFAULT 'v1.0',
+        timestamp TEXT
+    )
+    """)
+
+    now_nbirt = datetime.now().isoformat()
+    nbirt_defaults = {
+        "min_responses_per_item": 20.0,
+        "min_items_per_student": 5.0,
+        "em_max_iterations": 50.0,
+        "em_convergence_threshold": 0.001,
+        "prior_ability_mean": 0.0,
+        "prior_ability_sd": 1.0,
+        "memory_weight_in_prior": 0.4,
+        "misconception_penalty_in_prior": 0.2,
+        "discrimination_bounds_low": 0.2,
+        "discrimination_bounds_high": 3.0,
+        "min_irt_confidence_for_context": 0.5,
+        "theta_grid_points": 41.0,
+        "theta_grid_min": -4.0,
+        "theta_grid_max": 4.0,
+    }
+    for k, v in nbirt_defaults.items():
+        cur.execute(
+            "INSERT OR IGNORE INTO nbirt_config (key, value, config_version, updated_by, updated_at) VALUES (?, ?, 'v1.0', 'system', ?)",
+            (k, v, now_nbirt)
+        )
+
     conn.commit()
     conn.close()
 
@@ -1450,7 +1533,13 @@ def upgrade_database_schema():
         ("current_version", "INTEGER DEFAULT 1"),
         ("edited_by", "TEXT"),
         ("edited_at", "TEXT"),
-        ("change_reason", "TEXT")
+        ("change_reason", "TEXT"),
+        ("irt_difficulty", "REAL"),
+        ("irt_discrimination", "REAL"),
+        ("irt_guessing", "REAL DEFAULT 0.0"),
+        ("irt_run_id", "TEXT"),
+        ("irt_confidence", "REAL"),
+        ("irt_version", "TEXT DEFAULT 'v1.0'")
     ]
     for col_name, col_type in alterations_question_bank:
         try:
@@ -1467,6 +1556,20 @@ def upgrade_database_schema():
     for col_name, col_type in alterations_rooms:
         try:
             cur.execute(f"ALTER TABLE rooms ADD COLUMN {col_name} {col_type}")
+        except sqlite3.OperationalError:
+            pass
+
+    # student_cognitive_profiles additions
+    alterations_student_profiles = [
+        ("irt_ability", "REAL"),
+        ("irt_ability_se", "REAL"),
+        ("irt_ability_percentile", "REAL"),
+        ("irt_confidence", "REAL"),
+        ("irt_ability_version", "TEXT DEFAULT 'v1.0'")
+    ]
+    for col_name, col_type in alterations_student_profiles:
+        try:
+            cur.execute(f"ALTER TABLE student_cognitive_profiles ADD COLUMN {col_name} {col_type}")
         except sqlite3.OperationalError:
             pass
 
@@ -2184,6 +2287,7 @@ def upgrade_database_schema():
         "WEIGHT_QQI_CONFIDENCE": 0.1,
         "WEIGHT_TEACHER_PRIORITY": 0.1,
         "WEIGHT_EXAM_WEIGHT": 0.1,
+        "WEIGHT_IRT_ALIGNMENT": 0.15,
         
         # Device multipliers
         "MULTIPLIER_DEVICE_MOBILE_REMEDIATION": 0.6,

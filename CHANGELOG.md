@@ -5,6 +5,27 @@ All notable changes to the Cognify platform will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to Semantic Versioning.
 
+## [2.0.0] - 2026-06-28
+
+### Added (Week 11 — NBIRT: Neural Bayesian Item Response Theory)
+- **Neural Bayesian Item Response Theory Engine** (`nbirt_engine.py`): Implements 2-Parameter Logistic (2PL) psychometric item response model (estimating latent difficulty $b$ and discrimination $a$, keeping guessing parameter $c$ fixed to 0.0) via on-demand Expectation-Maximization (EM) loop.
+- **Personalized Bayesian Ability Priors**: Fuses student's Educational Memory storage strength and confirmed active misconception count to compute dynamic priors for latent ability $\theta$ estimation.
+- **Ability Confidence & Percentile Estimations**: Calculates standard error (SE), reliability/confidence index, and normal CDF ability percentile for each student.
+- **Cold Start Protection Gate**: Enforces minimum response threshold per student (`min_items_per_student`) before ability estimation; falls back safely to QQI heuristics when evidence is insufficient.
+- **Additive Context Signal**: Context Engine (`context_engine.py`) upgraded with IRT alignment term ($S_{\text{base}} = \dots + w_{\text{irt}} \cdot \text{sigmoid}(-|\theta - b|)$) as a 7th additive recommendation signal, with graceful backward-compatible fallback when student/item IRT statistics are NULL.
+- **History ledgers**:
+  - `nbirt_runs` — audit log for each EM execution run.
+  - `nbirt_item_history` — append-only tracking of difficulty and discrimination parameters.
+  - `nbirt_ability_history` — append-only tracking of student abilities, error boundaries, percentiles, and prior parameters used.
+- **New API Endpoints**:
+  - `POST /nbirt/run` — trigger on-demand batch 2PL EM optimization run.
+  - `GET /nbirt/student/<email>/ability` — returns student theta logit, standard error, percentile, confidence, and items used.
+  - `GET /nbirt/question/<id>/parameters` — returns question difficulty b, discrimination a, and guessing c.
+  - `GET /nbirt/runs` — fetch EM runs ledger logs.
+  - `GET/POST /nbirt/config` — view and edit NBIRT parameters.
+- **Safe DB Migrations**: Idempotent alterations adding IRT parameters to `question_bank` and `student_cognitive_profiles`, and creating the config, runs, and history ledger tables.
+- **Integration Tests**: 9 test suites in `tests/test_nbirt.py` validating 2PL math, EM convergence, prior shifting, misconception penalties, cold starts, and context engine integration.
+
 ## [1.9.0] - 2026-06-28
 
 ### Added (Week 10 — QQI Calibration Feedback Loop)

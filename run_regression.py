@@ -66,7 +66,9 @@ def run_regression_suite():
         "tests/test_pilot_analytics_v2.py",
         "tests/test_qqi_calibration.py",
         "tests/test_teacher_twin.py",
-        "tests/test_e2e_integration.py"
+        "tests/test_e2e_integration.py",
+        "tests/test_qqi_feedback_loop.py",
+        "tests/test_nbirt.py"
     ]
     
     results = {}

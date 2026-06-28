@@ -37,6 +37,7 @@ def _bootstrap_config_table(conn, cur):
         ("w_qqi",          0.15, "Weight: QQI calibration alignment"),
         ("w_teacher",      0.10, "Weight: Teacher priority override"),
         ("w_curriculum",   0.10, "Weight: Curriculum/exam weight"),
+        ("WEIGHT_IRT_ALIGNMENT", 0.15, "Weight: IRT calibration alignment"),
         ("ctx_mobile_mult",         0.85, "Context multiplier: mobile device"),
         ("ctx_tablet_mult",         0.95, "Context multiplier: tablet device"),
         ("ctx_desktop_mult",        1.05, "Context multiplier: desktop device"),
@@ -101,6 +102,32 @@ def generate_contextual_recommendations(student_email, context_overrides=None):
         config[row["key"]] = row["value"]
         if row["config_version"]:
             config_version = row["config_version"]
+
+    # -------------------------------------------------------------
+    # 1.5 Load Student IRT Ability & Confidence
+    # -------------------------------------------------------------
+    irt_ability = None
+    irt_confidence = 0.0
+    try:
+        cur.execute("""
+            SELECT irt_ability, irt_confidence FROM student_cognitive_profiles
+            WHERE student_email = ?
+        """, (student_email,))
+        profile_row = cur.fetchone()
+        if profile_row:
+            irt_ability = profile_row["irt_ability"]
+            irt_confidence = profile_row["irt_confidence"] or 0.0
+    except Exception:
+        pass
+
+    min_irt_conf = 0.5
+    try:
+        cur.execute("SELECT value FROM nbirt_config WHERE key = 'min_irt_confidence_for_context'")
+        min_irt_conf_row = cur.fetchone()
+        if min_irt_conf_row:
+            min_irt_conf = min_irt_conf_row["value"]
+    except Exception:
+        pass
 
     # -------------------------------------------------------------
     # 2. Context Ingest & Quality Audit
@@ -391,6 +418,25 @@ def generate_contextual_recommendations(student_email, context_overrides=None):
                 pass
             Q_cal = avg_qqi_score / 100.0
 
+            # NBIRT Calibration Indicator (I_align) - Upgraded IRT signal
+            I_align = 0.0
+            avg_b = None
+            if irt_ability is not None and irt_confidence >= min_irt_conf:
+                try:
+                    cur.execute("""
+                        SELECT AVG(qb.irt_difficulty) as avg_diff FROM question_bank qb
+                        JOIN question_concepts qc ON qc.question_id = qb.id
+                        WHERE qc.concept_id = ? AND qb.irt_difficulty IS NOT NULL
+                    """, (concept_id,))
+                    diff_row = cur.fetchone()
+                    if diff_row and diff_row["avg_diff"] is not None:
+                        avg_b = diff_row["avg_diff"]
+                        diff_abs = abs(irt_ability - avg_b)
+                        # 2PL probability mapping sigmoid(-|θ - b|) scaled to 1.0 peak
+                        I_align = (1.0 / (1.0 + math.exp(diff_abs))) * 2.0
+                except Exception:
+                    pass
+
             # Teacher Priority (T_prior)
             note_cnt = teacher_notes_count.get(concept_id, 0)
             T_prior = min(1.0, note_cnt * 0.5)
@@ -407,14 +453,16 @@ def generate_contextual_recommendations(student_email, context_overrides=None):
             w_qqi = config.get("WEIGHT_QQI_CONFIDENCE", 0.1)
             w_teach = config.get("WEIGHT_TEACHER_PRIORITY", 0.1)
             w_exam = config.get("WEIGHT_EXAM_WEIGHT", 0.1)
+            w_irt = config.get("WEIGHT_IRT_ALIGNMENT", 0.15)
 
-            # Linear aggregate base score
+            # Linear aggregate base score (IRT added as 7th signal)
             S_base = (w_mem * M_risk) + \
                      (w_apd * P_impt) + \
                      (w_mcp * S_sev) + \
                      (w_qqi * Q_cal) + \
                      (w_teach * T_prior) + \
-                     (w_exam * E_wt)
+                     (w_exam * E_wt) + \
+                     (w_irt * I_align)
 
             # -----------------------------------------------------
             # 6. Environmental Context Calibration
@@ -468,7 +516,8 @@ def generate_contextual_recommendations(student_email, context_overrides=None):
                     "misconception_severity": round(S_sev, 3),
                     "qqi_confidence": round(Q_cal, 3),
                     "teacher_priority": round(T_prior, 3),
-                    "exam_weight": round(E_wt, 3)
+                    "exam_weight": round(E_wt, 3),
+                    "irt_alignment": round(I_align, 3)
                 },
                 "weights": {
                     "w_mem": w_mem,
@@ -476,7 +525,8 @@ def generate_contextual_recommendations(student_email, context_overrides=None):
                     "w_mcp": w_mcp,
                     "w_qqi": w_qqi,
                     "w_teach": w_teach,
-                    "w_exam": w_exam
+                    "w_exam": w_exam,
+                    "w_irt": w_irt
                 },
                 "multipliers": {
                     "device": M_dev,
@@ -489,7 +539,8 @@ def generate_contextual_recommendations(student_email, context_overrides=None):
 
             trace_str = (
                 f"S_final = ({w_mem}*{round(M_risk, 2)} + {w_apd}*{round(P_impt, 2)} + {w_mcp}*{round(S_sev, 2)} + "
-                f"{w_qqi}*{round(Q_cal, 2)} + {w_teach}*{round(T_prior, 2)} + {w_exam}*{round(E_wt, 2)}) * "
+                f"{w_qqi}*{round(Q_cal, 2)} + {w_teach}*{round(T_prior, 2)} + {w_exam}*{round(E_wt, 2)} + "
+                f"{w_irt}*{round(I_align, 2)}) * "
                 f"{M_dev} * {M_net} * {M_time} * {M_class}"
             )
 
