@@ -120,6 +120,25 @@ def generate_contextual_recommendations(student_email, context_overrides=None):
     except Exception:
         pass
 
+    # -------------------------------------------------------------
+    # 1.6 Load Student Cognitive Load State (Fatigue & Recovery)
+    # -------------------------------------------------------------
+    rolling_ccli = 0.0
+    alert_status = "normal"
+    try:
+        cur.execute("""
+            SELECT rolling_ccli, alert_status FROM student_cognitive_load_state
+            WHERE student_email = ?
+        """, (student_email,))
+        ccli_row = cur.fetchone()
+        if ccli_row:
+            rolling_ccli = ccli_row["rolling_ccli"] or 0.0
+            alert_status = ccli_row["alert_status"] or "normal"
+    except Exception:
+        pass
+
+    is_fatigued = (alert_status == "fatigued")
+
     min_irt_conf = 0.5
     try:
         cur.execute("SELECT value FROM nbirt_config WHERE key = 'min_irt_confidence_for_context'")
@@ -357,6 +376,22 @@ def generate_contextual_recommendations(student_email, context_overrides=None):
             )
 
         # ---------------------------------------------------------
+        # Blocking Rule C: Cognitive Recovery Mode (Fatigue Mitigation)
+        # ---------------------------------------------------------
+        if is_fatigued:
+            is_new = (mem_data.get("reinforcement_count", 0) == 0)
+            if is_new:
+                is_practice_blocked = True
+                is_review_blocked = True
+                is_remediation_blocked = True
+                blocking_reasons.append("Blocked new concept recommendation under Cognitive Recovery Mode due to student fatigue.")
+            else:
+                is_prereq_reinforcement = (prereq_out_degrees.get(concept_id, 0) > 0)
+                if not is_prereq_reinforcement:
+                    is_practice_blocked = True
+                    blocking_reasons.append("Blocked standard Practice under Cognitive Recovery Mode. Prioritizing reviews and prerequisite reinforcement.")
+
+        # ---------------------------------------------------------
         # Action Evaluation & Scoring
         # ---------------------------------------------------------
         # Define actions to evaluate
@@ -498,16 +533,41 @@ def generate_contextual_recommendations(student_email, context_overrides=None):
 
             # Apply multipliers and clamp
             S_final = S_base * M_dev * M_net * M_time * M_class
+
+            # Apply Cognitive Recovery Mode dampening/boosts
+            fatigue_dampener_applied = False
+            if is_fatigued:
+                if avg_b is not None and irt_ability is not None:
+                    target_b = irt_ability - 0.5
+                    if avg_b > target_b:
+                        excess = avg_b - target_b
+                        penalty = max(0.2, 1.0 - excess)
+                        S_final = S_final * penalty
+                        fatigue_dampener_applied = True
+                
+                is_prereq_reinforcement = (prereq_out_degrees.get(concept_id, 0) > 0)
+                if action_name in ["Review", "Remediation"] or is_prereq_reinforcement:
+                    S_final = S_final * 1.3
+
             S_final = min(1.0, max(0.0, S_final))
             S_final = round(S_final, 4)
 
             # Human-readable justification note
-            justification = (
+            justification_parts = [
                 f"Base cognitive priority ({round(S_base, 2)}) was driven by memory decay/risk ({round(M_risk, 2)}) "
-                f"and active misconception severity ({round(S_sev, 2)}). "
+                f"and active misconception severity ({round(S_sev, 2)})."
+            ]
+            if is_fatigued:
+                if fatigue_dampener_applied:
+                    justification_parts.append("Dampened under Cognitive Recovery Mode due to high difficulty relative to student ability.")
+                else:
+                    justification_parts.append("Boosted under Cognitive Recovery Mode to prioritize review/reinforcement.")
+            
+            justification_parts.append(
                 f"Calibrated by context multipliers (Device: x{M_dev}, Network: x{M_net}, Time: x{M_time}, Class: x{M_class}) "
                 f"optimized for a {device_type.capitalize()} on a {network_quality.capitalize()} connection."
             )
+            justification = " ".join(justification_parts)
 
             scoring_breakdown = {
                 "base_components": {

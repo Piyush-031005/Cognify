@@ -5,6 +5,25 @@ All notable changes to the Cognify platform will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to Semantic Versioning.
 
+## [2.1.0] - 2026-06-28
+
+### Added (Week 12 — Cognitive Load Intelligence Engine)
+- **Cognitive Load Intelligence Engine** (`cognitive_load_engine.py`): Implements deterministic estimation of Intrinsic Load (IL), Extraneous Load (EL), and Germane Load (GL) post-response.
+- **EWMA-Based Rolling State**: Tracks student fatigue status via Exponentially Weighted Moving Average (EWMA) with configurable `ewma_alpha` (default 0.25).
+- **Cognitive Recovery Mode**: Context Engine (`context_engine.py`) upgraded with recovery mode blocks (blocking new concept recommendations, prioritizing prerequisite reinforcement, memory review, and lower-difficulty questions $b \le \theta - 0.5$ when student is overloaded).
+- **Explainability Payload**: Appends an explainability JSON block containing sub-component score details to every computed cognitive load event.
+- **History & Alerts Ledgers**:
+  - `cognitive_load_events` — record of raw IL, EL, GL, and CCLI values.
+  - `student_cognitive_load_state` — active rolling metrics state per student.
+  - `cognitive_load_alerts` — active/resolved fatigue alerts.
+  - `cognitive_load_history` — append-only state transition audit ledger.
+- **New API Endpoints**:
+  - `POST /cognitive-load/compute` — manually trigger load estimation for a response.
+  - `GET /cognitive-load/student/<email>/state` — fetch student state, alerts, and history.
+  - `GET/POST /cognitive-load/config` — view and manage load config weights and alphas.
+- **Safe DB Migrations**: Idempotently creates config, event, state, alert, and history tables and seeds defaults.
+- **Integration Tests**: 4 test cases in `tests/test_cognitive_load.py` validating Sweller load calculations, EWMA alerts, and Context Engine gating.
+
 ## [2.0.0] - 2026-06-28
 
 ### Added (Week 11 — NBIRT: Neural Bayesian Item Response Theory)

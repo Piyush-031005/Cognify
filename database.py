@@ -905,6 +905,93 @@ def init_db():
             (k, v, now_nbirt)
         )
 
+    # --- Week 12: Cognitive Load Intelligence Engine (CCLI) ---
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS cognitive_load_config (
+        key TEXT PRIMARY KEY,
+        value REAL,
+        config_version TEXT DEFAULT 'v1.0',
+        updated_by TEXT DEFAULT 'system',
+        updated_at TEXT
+    )
+    """)
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS cognitive_load_events (
+        event_id TEXT PRIMARY KEY,
+        response_id INTEGER,
+        student_email TEXT,
+        concept_id TEXT,
+        intrinsic_load REAL,
+        extraneous_load REAL,
+        germane_load REAL,
+        composite_load REAL,
+        explanation_json TEXT,
+        algorithm_version TEXT DEFAULT 'v1.0',
+        config_version TEXT DEFAULT 'v1.0',
+        timestamp TEXT,
+        FOREIGN KEY (response_id) REFERENCES responses(id)
+    )
+    """)
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS student_cognitive_load_state (
+        student_email TEXT PRIMARY KEY,
+        rolling_il REAL,
+        rolling_el REAL,
+        rolling_gl REAL,
+        rolling_ccli REAL,
+        confidence REAL,
+        last_computed_at TEXT,
+        alert_status TEXT DEFAULT 'normal',
+        config_version TEXT DEFAULT 'v1.0'
+    )
+    """)
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS cognitive_load_alerts (
+        alert_id TEXT PRIMARY KEY,
+        student_email TEXT,
+        ccli_value REAL,
+        severity TEXT,
+        status TEXT DEFAULT 'active',
+        created_at TEXT,
+        resolved_at TEXT,
+        resolution_note TEXT
+    )
+    """)
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS cognitive_load_history (
+        history_id INTEGER PRIMARY KEY AUTOINCREMENT,
+        student_email TEXT,
+        old_ccli REAL,
+        new_ccli REAL,
+        alert_status TEXT,
+        timestamp TEXT
+    )
+    """)
+
+    now_ccli = datetime.now().isoformat()
+    ccli_defaults = {
+        "weight_intrinsic_load": 0.4,
+        "weight_extraneous_load": 0.3,
+        "weight_germane_load": 0.3,
+        "weight_bloom_level": 0.3,
+        "weight_irt_difficulty": 0.4,
+        "weight_prereq_complexity": 0.3,
+        "weight_prompt_length": 0.5,
+        "weight_interaction_complexity": 0.5,
+        "weight_sat": 0.4,
+        "weight_hesitation": 0.3,
+        "weight_backspace_efficiency": 0.3,
+        "ewma_alpha": 0.25,
+        "fatigue_threshold": 0.7,
+        "recovery_threshold": 0.5,
+        "memory_discount_factor": 0.3,
+    }
+    for k, v in ccli_defaults.items():
+        cur.execute(
+            "INSERT OR IGNORE INTO cognitive_load_config (key, value, config_version, updated_by, updated_at) VALUES (?, ?, 'v1.0', 'system', ?)",
+            (k, v, now_ccli)
+        )
+
     conn.commit()
     conn.close()
 
@@ -2449,6 +2536,93 @@ def upgrade_database_schema():
         worker_id TEXT
     )
     """)
+
+    # --- Week 12: Cognitive Load Intelligence Engine (CCLI) ---
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS cognitive_load_config (
+        key TEXT PRIMARY KEY,
+        value REAL,
+        config_version TEXT DEFAULT 'v1.0',
+        updated_by TEXT DEFAULT 'system',
+        updated_at TEXT
+    )
+    """)
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS cognitive_load_events (
+        event_id TEXT PRIMARY KEY,
+        response_id INTEGER,
+        student_email TEXT,
+        concept_id TEXT,
+        intrinsic_load REAL,
+        extraneous_load REAL,
+        germane_load REAL,
+        composite_load REAL,
+        explanation_json TEXT,
+        algorithm_version TEXT DEFAULT 'v1.0',
+        config_version TEXT DEFAULT 'v1.0',
+        timestamp TEXT,
+        FOREIGN KEY (response_id) REFERENCES responses(id)
+    )
+    """)
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS student_cognitive_load_state (
+        student_email TEXT PRIMARY KEY,
+        rolling_il REAL,
+        rolling_el REAL,
+        rolling_gl REAL,
+        rolling_ccli REAL,
+        confidence REAL,
+        last_computed_at TEXT,
+        alert_status TEXT DEFAULT 'normal',
+        config_version TEXT DEFAULT 'v1.0'
+    )
+    """)
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS cognitive_load_alerts (
+        alert_id TEXT PRIMARY KEY,
+        student_email TEXT,
+        ccli_value REAL,
+        severity TEXT,
+        status TEXT DEFAULT 'active',
+        created_at TEXT,
+        resolved_at TEXT,
+        resolution_note TEXT
+    )
+    """)
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS cognitive_load_history (
+        history_id INTEGER PRIMARY KEY AUTOINCREMENT,
+        student_email TEXT,
+        old_ccli REAL,
+        new_ccli REAL,
+        alert_status TEXT,
+        timestamp TEXT
+    )
+    """)
+
+    now_ccli = datetime.now().isoformat()
+    ccli_defaults = {
+        "weight_intrinsic_load": 0.4,
+        "weight_extraneous_load": 0.3,
+        "weight_germane_load": 0.3,
+        "weight_bloom_level": 0.3,
+        "weight_irt_difficulty": 0.4,
+        "weight_prereq_complexity": 0.3,
+        "weight_prompt_length": 0.5,
+        "weight_interaction_complexity": 0.5,
+        "weight_sat": 0.4,
+        "weight_hesitation": 0.3,
+        "weight_backspace_efficiency": 0.3,
+        "ewma_alpha": 0.25,
+        "fatigue_threshold": 0.7,
+        "recovery_threshold": 0.5,
+        "memory_discount_factor": 0.3,
+    }
+    for k, v in ccli_defaults.items():
+        cur.execute(
+            "INSERT OR IGNORE INTO cognitive_load_config (key, value, config_version, updated_by, updated_at) VALUES (?, ?, 'v1.0', 'system', ?)",
+            (k, v, now_ccli)
+        )
 
     conn.commit()
     conn.close()

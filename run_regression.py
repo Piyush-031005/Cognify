@@ -68,7 +68,8 @@ def run_regression_suite():
         "tests/test_teacher_twin.py",
         "tests/test_e2e_integration.py",
         "tests/test_qqi_feedback_loop.py",
-        "tests/test_nbirt.py"
+        "tests/test_nbirt.py",
+        "tests/test_cognitive_load.py"
     ]
     
     results = {}

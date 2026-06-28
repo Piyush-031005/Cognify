@@ -4239,6 +4239,66 @@ def api_nbirt_config():
         return jsonify({"status": "error", "error": str(e)}), 500
 
 
+# =============================================================================
+# WEEK 12: COGNITIVE LOAD INTELLIGENCE ENGINE ENDPOINTS
+# =============================================================================
+
+@app.route('/cognitive-load/compute', methods=['POST'])
+def api_cognitive_load_compute():
+    """
+    POST /cognitive-load/compute
+    Computes IL, EL, GL, and CCLI for a given response_id.
+    """
+    try:
+        import cognitive_load_engine
+        data = request.get_json(silent=True) or {}
+        response_id = data.get("response_id")
+        if not response_id:
+            return jsonify({"status": "error", "error": "Missing response_id"}), 400
+        result = cognitive_load_engine.compute_and_save_cognitive_load(response_id)
+        if "error" in result:
+            return jsonify({"status": "error", "error": result["error"]}), 400
+        return jsonify({"status": "success", "data": result})
+    except Exception as e:
+        return jsonify({"status": "error", "error": str(e)}), 500
+
+
+@app.route('/cognitive-load/student/<email>/state', methods=['GET'])
+def api_cognitive_load_student_state(email):
+    """
+    GET /cognitive-load/student/<email>/state
+    Returns current cognitive load state, active alerts, and history for the student.
+    """
+    try:
+        import cognitive_load_engine
+        result = cognitive_load_engine.get_student_load_state(email)
+        return jsonify({"status": "success", "data": result})
+    except Exception as e:
+        return jsonify({"status": "error", "error": str(e)}), 500
+
+
+@app.route('/cognitive-load/config', methods=['GET', 'POST'])
+def api_cognitive_load_config():
+    """
+    GET /cognitive-load/config - Returns CCLI configurations.
+    POST /cognitive-load/config - Updates one or more configuration keys.
+    """
+    try:
+        import cognitive_load_engine
+        if request.method == 'POST':
+            data = request.get_json(silent=True) or {}
+            updated = []
+            for key, val in data.items():
+                result = cognitive_load_engine.update_ccli_config(key, val)
+                updated.append(result)
+            return jsonify({"status": "success", "updated": updated})
+        else:
+            rows = cognitive_load_engine.get_ccli_config()
+            return jsonify({"status": "success", "data": rows})
+    except Exception as e:
+        return jsonify({"status": "error", "error": str(e)}), 500
+
+
 if __name__ == "__main__":
     upgrade_question_bank_schema()
     upgrade_semantic_schema()
