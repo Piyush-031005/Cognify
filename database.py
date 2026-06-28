@@ -992,6 +992,57 @@ def init_db():
             (k, v, now_ccli)
         )
 
+    # --- Week 13: Cognitive Decision Orchestrator (CDO) ---
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS decision_config (
+        key TEXT PRIMARY KEY,
+        value REAL,
+        config_version TEXT DEFAULT 'v1.0',
+        updated_by TEXT DEFAULT 'system',
+        updated_at TEXT
+    )
+    """)
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS decision_runs (
+        run_id TEXT PRIMARY KEY,
+        student_email TEXT,
+        concept_id TEXT,
+        final_decision TEXT,
+        confidence_score REAL,
+        decision_policy_version TEXT DEFAULT 'v1.0',
+        trigger_source TEXT,
+        timestamp TEXT
+    )
+    """)
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS decision_explanations (
+        run_id TEXT PRIMARY KEY,
+        student_email TEXT,
+        concept_id TEXT,
+        winning_rule TEXT,
+        candidates_json TEXT,
+        conflicts_json TEXT,
+        decision_reason TEXT,
+        decision_policy_version TEXT DEFAULT 'v1.0',
+        FOREIGN KEY (run_id) REFERENCES decision_runs(run_id)
+    )
+    """)
+
+    now_cdo = datetime.now().isoformat()
+    cdo_defaults = {
+        "priority_rule_teacher": 100.0,
+        "priority_rule_load": 90.0,
+        "priority_rule_misconception": 80.0,
+        "priority_rule_apd": 70.0,
+        "priority_rule_memory": 60.0,
+        "priority_rule_nbirt": 50.0,
+    }
+    for k, v in cdo_defaults.items():
+        cur.execute(
+            "INSERT OR IGNORE INTO decision_config (key, value, config_version, updated_by, updated_at) VALUES (?, ?, 'v1.0', 'system', ?)",
+            (k, v, now_cdo)
+        )
+
     conn.commit()
     conn.close()
 
@@ -2622,6 +2673,57 @@ def upgrade_database_schema():
         cur.execute(
             "INSERT OR IGNORE INTO cognitive_load_config (key, value, config_version, updated_by, updated_at) VALUES (?, ?, 'v1.0', 'system', ?)",
             (k, v, now_ccli)
+        )
+
+    # --- Week 13: Cognitive Decision Orchestrator (CDO) ---
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS decision_config (
+        key TEXT PRIMARY KEY,
+        value REAL,
+        config_version TEXT DEFAULT 'v1.0',
+        updated_by TEXT DEFAULT 'system',
+        updated_at TEXT
+    )
+    """)
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS decision_runs (
+        run_id TEXT PRIMARY KEY,
+        student_email TEXT,
+        concept_id TEXT,
+        final_decision TEXT,
+        confidence_score REAL,
+        decision_policy_version TEXT DEFAULT 'v1.0',
+        trigger_source TEXT,
+        timestamp TEXT
+    )
+    """)
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS decision_explanations (
+        run_id TEXT PRIMARY KEY,
+        student_email TEXT,
+        concept_id TEXT,
+        winning_rule TEXT,
+        candidates_json TEXT,
+        conflicts_json TEXT,
+        decision_reason TEXT,
+        decision_policy_version TEXT DEFAULT 'v1.0',
+        FOREIGN KEY (run_id) REFERENCES decision_runs(run_id)
+    )
+    """)
+
+    now_cdo = datetime.now().isoformat()
+    cdo_defaults = {
+        "priority_rule_teacher": 100.0,
+        "priority_rule_load": 90.0,
+        "priority_rule_misconception": 80.0,
+        "priority_rule_apd": 70.0,
+        "priority_rule_memory": 60.0,
+        "priority_rule_nbirt": 50.0,
+    }
+    for k, v in cdo_defaults.items():
+        cur.execute(
+            "INSERT OR IGNORE INTO decision_config (key, value, config_version, updated_by, updated_at) VALUES (?, ?, 'v1.0', 'system', ?)",
+            (k, v, now_cdo)
         )
 
     conn.commit()

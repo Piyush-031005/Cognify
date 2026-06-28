@@ -85,25 +85,36 @@ Cognify's path from a conceptual prototype to national integration is structured
 
 ---
 
-## 🚀 CTO Command: Sprint v3.0 Timeline
+## 🚀 CTO Command: Sprint Timeline (Weeks 8–20)
 
-We follow a strict **Build ➔ Validate ➔ Deploy** cycle across our 8-week execution plan:
+We follow a strict **Build ➔ Validate ➔ Deploy** cycle across our execution plan:
 
-1. **Week 1: 🥇 QQI Engine (10-Metrics Calculation Engine)**
-   * Calculate Concept Purity, Discrimination, Difficulty Stability, Guess Resistance, Language Quality, Behavior Signal Strength, KG Mapping, Time Stability, Teacher Rating, and Historical Reliability.
-2. **Week 2: 🥈 Teacher Reviewed Question Bank (Versioning Lifecycle)**
-   * Implement question lifecycle: $\text{Question v1} \rightarrow \text{Teacher Edits} \rightarrow \text{Question v2} \rightarrow \text{QQI Recalculate} \rightarrow \text{Question v3}$.
-3. **Week 3: 🥉 Knowledge Graph Expansion (7-Tier Scale)**
-   * Populate proper hierarchical nodes using the scale: $\text{Subject} \rightarrow \text{Topic} \rightarrow \text{Subtopic} \rightarrow \text{Concept} \rightarrow \text{Micro Concept} \rightarrow \text{Misconception} \rightarrow \text{Assessment Item}$.
-4. **Week 4: First Classroom Pilot (Pilot 1)**
-   * Active logging of student telemetry and teacher overrides with 20–30 students.
-5. **Week 5: Analyze Telemetry**
-   * Process raw click, hover, pause, and backspace event streams to calculate indices.
-6. **Week 6: Model Retraining**
-   * Refit evaluation MLP and decision trees on collected pilot telemetry.
-7. **Week 7: Improve QQI**
-   * Recalibrate mathematical weights and bounds of the QQI engine.
-8. **Week 8: Prepare SIH Demo + IEEE Paper**
+* **Week 8: 🥇 Educational Memory v2.0** (✅ Complete)
+  * Implements Ebbinghaus forgetting curve tracking (Storage Strength, Retrieval Strength).
+* **Week 9: 🥈 Context Engine v2.0** (✅ Complete)
+  * Stateless multi-signal recommendation scoring with context multipliers.
+* **Week 10: 🥉 QQI Calibration Feedback Loop** (✅ Complete)
+  * Dynamic item calibration based on student digital twin performance and asynchronous replay worker.
+* **Week 11: 🏅 NBIRT v2.0** (✅ Complete)
+  * 2PL psychometric item calibration and Bayesian latent student ability ($\theta$) estimation.
+* **Week 12: 🏅 Cognitive Load Intelligence** (✅ Complete)
+  * Intrinsic, Extraneous, and Germane Load computation with EWMA rolling fatigue states.
+* **Week 13: 🧠 Cognitive Decision Orchestrator (CDO)** (🚀 Active Current Milestone)
+  * Decoupled Rule Object Pipeline for deterministic conflict resolution, consensus confidence, and explainability.
+* **Week 14: 📱 Cross-Platform Telemetry Engine** (📅 Planned)
+  * Desktop/Android normalized telemetry adapters, touch dynamics, scroll behavior, and offline-first sync.
+* **Week 15: ⏰ Attention & Circadian Intelligence** (📅 Planned)
+  * Attention Decay Indicator (ADI) and Circadian Fatigue Adjuster (CFA).
+* **Week 16: 🔄 Question Lifecycle & Versioning** (📅 Planned)
+  * Blueprint-to-version lineage (v1...v5), parent-child version graphs, and shared NBIRT priors.
+* **Week 17: 🚌 Cognitive Event Bus** (📅 Planned)
+  * Event-driven integration backbone for Memory, QQI, NBIRT, CCLI, CDO, and digital twins.
+* **Week 18: 👩‍🏫 Teacher Twin v2** (📅 Planned)
+  * Analytics dashboard enriched with decision explanations and intervention timings.
+* **Week 19: 👤 Student Digital Twin** (📅 Planned)
+  * Persistent digital twin mapping memory, ability, load, misconceptions, and learning pacing.
+* **Week 20: 🔬 Simulation & Research Freeze** (📅 Planned)
+  * "What if" intervention simulator, benchmark audits, and SIH demonstration.
 
 ---
 

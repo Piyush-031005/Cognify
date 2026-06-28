@@ -5,6 +5,20 @@ All notable changes to the Cognify platform will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to Semantic Versioning.
 
+## [2.2.0] - 2026-06-29
+
+### Added (Week 13 — Cognitive Decision Orchestrator)
+- **Cognitive Decision Orchestrator Engine** (`decision_engine.py`): Centralizes and resolves learning recommendation conflicts via a decoupled rule object pipeline (`TeacherRule`, `LoadRule`, `MisconceptionRule`, `APDRule`, `MemoryRule`, `NBIRTRule`).
+- **Config-driven Priorities**: Dynamically fetches and resolves rule priorities via the database (`decision_config` table) rather than hardcoding priority sequences.
+- **Traceable Explainability & Conflict Logging**: Logs evaluated rule options (`candidates_json`) and discarded candidates (`conflicts_json`) directly into the `decision_explanations` table for auditable compliance.
+- **Context Engine Gating**: Filters recommendation candidates against the CDO's final winning action.
+- **Policy Versioning**: Stores policy versioning information (`decision_policy_version`) on every run.
+- **New API Endpoints**:
+  - `POST /decision/run` — trigger the decision pipeline pass manually.
+  - `GET /decision/student/<email>` — retrieve a student's active CDO recommendations and audit logs.
+  - `GET /decision/history` — fetch recent runs log ledger.
+  - `GET/POST /decision/config` — manage rule priorities parameters dynamically.
+
 ## [2.1.0] - 2026-06-28
 
 ### Added (Week 12 — Cognitive Load Intelligence Engine)

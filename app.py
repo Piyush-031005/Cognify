@@ -4299,6 +4299,91 @@ def api_cognitive_load_config():
         return jsonify({"status": "error", "error": str(e)}), 500
 
 
+# =============================================================================
+# WEEK 13: COGNITIVE DECISION ORCHESTRATOR (CDO) ENDPOINTS
+# =============================================================================
+
+@app.route('/decision/run', methods=['POST'])
+def api_decision_run():
+    """
+    POST /decision/run
+    Manually triggers a CDO decision pipeline pass for a student and concept.
+    """
+    try:
+        import decision_engine
+        data = request.get_json(silent=True) or {}
+        student_email = data.get("student_email")
+        concept_id = data.get("concept_id")
+        if not student_email or not concept_id:
+            return jsonify({"status": "error", "error": "Missing student_email or concept_id"}), 400
+        result = decision_engine.execute_decision_pipeline(student_email, concept_id, trigger_source="api")
+        if "error" in result:
+            return jsonify({"status": "error", "error": result["error"]}), 400
+        return jsonify({"status": "success", "data": result})
+    except Exception as e:
+        return jsonify({"status": "error", "error": str(e)}), 500
+
+
+@app.route('/decision/student/<email>', methods=['GET'])
+def api_decision_student_state(email):
+    """
+    GET /decision/student/<email>
+    Returns the latest CDO decision state, candidate rule traces, conflict logs, and history for the student.
+    """
+    try:
+        import decision_engine
+        result = decision_engine.get_student_decision_state(email)
+        return jsonify({"status": "success", "data": result})
+    except Exception as e:
+        return jsonify({"status": "error", "error": str(e)}), 500
+
+
+@app.route('/decision/history', methods=['GET'])
+def api_decision_history():
+    """
+    GET /decision/history
+    Returns overall decision runs log records.
+    """
+    try:
+        from database import get_conn
+        conn = get_conn()
+        cur = conn.cursor()
+        limit = int(request.args.get("limit", 20))
+        cur.execute("""
+            SELECT dr.*, de.winning_rule, de.decision_reason
+            FROM decision_runs dr
+            JOIN decision_explanations de ON de.run_id = dr.run_id
+            ORDER BY dr.timestamp DESC LIMIT ?
+        """, (limit,))
+        rows = [dict(r) for r in cur.fetchall()]
+        conn.close()
+        return jsonify({"status": "success", "count": len(rows), "data": rows})
+    except Exception as e:
+        return jsonify({"status": "error", "error": str(e)}), 500
+
+
+@app.route('/decision/config', methods=['GET', 'POST'])
+def api_decision_config():
+    """
+    GET /decision/config - Returns CCLI configurations.
+    POST /decision/config - Updates one or more configuration keys.
+    """
+    try:
+        import decision_engine
+        if request.method == 'POST':
+            data = request.get_json(silent=True) or {}
+            updated = []
+            for key, val in data.items():
+                result = decision_engine.update_cdo_config(key, val)
+                updated.append(result)
+            return jsonify({"status": "success", "updated": updated})
+        else:
+            rows = decision_engine.get_cdo_config()
+            return jsonify({"status": "success", "data": rows})
+    except Exception as e:
+        return jsonify({"status": "error", "error": str(e)}), 500
+
+
 if __name__ == "__main__":
     upgrade_question_bank_schema()
     upgrade_semantic_schema()

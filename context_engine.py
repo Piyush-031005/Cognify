@@ -392,6 +392,20 @@ def generate_contextual_recommendations(student_email, context_overrides=None):
                     blocking_reasons.append("Blocked standard Practice under Cognitive Recovery Mode. Prioritizing reviews and prerequisite reinforcement.")
 
         # ---------------------------------------------------------
+        # CDO Decision Orchestration Gate (Week 13 Brain integration)
+        # ---------------------------------------------------------
+        cdo_decision = None
+        cdo_trace = None
+        try:
+            import decision_engine
+            cdo_res = decision_engine.execute_decision_pipeline(student_email, concept_id, trigger_source="context_engine")
+            if "error" not in cdo_res:
+                cdo_decision = cdo_res["final_decision"]
+                cdo_trace = cdo_res
+        except Exception:
+            pass
+
+        # ---------------------------------------------------------
         # Action Evaluation & Scoring
         # ---------------------------------------------------------
         # Define actions to evaluate
@@ -402,6 +416,17 @@ def generate_contextual_recommendations(student_email, context_overrides=None):
         ]
 
         for action_name, is_blocked in possible_actions:
+            current_blocking_reasons = list(blocking_reasons)
+            if not is_blocked and cdo_decision is not None:
+                if action_name != cdo_decision:
+                    is_blocked = True
+                    current_blocking_reasons.append(
+                        f"Blocked by CDO Orchestrator. Winning decision was {cdo_decision} (Winning rule: {cdo_trace.get('winning_rule')})."
+                    )
+                elif cdo_decision == "Pause":
+                    is_blocked = True
+                    current_blocking_reasons.append("Blocked by CDO: Teacher override Pause instruction in effect.")
+
             if is_blocked:
                 # Log blocked candidate for traceability/teacher visibility
                 recommendations.append({
@@ -411,7 +436,7 @@ def generate_contextual_recommendations(student_email, context_overrides=None):
                     "priority": 0.0,
                     "status": "blocked",
                     "conflict": True,
-                    "reason": " | ".join(blocking_reasons),
+                    "reason": " | ".join(current_blocking_reasons),
                     "context_quality": context_quality,
                     "confidence": confidence_score,
                     "confidence_reason": confidence_reason,
