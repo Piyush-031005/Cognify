@@ -1444,6 +1444,68 @@ def init_db():
     )
     """)
 
+    # Parent Twin Projections (Week 20 — CQRS, Privacy-by-Design)
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS parent_student_mapping (
+        parent_email      TEXT NOT NULL,
+        student_email     TEXT NOT NULL,
+        relationship_type TEXT NOT NULL DEFAULT 'guardian',
+        is_primary        INTEGER NOT NULL DEFAULT 1,
+        created_at        TEXT NOT NULL,
+        PRIMARY KEY (parent_email, student_email)
+    )
+    """)
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS parent_student_projection (
+        student_email           TEXT PRIMARY KEY,
+        overall_digest          TEXT NOT NULL,
+        study_habit_summary_json TEXT NOT NULL,
+        strengths_digest_json   TEXT NOT NULL,
+        weaknesses_digest_json  TEXT NOT NULL,
+        memory_trend            TEXT NOT NULL DEFAULT 'stable',
+        last_active_date        TEXT,
+        projection_version      TEXT DEFAULT 'v1.0',
+        updated_at              TEXT
+    )
+    """)
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS parent_weekly_report (
+        report_id            TEXT PRIMARY KEY,
+        parent_email         TEXT NOT NULL,
+        student_email        TEXT NOT NULL,
+        week_start_date      TEXT NOT NULL,
+        week_end_date        TEXT NOT NULL,
+        overall_digest       TEXT NOT NULL,
+        strengths_json       TEXT NOT NULL,
+        weaknesses_json      TEXT NOT NULL,
+        study_habits_json    TEXT NOT NULL,
+        memory_trend         TEXT NOT NULL,
+        recommendations_json TEXT NOT NULL,
+        is_latest            INTEGER DEFAULT 1,
+        generated_at         TEXT NOT NULL,
+        projection_version   TEXT DEFAULT 'v1.0'
+    )
+    """)
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS parent_notification_log (
+        id                TEXT PRIMARY KEY,
+        parent_email      TEXT NOT NULL,
+        student_email     TEXT NOT NULL,
+        notification_type TEXT NOT NULL,
+        payload_json      TEXT,
+        sent_at           TEXT NOT NULL,
+        read_at           TEXT,
+        projection_version TEXT DEFAULT 'v1.0'
+    )
+    """)
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS parent_projection_metadata (
+        projection_version TEXT PRIMARY KEY,
+        checksum           TEXT NOT NULL,
+        rebuilt_at         TEXT NOT NULL
+    )
+    """)
+
     # Seed dynamic subscriptions (Decision 7)
     default_subscriptions = [
         ("memory_engine", "ResponseSubmitted", "v1.0", "memory_engine.handle_response_submitted"),
@@ -1469,7 +1531,12 @@ def init_db():
         ("student_twin", "CCLIUpdated", "v1.0", "student_twin.handle_ccli_updated"),
         ("student_twin", "DecisionGenerated", "v1.0", "student_twin.handle_decision_generated"),
         ("student_twin", "TeacherOverrideApplied", "v1.0", "student_twin.handle_teacher_override_applied"),
-        ("student_twin", "TeacherRecommendationGenerated", "v1.0", "student_twin.handle_teacher_recommendation")
+        ("student_twin", "TeacherRecommendationGenerated", "v1.0", "student_twin.handle_teacher_recommendation"),
+        # Parent Twin subscriptions
+        ("parent_twin", "MemoryUpdated", "v1.0", "parent_twin.handle_memory_updated"),
+        ("parent_twin", "AttentionUpdated", "v1.0", "parent_twin.handle_attention_updated"),
+        ("parent_twin", "CCLIUpdated", "v1.0", "parent_twin.handle_ccli_updated"),
+        ("parent_twin", "DecisionGenerated", "v1.0", "parent_twin.handle_decision_generated")
     ]
     for consumer, event, ver, handler in default_subscriptions:
         cur.execute("""
@@ -3558,6 +3625,68 @@ def upgrade_database_schema():
         projection_version TEXT PRIMARY KEY,
         checksum TEXT NOT NULL,
         rebuilt_at TEXT NOT NULL
+    )
+    """)
+
+    # Parent Twin Projections (Week 20)
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS parent_student_mapping (
+        parent_email      TEXT NOT NULL,
+        student_email     TEXT NOT NULL,
+        relationship_type TEXT NOT NULL DEFAULT 'guardian',
+        is_primary        INTEGER NOT NULL DEFAULT 1,
+        created_at        TEXT NOT NULL,
+        PRIMARY KEY (parent_email, student_email)
+    )
+    """)
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS parent_student_projection (
+        student_email           TEXT PRIMARY KEY,
+        overall_digest          TEXT NOT NULL,
+        study_habit_summary_json TEXT NOT NULL,
+        strengths_digest_json   TEXT NOT NULL,
+        weaknesses_digest_json  TEXT NOT NULL,
+        memory_trend            TEXT NOT NULL DEFAULT 'stable',
+        last_active_date        TEXT,
+        projection_version      TEXT DEFAULT 'v1.0',
+        updated_at              TEXT
+    )
+    """)
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS parent_weekly_report (
+        report_id            TEXT PRIMARY KEY,
+        parent_email         TEXT NOT NULL,
+        student_email        TEXT NOT NULL,
+        week_start_date      TEXT NOT NULL,
+        week_end_date        TEXT NOT NULL,
+        overall_digest       TEXT NOT NULL,
+        strengths_json       TEXT NOT NULL,
+        weaknesses_json      TEXT NOT NULL,
+        study_habits_json    TEXT NOT NULL,
+        memory_trend         TEXT NOT NULL,
+        recommendations_json TEXT NOT NULL,
+        is_latest            INTEGER DEFAULT 1,
+        generated_at         TEXT NOT NULL,
+        projection_version   TEXT DEFAULT 'v1.0'
+    )
+    """)
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS parent_notification_log (
+        id                TEXT PRIMARY KEY,
+        parent_email      TEXT NOT NULL,
+        student_email     TEXT NOT NULL,
+        notification_type TEXT NOT NULL,
+        payload_json      TEXT,
+        sent_at           TEXT NOT NULL,
+        read_at           TEXT,
+        projection_version TEXT DEFAULT 'v1.0'
+    )
+    """)
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS parent_projection_metadata (
+        projection_version TEXT PRIMARY KEY,
+        checksum           TEXT NOT NULL,
+        rebuilt_at         TEXT NOT NULL
     )
     """)
 

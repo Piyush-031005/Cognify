@@ -3280,7 +3280,65 @@ def api_student_recommendation_feedback(rec_id):
         return jsonify({"error": str(ve)}), 400
 
 
+# =============================================================================
+# PARENT TWIN COGNITIVE COMPANION API ENDPOINTS (Week 20)
+# =============================================================================
+
+import parent_twin
+import parent_twin.weekly_report as parent_weekly_report
+import parent_twin.notifications as parent_notifications
+
+@app.route('/api/v1/parent/<parent_email>/children', methods=['GET'])
+def api_parent_children(parent_email):
+    """Lists all students linked to this parent (multi-child support — Decision 4)."""
+    children = parent_twin.get_children(parent_email)
+    return jsonify(children)
+
+@app.route('/api/v1/parent/<parent_email>/child/<student_email>/link', methods=['POST'])
+def api_parent_link_child(parent_email, student_email):
+    """Creates or updates a parent-child mapping."""
+    data = request.json or {}
+    rel = data.get("relationship_type", "guardian")
+    is_primary = int(data.get("is_primary", 1))
+    try:
+        res = parent_twin.link_child(parent_email, student_email, rel, is_primary)
+        return jsonify(res)
+    except ValueError as ve:
+        return jsonify({"error": str(ve)}), 400
+
+@app.route('/api/v1/parent/<parent_email>/child/<student_email>/snapshot', methods=['GET'])
+def api_parent_snapshot(parent_email, student_email):
+    """Live parent-facing child projection — all raw metrics translated through digest.py."""
+    res = parent_twin.get_snapshot(parent_email, student_email)
+    return jsonify(res)
+
+@app.route('/api/v1/parent/<parent_email>/child/<student_email>/weekly-report', methods=['GET'])
+def api_parent_weekly_report(parent_email, student_email):
+    """Returns the current week's latest report. Generates if missing (Decision 6 — append-only)."""
+    report = parent_weekly_report.get_latest_weekly_report(parent_email, student_email)
+    return jsonify(report)
+
+@app.route('/api/v1/parent/<parent_email>/child/<student_email>/weekly-report/read', methods=['POST'])
+def api_parent_report_read(parent_email, student_email):
+    """Marks a weekly report as read in the notification log."""
+    data = request.json or {}
+    report_id = data.get("report_id")
+    if not report_id:
+        return jsonify({"error": "Missing report_id"}), 400
+    parent_notifications.mark_report_read(parent_email, student_email, report_id)
+    parent_notifications.log_notification(parent_email, student_email, "WeeklyReportViewed",
+                                          {"report_id": report_id})
+    return jsonify({"status": "success"})
+
+@app.route('/api/v1/parent/rebuild', methods=['POST'])
+def api_parent_rebuild():
+    """Triggers a safe projection rebuild with checksum validation."""
+    res = parent_twin.rebuild_projections()
+    return jsonify(res)
+
+
 import teacher_twin
+
 
 @app.route('/api/v1/teacher/rooms/<room_id>/heatmap', methods=['GET'])
 def api_teacher_heatmap(room_id):
