@@ -5,6 +5,17 @@ All notable changes to the Cognify platform will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to Semantic Versioning.
 
+## [2.5.0] - 2026-06-29
+
+### Added (Week 16 — Question Blueprint & Lifecycle Engine)
+- **Question Blueprint & Lifecycle Engine (QBL)**: Built a complete question genome module (`question_lifecycle_engine.py`) supporting templates/blueprints, families, lineages, and parent-version psychometric prior inheritance.
+- **Blueprint Versioning**: Added `blueprint_version` tracking parameter inside the blueprint templates.
+- **Drift Calculations & Authoritative Source**: Computes psychometric drifts (time and difficulty differences) and maintains QQI/NBIRT as the single source of truth.
+- **Retirement Evidence Ledger**: Logged retirement metrics dynamically (`retirement_metrics_json`) on question version retirement.
+- **Lineage Ancestor Caching**: Cached ancestor path string (`ancestor_path`) in versions to support $O(1)$ lineages.
+- **Lifecycle Status Filtration**: Updated context recommendation loaders to only fetch `'Active'` or `'Calibration'` questions.
+- **New REST API Endpoints**: Exposed routes for version creation, promotes, retirements, lineage hierarchies, and family details.
+
 ## [2.4.0] - 2026-06-29
 
 ### Added (Week 15 — Attention & Circadian Intelligence)

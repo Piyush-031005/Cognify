@@ -1140,6 +1140,85 @@ def init_db():
             (k, v, now_aci)
         )
 
+    # --- Week 16: Question Blueprint Intelligence & Lifecycle Engine (QBL) ---
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS question_blueprints (
+        blueprint_id TEXT PRIMARY KEY,
+        concept_id TEXT,
+        learning_objective TEXT,
+        bloom_level TEXT,
+        canonical_solution TEXT,
+        template TEXT,
+        expected_solve_time REAL DEFAULT 120.0,
+        difficulty_prior REAL DEFAULT 0.0,
+        discrimination_prior REAL DEFAULT 1.0,
+        guessing_prior REAL DEFAULT 0.0,
+        blueprint_version TEXT DEFAULT 'v1.0',
+        created_at TEXT
+    )
+    """)
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS question_families (
+        family_id TEXT PRIMARY KEY,
+        blueprint_id TEXT,
+        family_name TEXT,
+        family_type TEXT,
+        created_at TEXT,
+        FOREIGN KEY(blueprint_id) REFERENCES question_blueprints(blueprint_id)
+    )
+    """)
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS question_versions (
+        question_id INTEGER PRIMARY KEY,
+        family_id TEXT,
+        version_number INTEGER NOT NULL,
+        lineage_depth INTEGER DEFAULT 0,
+        root_blueprint_id TEXT,
+        generation INTEGER DEFAULT 1,
+        derived_from_question_id INTEGER,
+        ancestor_path TEXT,
+        expected_solve_time REAL,
+        observed_solve_time REAL DEFAULT 0.0,
+        time_drift REAL DEFAULT 0.0,
+        difficulty_prior REAL DEFAULT 0.0,
+        difficulty_current REAL DEFAULT 0.0,
+        difficulty_drift REAL DEFAULT 0.0,
+        discrimination_prior REAL DEFAULT 1.0,
+        discrimination_current REAL DEFAULT 1.0,
+        guessing_prior REAL DEFAULT 0.0,
+        guessing_current REAL DEFAULT 0.0,
+        FOREIGN KEY(question_id) REFERENCES question_bank(id),
+        FOREIGN KEY(family_id) REFERENCES question_families(family_id),
+        FOREIGN KEY(derived_from_question_id) REFERENCES question_bank(id)
+    )
+    """)
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS question_lifecycle (
+        question_id INTEGER PRIMARY KEY,
+        lifecycle_status TEXT DEFAULT 'Draft',
+        last_status_change TEXT,
+        retired_at TEXT,
+        retirement_reason TEXT,
+        retirement_metrics_json TEXT,
+        replaced_by_question_id INTEGER,
+        FOREIGN KEY(question_id) REFERENCES question_bank(id),
+        FOREIGN KEY(replaced_by_question_id) REFERENCES question_bank(id)
+    )
+    """)
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS question_retirement_history (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        question_id INTEGER,
+        old_status TEXT,
+        new_status TEXT,
+        transition_reason TEXT,
+        retirement_metrics_json TEXT,
+        actor TEXT,
+        timestamp TEXT,
+        FOREIGN KEY(question_id) REFERENCES question_bank(id)
+    )
+    """)
+
     conn.commit()
     conn.close()
 
@@ -2919,6 +2998,85 @@ def upgrade_database_schema():
             "INSERT OR IGNORE INTO attention_config (key, value, config_version, updated_by, updated_at) VALUES (?, ?, 'v1.0', 'system', ?)",
             (k, v, now_aci)
         )
+
+    # --- Week 16: Question Blueprint Intelligence & Lifecycle Engine (QBL) ---
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS question_blueprints (
+        blueprint_id TEXT PRIMARY KEY,
+        concept_id TEXT,
+        learning_objective TEXT,
+        bloom_level TEXT,
+        canonical_solution TEXT,
+        template TEXT,
+        expected_solve_time REAL DEFAULT 120.0,
+        difficulty_prior REAL DEFAULT 0.0,
+        discrimination_prior REAL DEFAULT 1.0,
+        guessing_prior REAL DEFAULT 0.0,
+        blueprint_version TEXT DEFAULT 'v1.0',
+        created_at TEXT
+    )
+    """)
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS question_families (
+        family_id TEXT PRIMARY KEY,
+        blueprint_id TEXT,
+        family_name TEXT,
+        family_type TEXT,
+        created_at TEXT,
+        FOREIGN KEY(blueprint_id) REFERENCES question_blueprints(blueprint_id)
+    )
+    """)
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS question_versions (
+        question_id INTEGER PRIMARY KEY,
+        family_id TEXT,
+        version_number INTEGER NOT NULL,
+        lineage_depth INTEGER DEFAULT 0,
+        root_blueprint_id TEXT,
+        generation INTEGER DEFAULT 1,
+        derived_from_question_id INTEGER,
+        ancestor_path TEXT,
+        expected_solve_time REAL,
+        observed_solve_time REAL DEFAULT 0.0,
+        time_drift REAL DEFAULT 0.0,
+        difficulty_prior REAL DEFAULT 0.0,
+        difficulty_current REAL DEFAULT 0.0,
+        difficulty_drift REAL DEFAULT 0.0,
+        discrimination_prior REAL DEFAULT 1.0,
+        discrimination_current REAL DEFAULT 1.0,
+        guessing_prior REAL DEFAULT 0.0,
+        guessing_current REAL DEFAULT 0.0,
+        FOREIGN KEY(question_id) REFERENCES question_bank(id),
+        FOREIGN KEY(family_id) REFERENCES question_families(family_id),
+        FOREIGN KEY(derived_from_question_id) REFERENCES question_bank(id)
+    )
+    """)
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS question_lifecycle (
+        question_id INTEGER PRIMARY KEY,
+        lifecycle_status TEXT DEFAULT 'Draft',
+        last_status_change TEXT,
+        retired_at TEXT,
+        retirement_reason TEXT,
+        retirement_metrics_json TEXT,
+        replaced_by_question_id INTEGER,
+        FOREIGN KEY(question_id) REFERENCES question_bank(id),
+        FOREIGN KEY(replaced_by_question_id) REFERENCES question_bank(id)
+    )
+    """)
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS question_retirement_history (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        question_id INTEGER,
+        old_status TEXT,
+        new_status TEXT,
+        transition_reason TEXT,
+        retirement_metrics_json TEXT,
+        actor TEXT,
+        timestamp TEXT,
+        FOREIGN KEY(question_id) REFERENCES question_bank(id)
+    )
+    """)
 
     conn.commit()
     conn.close()

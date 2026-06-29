@@ -51,6 +51,18 @@ def setup_test_db():
     """)
 
     cur.execute("""
+    CREATE TABLE IF NOT EXISTS question_lifecycle (
+        question_id INTEGER PRIMARY KEY,
+        lifecycle_status TEXT DEFAULT 'Draft',
+        last_status_change TEXT,
+        retired_at TEXT,
+        retirement_reason TEXT,
+        retirement_metrics_json TEXT,
+        replaced_by_question_id INTEGER
+    )
+    """)
+
+    cur.execute("""
     CREATE TABLE IF NOT EXISTS question_concepts (
         question_id INTEGER,
         concept_id TEXT

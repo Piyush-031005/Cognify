@@ -4558,6 +4558,138 @@ def api_attention_config():
         return jsonify({"status": "error", "error": str(e)}), 500
 
 
+# =============================================================================
+# WEEK 16: QUESTION BLUEPRINT INTELLIGENCE & LIFECYCLE (QBL) ENDPOINTS
+# =============================================================================
+
+@app.route('/question/version', methods=['POST'])
+def api_question_version():
+    """
+    POST /question/version
+    Creates a new version of a question inside a family, inheriting priors.
+    """
+    try:
+        import question_lifecycle_engine
+        data = request.get_json(silent=True) or {}
+        blueprint_id = data.get("blueprint_id")
+        family_id = data.get("family_id")
+        derived_from_question_id = data.get("derived_from_question_id")
+
+        prompt = data.get("prompt")
+        option_a = data.get("option_a")
+        option_b = data.get("option_b")
+        option_c = data.get("option_c")
+        option_d = data.get("option_d")
+        correct_index = data.get("correct_index")
+        explanation = data.get("explanation")
+
+        subject = data.get("subject", "math")
+        topic = data.get("topic", "algebra")
+        subtopic = data.get("subtopic", "equations")
+        difficulty = data.get("difficulty", "medium")
+        cognitive_type = data.get("cognitive_type", "application")
+        tags = data.get("tags")
+        created_by = data.get("created_by", "system")
+
+        if not prompt or correct_index is None:
+            return jsonify({"status": "error", "error": "Missing prompt or correct_index"}), 400
+
+        res = question_lifecycle_engine.create_question_version(
+            blueprint_id, family_id, derived_from_question_id,
+            prompt, option_a, option_b, option_c, option_d, correct_index, explanation,
+            subject, topic, subtopic, difficulty, cognitive_type, tags, created_by
+        )
+        if "error" in res:
+            return jsonify({"status": "error", "error": res["error"]}), 400
+        return jsonify({"status": "success", "data": res})
+    except Exception as e:
+        return jsonify({"status": "error", "error": str(e)}), 500
+
+
+@app.route('/question/retire', methods=['POST'])
+def api_question_retire():
+    """
+    POST /question/retire
+    Retires a specific question version, links its replacement, and stores metrics evidence.
+    """
+    try:
+        import question_lifecycle_engine
+        data = request.get_json(silent=True) or {}
+        question_id = data.get("question_id")
+        reason = data.get("reason")
+        replaced_by_question_id = data.get("replaced_by_question_id")
+        metrics_json = data.get("metrics_json")
+        actor = data.get("actor", "system")
+
+        if not question_id or not reason:
+            return jsonify({"status": "error", "error": "Missing question_id or reason"}), 400
+
+        res = question_lifecycle_engine.retire_question_version(
+            question_id, reason, replaced_by_question_id, metrics_json, actor
+        )
+        if "error" in res:
+            return jsonify({"status": "error", "error": res["error"]}), 400
+        return jsonify({"status": "success", "data": res})
+    except Exception as e:
+        return jsonify({"status": "error", "error": str(e)}), 500
+
+
+@app.route('/question/promote', methods=['POST'])
+def api_question_promote():
+    """
+    POST /question/promote
+    Transitions lifecycle status (Draft -> Pilot -> Calibration -> Active -> Retired -> Archived).
+    """
+    try:
+        import question_lifecycle_engine
+        data = request.get_json(silent=True) or {}
+        question_id = data.get("question_id")
+        new_status = data.get("new_status")
+        actor = data.get("actor", "system")
+
+        if not question_id or not new_status:
+            return jsonify({"status": "error", "error": "Missing question_id or new_status"}), 400
+
+        res = question_lifecycle_engine.promote_question_status(question_id, new_status, actor)
+        if "error" in res:
+            return jsonify({"status": "error", "error": res["error"]}), 400
+        return jsonify({"status": "success", "data": res})
+    except Exception as e:
+        return jsonify({"status": "error", "error": str(e)}), 500
+
+
+@app.route('/question/lineage/<int:question_id>', methods=['GET'])
+def api_question_lineage(question_id):
+    """
+    GET /question/lineage/<id>
+    Retrieves ancestor lineage path for O(1) reconstruction.
+    """
+    try:
+        import question_lifecycle_engine
+        res = question_lifecycle_engine.get_question_lineage(question_id)
+        if "error" in res:
+            return jsonify({"status": "error", "error": res["error"]}), 400
+        return jsonify({"status": "success", "data": res})
+    except Exception as e:
+        return jsonify({"status": "error", "error": str(e)}), 500
+
+
+@app.route('/question/family/<family_id>', methods=['GET'])
+def api_question_family(family_id):
+    """
+    GET /question/family/<family_id>
+    Retrieves all siblings under a family.
+    """
+    try:
+        import question_lifecycle_engine
+        res = question_lifecycle_engine.get_question_family(family_id)
+        if "error" in res:
+            return jsonify({"status": "error", "error": res["error"]}), 400
+        return jsonify({"status": "success", "data": res})
+    except Exception as e:
+        return jsonify({"status": "error", "error": str(e)}), 500
+
+
 if __name__ == "__main__":
     upgrade_question_bank_schema()
     upgrade_semantic_schema()

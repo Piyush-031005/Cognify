@@ -501,7 +501,8 @@ def generate_contextual_recommendations(student_email, context_overrides=None):
                 cur.execute("""
                     SELECT AVG(qb.qqi_score) as avg_qqi FROM question_bank qb
                     JOIN question_concepts qc ON qc.question_id = qb.id
-                    WHERE qc.concept_id = ?
+                    LEFT JOIN question_lifecycle ql ON ql.question_id = qb.id
+                    WHERE qc.concept_id = ? AND (ql.lifecycle_status IS NULL OR ql.lifecycle_status IN ('Calibration', 'Active'))
                 """, (concept_id,))
                 q_row = cur.fetchone()
                 if q_row and q_row["avg_qqi"]:
@@ -518,7 +519,9 @@ def generate_contextual_recommendations(student_email, context_overrides=None):
                     cur.execute("""
                         SELECT AVG(qb.irt_difficulty) as avg_diff FROM question_bank qb
                         JOIN question_concepts qc ON qc.question_id = qb.id
+                        LEFT JOIN question_lifecycle ql ON ql.question_id = qb.id
                         WHERE qc.concept_id = ? AND qb.irt_difficulty IS NOT NULL
+                          AND (ql.lifecycle_status IS NULL OR ql.lifecycle_status IN ('Calibration', 'Active'))
                     """, (concept_id,))
                     diff_row = cur.fetchone()
                     if diff_row and diff_row["avg_diff"] is not None:

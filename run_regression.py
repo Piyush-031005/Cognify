@@ -72,7 +72,8 @@ def run_regression_suite():
         "tests/test_cognitive_load.py",
         "tests/test_cdo.py",
         "tests/test_cte.py",
-        "tests/test_attention.py"
+        "tests/test_attention.py",
+        "tests/test_question_lifecycle.py"
     ]
     
     results = {}
