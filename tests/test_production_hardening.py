@@ -166,6 +166,101 @@ class TestProductionHardening(unittest.TestCase):
         self.assertEqual(spec["openapi"], "3.0.0")
         self.assertIn("/health", spec["paths"])
 
+    # 11. Blueprint validations
+    def test_assessment_blueprint_validations(self):
+        # 11.1 Test invalid sum (not 100%)
+        resp = self.client.post('/assessment-blueprints', json={
+            "name": "Invalid Sum",
+            "teacher_email": "teacher1@cognify.edu",
+            "subject": "math",
+            "topic": "algebra",
+            "subtopic": "quadratic",
+            "purpose": "practice",
+            "difficulty": "medium",
+            "conceptual_pct": 20,
+            "application_pct": 20,
+            "reasoning_pct": 20,
+            "memory_pct": 20
+        })
+        self.assertEqual(resp.status_code, 400)
+        data = json.loads(resp.data)
+        self.assertEqual(data["success"], False)
+        self.assertEqual(data["error_code"], "VALIDATION_ERROR")
+
+        # 11.2 Test invalid values (< 0)
+        resp = self.client.post('/assessment-blueprints', json={
+            "name": "Negative Val",
+            "teacher_email": "teacher1@cognify.edu",
+            "subject": "math",
+            "topic": "algebra",
+            "subtopic": "quadratic",
+            "purpose": "practice",
+            "difficulty": "medium",
+            "conceptual_pct": -10,
+            "application_pct": 50,
+            "reasoning_pct": 30,
+            "memory_pct": 30
+        })
+        self.assertEqual(resp.status_code, 400)
+        data = json.loads(resp.data)
+        self.assertEqual(data["success"], False)
+        self.assertEqual(data["error_code"], "VALIDATION_ERROR")
+
+        # 11.3 Test valid blueprint success response contract
+        resp = self.client.post('/assessment-blueprints', json={
+            "name": "Valid BP",
+            "teacher_email": "teacher1@cognify.edu",
+            "subject": "math",
+            "topic": "algebra",
+            "subtopic": "quadratic",
+            "purpose": "practice",
+            "conceptual_pct": 25,
+            "application_pct": 25,
+            "reasoning_pct": 25,
+            "memory_pct": 25,
+            "duration": 30,
+            "question_count": 10,
+            "difficulty": "medium",
+            "assessment_strategy": "adaptive_mixed"
+        })
+        self.assertEqual(resp.status_code, 200)
+        data = json.loads(resp.data)
+        self.assertEqual(data["success"], True)
+        self.assertIn("blueprint_id", data["data"])
+
+    # 12. Quiz submission contracts
+    def test_quiz_submission_contract(self):
+        # 12.1 Missing required field
+        token = auth.auth_provider.issue_token("student1@cognify.edu", "student")
+        headers = {"Authorization": f"Bearer {token}"}
+        resp = self.client.post('/submit', headers=headers, json={
+            "student_email": "student1@cognify.edu"
+        })
+        self.assertEqual(resp.status_code, 400)
+        data = json.loads(resp.data)
+        self.assertEqual(data["success"], False)
+        self.assertEqual(data["error_code"], "VALIDATION_ERROR")
+
+        # 12.2 Successful submission contract
+        resp = self.client.post('/submit', headers=headers, json={
+            "student_email": "student1@cognify.edu",
+            "question_id": 2044, # real seeded ID
+            "question_text": "Which law explains inertia?",
+            "correct": 1,
+            "response_time": 5.0,
+            "idle_time": 1.0,
+            "rewrite_count": 0,
+            "backspace_count": 0,
+            "attempts": 1,
+            "confidence": 0.8,
+            "room_code": "R101"
+        })
+        self.assertEqual(resp.status_code, 200)
+        data = json.loads(resp.data)
+        self.assertEqual(data["success"], True)
+        self.assertIn("session", data["data"])
+        self.assertEqual(data["data"]["message"], "Processed")
+
 
 if __name__ == '__main__':
     unittest.main()

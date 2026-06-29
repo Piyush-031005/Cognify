@@ -1816,7 +1816,7 @@ export default function Dashboard() {
                         <div className="text-xs uppercase text-muted-foreground font-semibold flex justify-between">
                           <span>Cognitive Type Distribution</span>
                           <span className={Number(bpConceptual)+Number(bpApplication)+Number(bpReasoning)+Number(bpMemory) !== 100 ? "text-rose-400" : "text-mint"}>
-                            Total: {Number(bpConceptual)+Number(bpApplication)+Number(bpReasoning)+Number(bpMemory)}% (Target: 100%)
+                            Total: {Number(bpConceptual)+Number(bpApplication)+Number(bpReasoning)+Number(bpMemory)}% (Target: 100%, Remaining: {100 - (Number(bpConceptual)+Number(bpApplication)+Number(bpReasoning)+Number(bpMemory))}%)
                           </span>
                         </div>
 
@@ -1828,7 +1828,7 @@ export default function Dashboard() {
                           <input
                             type="range"
                             min="0"
-                            max="100"
+                            max={100 - (Number(bpApplication) + Number(bpReasoning) + Number(bpMemory))}
                             value={bpConceptual}
                             onChange={(e) => setBpConceptual(Number(e.target.value))}
                             className="w-full h-1 bg-white/10 accent-mint rounded"
@@ -1843,7 +1843,7 @@ export default function Dashboard() {
                           <input
                             type="range"
                             min="0"
-                            max="100"
+                            max={100 - (Number(bpConceptual) + Number(bpReasoning) + Number(bpMemory))}
                             value={bpApplication}
                             onChange={(e) => setBpApplication(Number(e.target.value))}
                             className="w-full h-1 bg-white/10 accent-mint rounded"
@@ -1858,7 +1858,7 @@ export default function Dashboard() {
                           <input
                             type="range"
                             min="0"
-                            max="100"
+                            max={100 - (Number(bpConceptual) + Number(bpApplication) + Number(bpMemory))}
                             value={bpReasoning}
                             onChange={(e) => setBpReasoning(Number(e.target.value))}
                             className="w-full h-1 bg-white/10 accent-mint rounded"
@@ -1873,7 +1873,7 @@ export default function Dashboard() {
                           <input
                             type="range"
                             min="0"
-                            max="100"
+                            max={100 - (Number(bpConceptual) + Number(bpApplication) + Number(bpReasoning))}
                             value={bpMemory}
                             onChange={(e) => setBpMemory(Number(e.target.value))}
                             className="w-full h-1 bg-white/10 accent-mint rounded"

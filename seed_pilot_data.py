@@ -16,10 +16,11 @@ def seed_data():
     upgrade_database_schema()
 
     conn = get_conn()
+    conn.row_factory = sqlite3.Row
     cur = conn.cursor()
     try:
-        # Clear transactional tables for clean seeding
-        for t in ["rooms", "room_students", "parent_student_mapping", "responses", "cognitive_load_events", "memory_state_transitions", "student_recommendation_history", "student_profile_projection", "student_trend_projection", "misconception_clusters", "misconception_evidence"]:
+        # Clear transactional and question tables for clean seeding
+        for t in ["rooms", "room_students", "parent_student_mapping", "responses", "cognitive_load_events", "memory_state_transitions", "student_recommendation_history", "student_profile_projection", "student_trend_projection", "misconception_clusters", "misconception_evidence", "question_bank", "question_concepts", "room_questions_map"]:
             cur.execute(f"DELETE FROM {t}")
             
         print("[PILOT SEED] Seeding users...")
@@ -86,31 +87,70 @@ def seed_data():
                 VALUES (?, ?, ?, ?, ?)
             """, (parent_email, student_email, rel, is_primary, "2026-06-29"))
 
+        print("[PILOT SEED] Seeding authoritative question bank...")
+        from seed_questions import run_seed_questions
+        run_seed_questions(conn)
+
+        # Commit and close connection to release SQLite lock before running generator
+        conn.commit()
+        conn.close()
+
+        print("[PILOT SEED] Seeding generated concept variants...")
+        from question_generator import run_generator
+        run_generator(count_per_concept=2)
+
+        # Reopen connection for subsequent inserts
+        conn = get_conn()
+        conn.row_factory = sqlite3.Row
+        cur = conn.cursor()
+
+        print("[PILOT SEED] Mapping questions to classrooms...")
+        cur.execute("SELECT id FROM question_bank WHERE subject = 'math'")
+        math_ids = [r["id"] for r in cur.fetchall()]
+        for qid in math_ids[:15]:
+            cur.execute("""
+                INSERT INTO room_questions_map (room_code, question_id, source_type, created_at)
+                VALUES ('R101', ?, 'question_bank', datetime('now'))
+            """, (qid,))
+
+        cur.execute("SELECT id FROM question_bank WHERE subject = 'physics'")
+        physics_ids = [r["id"] for r in cur.fetchall()]
+        for qid in physics_ids[:15]:
+            cur.execute("""
+                INSERT INTO room_questions_map (room_code, question_id, source_type, created_at)
+                VALUES ('R102', ?, 'question_bank', datetime('now'))
+            """, (qid,))
+
+        # Query seeded questions to generate realistic responses
+        cur.execute("SELECT id, subject, topic, subtopic, prompt FROM question_bank")
+        seeded_qs = cur.fetchall()
+
         print("[PILOT SEED] Seeding responses & telemetry...")
         t0 = datetime.datetime.now()
-        for i in range(1, 20):
-            q_id = 100 + i
+        for i, q_row in enumerate(seeded_qs[:19]):
+            q_id = q_row["id"]
+            subject = q_row["subject"]
+            topic = q_row["topic"]
+            subtopic = q_row["subtopic"]
+            q_text = q_row["prompt"]
+            
             # Lisa (student2) answers correctly, Bart (student1) hesitates & misses some
             resp_data = [
                 ("student2@cognify.edu", 1, 3.2, 0.9, 1.2),
                 ("student1@cognify.edu", 0, 8.5, 0.4, 4.8)
             ]
             for student, correct, response_time, confidence, idle in resp_data:
-                session_obj = {
-                    "question_id": q_id,
-                    "correct": correct,
-                    "response_time": response_time,
-                    "confidence": confidence,
-                    "idle_time": idle,
-                    "attempts": 1,
-                    "subject": "Math",
-                    "topic": "fractions",
-                    "subtopic": "addition"
-                }
+                # We determine room code matching student/subject
+                r_code = "R101" if subject.lower() == "math" else "R102"
                 cur.execute("""
-                    INSERT INTO responses (question_id, student_email, correct, created_at)
-                    VALUES (?, ?, ?, ?)
-                """, (q_id, student, correct, (t0 - datetime.timedelta(days=i)).isoformat()))
+                    INSERT INTO responses (
+                        room_code, student_email, attempt_id, subject, topic, subtopic,
+                        question_id, question_text, correct, response_time, idle_time, created_at
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """, (
+                    r_code, student, f"attempt_{i}", subject, topic, subtopic,
+                    q_id, q_text, correct, response_time, idle, (t0 - datetime.timedelta(days=i)).isoformat()
+                ))
 
                 cur.execute("""
                     INSERT INTO cognitive_load_events (event_id, student_email, composite_load, timestamp)

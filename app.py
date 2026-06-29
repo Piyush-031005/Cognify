@@ -60,6 +60,27 @@ import feature_flags
 app = Flask(__name__)
 CORS(app, resources={r"/*": {"origins": "*"}})
 
+@app.errorhandler(Exception)
+def handle_exception(e):
+    from werkzeug.exceptions import HTTPException
+    import traceback
+    traceback.print_exc()
+    
+    if isinstance(e, HTTPException):
+        return jsonify({
+            "success": False,
+            "error_code": e.name.upper().replace(" ", "_"),
+            "message": e.description,
+            "details": None
+        }), e.code
+        
+    return jsonify({
+        "success": False,
+        "error_code": "INTERNAL_SERVER_ERROR",
+        "message": str(e),
+        "details": None
+    }), 500
+
 @app.before_request
 def before_request_hook():
     """Tracks latency metrics and sets correlation IDs (Refinements 3 & 4)."""
@@ -175,14 +196,24 @@ def submit():
     # 1. Centralized Validation (Refinement 5)
     is_valid, err = validation.validate_quiz_submission(data)
     if not is_valid:
-        return jsonify({"success": False, "error_code": "VALIDATION_ERROR", "message": err}), 400
+        return jsonify({
+            "success": False,
+            "error_code": "VALIDATION_ERROR",
+            "message": err,
+            "details": None
+        }), 400
 
     student_email = data["student_email"]
 
     # 2. Centralized Permissions (Refinement 2)
     actor_email, actor_role = get_current_user_identity()
     if not permissions.can_view_student(actor_email, actor_role, student_email):
-        return jsonify({"success": False, "error_code": "FORBIDDEN", "message": "Permission denied"}), 403
+        return jsonify({
+            "success": False,
+            "error_code": "FORBIDDEN",
+            "message": "Permission denied",
+            "details": None
+        }), 403
 
     session_obj = process_question(data)
     print("MASTER SESSION:", session_obj)
@@ -299,8 +330,11 @@ def submit():
         print("ERROR UPDATING LIVING KNOWLEDGE GRAPH AND QQI:", e)
 
     return jsonify({
-        "message": "Processed",
-        "session": session_obj
+        "success": True,
+        "data": {
+            "message": "Processed",
+            "session": session_obj
+        }
     })
 
 
@@ -576,10 +610,57 @@ def teacher_notes_api():
 # =========================
 @app.route('/assessment-blueprints', methods=['POST'])
 def create_blueprint_api():
-    data = request.json
+    data = request.json or {}
+    
+    # Required fields validation
+    required_fields = ["name", "teacher_email", "subject", "topic", "subtopic", "purpose", "difficulty"]
+    for field in required_fields:
+        if field not in data or not data[field]:
+            return jsonify({
+                "success": False,
+                "error_code": "VALIDATION_ERROR",
+                "message": f"Missing required field: '{field}'",
+                "details": None
+            }), 400
+            
+    # Validation checks
+    try:
+        conceptual_pct = int(data.get("conceptual_pct", 0))
+        application_pct = int(data.get("application_pct", 0))
+        reasoning_pct = int(data.get("reasoning_pct", 0))
+        memory_pct = int(data.get("memory_pct", 0))
+    except (ValueError, TypeError):
+        return jsonify({
+            "success": False,
+            "error_code": "VALIDATION_ERROR",
+            "message": "Percentages must be integers.",
+            "details": None
+        }), 400
+
+    if any(val < 0 or val > 100 for val in [conceptual_pct, application_pct, reasoning_pct, memory_pct]):
+        return jsonify({
+            "success": False,
+            "error_code": "VALIDATION_ERROR",
+            "message": "Cognitive type percentages must be between 0 and 100.",
+            "details": None
+        }), 400
+
+    if conceptual_pct + application_pct + reasoning_pct + memory_pct != 100:
+        return jsonify({
+            "success": False,
+            "error_code": "VALIDATION_ERROR",
+            "message": f"Cognitive type distribution must sum to exactly 100% (got {conceptual_pct + application_pct + reasoning_pct + memory_pct}%).",
+            "details": None
+        }), 400
+
     from database import create_assessment_blueprint
     blueprint_id = create_assessment_blueprint(data)
-    return jsonify({"success": True, "blueprint_id": blueprint_id})
+    return jsonify({
+        "success": True,
+        "data": {
+            "blueprint_id": blueprint_id
+        }
+    })
 
 
 @app.route('/assessment-blueprints/<email>', methods=['GET'])

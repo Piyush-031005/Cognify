@@ -1,8 +1,5 @@
 from database import get_conn
 
-conn = get_conn()
-cur = conn.cursor()
-
 questions = [
 
 # ================= PHYSICS =================
@@ -647,40 +644,57 @@ questions = [
 ]
 
 # ================= INSERT =================
-for q in questions:
-    options = q["options"] + [""] * 4  # safety: ensure at least 4 options
-    cur.execute("""
-    INSERT INTO question_bank (
-        subject, topic, subtopic,
-        difficulty, qtype,
-        cognitive_type,
-        prompt,
-        option_a, option_b, option_c, option_d,
-        correct_index,
-        explanation,
-        tags,
-        estimated_time
-    )
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    """, (
-        q["subject"],
-        q["topic"],
-        q["subtopic"],
-        q["difficulty"],
-        q["qtype"],
-        q["cognitive_type"],
-        q["prompt"],
-        options[0],
-        options[1],
-        options[2],
-        options[3],
-        q["correct_index"],
-        q["explanation"],
-        q["tags"],
-        q["estimated_time"]
-    ))
+def run_seed_questions(conn=None):
+    if conn is None:
+        c = get_conn()
+        should_close = True
+    else:
+        c = conn
+        should_close = False
+        
+    cur = c.cursor()
+    for q in questions:
+        # duplicate check to ensure idempotency
+        cur.execute("SELECT id FROM question_bank WHERE prompt = ?", (q["prompt"],))
+        if cur.fetchone():
+            continue
+            
+        options = q["options"] + [""] * 4  # safety: ensure at least 4 options
+        cur.execute("""
+        INSERT INTO question_bank (
+            subject, topic, subtopic,
+            difficulty, qtype,
+            cognitive_type,
+            prompt,
+            option_a, option_b, option_c, option_d,
+            correct_index,
+            explanation,
+            tags,
+            estimated_time
+        )
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """, (
+            q["subject"],
+            q["topic"],
+            q["subtopic"],
+            q["difficulty"],
+            q["qtype"],
+            q["cognitive_type"],
+            q["prompt"],
+            options[0],
+            options[1],
+            options[2],
+            options[3],
+            q["correct_index"],
+            q["explanation"],
+            q["tags"],
+            q["estimated_time"]
+        ))
+    if should_close:
+        c.commit()
+        c.close()
 
-conn.commit()
-conn.close()
-
-print("🔥 COGNIFY QUESTION BANK SEEDED SUCCESSFULLY")
+if __name__ == "__main__":
+    print("Running standalone question bank seeding...")
+    run_seed_questions()
+    print("🔥 COGNIFY QUESTION BANK SEEDED SUCCESSFULLY")
