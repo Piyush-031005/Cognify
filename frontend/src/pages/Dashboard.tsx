@@ -11,6 +11,186 @@ import {
 import InsideLayout from "@/components/InsideLayout";
 import { Button } from "@/components/ui/button";
 
+const SUBJECT_MAP: Record<string, { label: string; topics: Record<string, { label: string; subtopics: Record<string, string> }> }> = {
+  math: {
+    label: "Mathematics",
+    topics: {
+      algebra: {
+        label: "Algebra",
+        subtopics: { quadratic: "Quadratic" }
+      },
+      calculus: {
+        label: "Calculus",
+        subtopics: { derivatives: "Derivatives" }
+      },
+      probability: {
+        label: "Probability",
+        subtopics: { distributions: "Distributions" }
+      }
+    }
+  },
+  physics: {
+    label: "Physics",
+    topics: {
+      classical_mechanics: {
+        label: "Classical Mechanics",
+        subtopics: { laws_of_motion: "Laws of Motion" }
+      },
+      thermodynamics: {
+        label: "Thermodynamics",
+        subtopics: { heat_transfer: "Heat Transfer" }
+      },
+      electromagnetism: {
+        label: "Electromagnetism",
+        subtopics: { circuits: "Circuits" }
+      }
+    }
+  },
+  dsa: {
+    label: "DSA",
+    topics: {
+      arrays: {
+        label: "Arrays",
+        subtopics: { basics: "Basics" }
+      },
+      linked_lists: {
+        label: "Linked Lists",
+        subtopics: { singly_linked: "Singly Linked" }
+      },
+      graphs: {
+        label: "Graphs",
+        subtopics: { traversals: "Traversals" }
+      }
+    }
+  },
+  chemistry: {
+    label: "Chemistry",
+    topics: {
+      organic_chemistry: {
+        label: "Organic Chemistry",
+        subtopics: { functional_groups: "Functional Groups" }
+      },
+      physical_chemistry: {
+        label: "Physical Chemistry",
+        subtopics: { rates: "Rates" }
+      },
+      inorganic_chemistry: {
+        label: "Inorganic Chemistry",
+        subtopics: { bonding: "Bonding" }
+      }
+    }
+  },
+  biology: {
+    label: "Biology",
+    topics: {
+      genetics: {
+        label: "Genetics",
+        subtopics: { mendelian_inheritance: "Mendelian Inheritance" }
+      },
+      cell_biology: {
+        label: "Cell Biology",
+        subtopics: { organelles: "Organelles" }
+      },
+      ecology: {
+        label: "Ecology",
+        subtopics: { ecosystems: "Ecosystems" }
+      }
+    }
+  },
+  english: {
+    label: "English",
+    topics: {
+      grammar: {
+        label: "Grammar",
+        subtopics: { sentence_structure: "Sentence Structure" }
+      },
+      vocabulary: {
+        label: "Vocabulary",
+        subtopics: { context_clues: "Context Clues" }
+      }
+    }
+  },
+  programming: {
+    label: "Programming",
+    topics: {
+      python: {
+        label: "Python",
+        subtopics: { core_concepts: "Core Concepts" }
+      },
+      java: {
+        label: "Java",
+        subtopics: { oop: "OOP" }
+      },
+      cpp: {
+        label: "C++",
+        subtopics: { pointers: "Pointers" }
+      }
+    }
+  },
+  dbms: {
+    label: "DBMS",
+    topics: {
+      sql: {
+        label: "SQL",
+        subtopics: { joins: "Joins" }
+      },
+      normalization: {
+        label: "Normalization",
+        subtopics: { normal_forms: "Normal Forms" }
+      }
+    }
+  },
+  os: {
+    label: "Operating Systems",
+    topics: {
+      processes: {
+        label: "Processes",
+        subtopics: { scheduling: "Scheduling" }
+      },
+      memory_management: {
+        label: "Memory Management",
+        subtopics: { paging: "Paging" }
+      }
+    }
+  },
+  cn: {
+    label: "Computer Networks",
+    topics: {
+      protocols: {
+        label: "Protocols",
+        subtopics: { tcp_ip: "TCP/IP" }
+      }
+    }
+  },
+  ml: {
+    label: "Machine Learning",
+    topics: {
+      supervised_learning: {
+        label: "Supervised Learning",
+        subtopics: { classification: "Classification" }
+      }
+    }
+  },
+  ai: {
+    label: "Artificial Intelligence",
+    topics: {
+      search_algorithms: {
+        label: "Search Algorithms",
+        subtopics: { heuristics: "Heuristics" }
+      }
+    }
+  },
+  aptitude: {
+    label: "Aptitude",
+    topics: {
+      quantitative: {
+        label: "Quantitative",
+        subtopics: { arithmetic: "Arithmetic" }
+      }
+    }
+  }
+};
+
 export default function Dashboard() {
   const user = getCurrentUser();
   const navigate = useNavigate();
@@ -149,6 +329,26 @@ export default function Dashboard() {
   const [bpApplication, setBpApplication] = useState(25);
   const [bpReasoning, setBpReasoning] = useState(25);
   const [bpMemory, setBpMemory] = useState(25);
+
+  const handleSubjectChange = (newSub: string) => {
+    setBpSubject(newSub);
+    const subData = SUBJECT_MAP[newSub];
+    if (subData) {
+      const firstTopic = Object.keys(subData.topics)[0];
+      setBpTopic(firstTopic);
+      const firstSubtopic = Object.keys(subData.topics[firstTopic].subtopics)[0];
+      setBpSubtopic(firstSubtopic);
+    }
+  };
+
+  const handleTopicChange = (newTopic: string) => {
+    setBpTopic(newTopic);
+    const subData = SUBJECT_MAP[bpSubject];
+    if (subData && subData.topics[newTopic]) {
+      const firstSubtopic = Object.keys(subData.topics[newTopic].subtopics)[0];
+      setBpSubtopic(firstSubtopic);
+    }
+  };
 
   // Question Builder Form state
   const [customPrompt, setCustomPrompt] = useState("");
@@ -1704,12 +1904,12 @@ export default function Dashboard() {
                           <label className="text-xs uppercase text-muted-foreground">Subject</label>
                           <select
                             value={bpSubject}
-                            onChange={(e) => setBpSubject(e.target.value)}
+                            onChange={(e) => handleSubjectChange(e.target.value)}
                             className="p-3 rounded-xl bg-black border text-white w-full text-sm"
                           >
-                            <option value="math">Mathematics</option>
-                            <option value="physics">Physics</option>
-                            <option value="dsa">DSA</option>
+                            {Object.entries(SUBJECT_MAP).map(([key, val]) => (
+                              <option key={key} value={key}>{val.label}</option>
+                            ))}
                           </select>
                         </div>
 
@@ -1717,12 +1917,12 @@ export default function Dashboard() {
                           <label className="text-xs uppercase text-muted-foreground">Topic</label>
                           <select
                             value={bpTopic}
-                            onChange={(e) => setBpTopic(e.target.value)}
+                            onChange={(e) => handleTopicChange(e.target.value)}
                             className="p-3 rounded-xl bg-black border text-white w-full text-sm"
                           >
-                            {bpSubject === "math" && <option value="algebra">Algebra</option>}
-                            {bpSubject === "physics" && <option value="mechanics">Mechanics</option>}
-                            {bpSubject === "dsa" && <option value="arrays">Arrays</option>}
+                            {SUBJECT_MAP[bpSubject] && Object.entries(SUBJECT_MAP[bpSubject].topics).map(([key, val]) => (
+                              <option key={key} value={key}>{val.label}</option>
+                            ))}
                           </select>
                         </div>
 
@@ -1733,14 +1933,11 @@ export default function Dashboard() {
                             onChange={(e) => setBpSubtopic(e.target.value)}
                             className="p-3 rounded-xl bg-black border text-white w-full text-sm"
                           >
-                            {bpSubject === "math" && <option value="quadratic">Quadratic</option>}
-                            {bpSubject === "physics" && (
-                              <>
-                                <option value="laws_of_motion">Laws of Motion</option>
-                                <option value="kinematics">Kinematics</option>
-                              </>
-                            )}
-                            {bpSubject === "dsa" && <option value="basics">Basics</option>}
+                            {SUBJECT_MAP[bpSubject] && SUBJECT_MAP[bpSubject].topics[bpTopic] &&
+                              Object.entries(SUBJECT_MAP[bpSubject].topics[bpTopic].subtopics).map(([key, val]) => (
+                                <option key={key} value={key}>{val}</option>
+                              ))
+                            }
                           </select>
                         </div>
                       </div>
@@ -2850,12 +3047,9 @@ export default function Dashboard() {
                           onChange={(e) => setKgSubject(e.target.value)}
                           className="w-full p-2.5 rounded-xl bg-black border border-white/10 text-white text-xs font-semibold"
                         >
-                          <option value="dsa">DSA (Data Structures)</option>
-                          <option value="math">Mathematics (Algebra)</option>
-                          <option value="physics">Physics (Mechanics)</option>
-                          <option value="chemistry">Chemistry (Organic)</option>
-                          <option value="biology">Biology (Genetics)</option>
-                          <option value="english">English Language</option>
+                          {Object.entries(SUBJECT_MAP).map(([key, val]) => (
+                            <option key={key} value={key}>{val.label}</option>
+                          ))}
                         </select>
                       </div>
 

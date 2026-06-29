@@ -2067,6 +2067,10 @@ def get_room_questions(subject, topic, subtopic, limit_count=5, question_source=
     conn = get_conn()
     cur = conn.cursor()
 
+    subject = subject.lower()
+    topic = topic.lower()
+    subtopic = subtopic.lower()
+
     cognitive_types = ["memory", "conceptual", "tricky", "application", "reasoning", "elimination"]
     final_questions = []
 
@@ -4750,9 +4754,9 @@ def get_room_questions_from_blueprint(blueprint_id):
         conn.close()
         return []
 
-    subject = bp["subject"]
-    topic = bp["topic"]
-    subtopic = bp["subtopic"]
+    subject = bp["subject"].lower()
+    topic = bp["topic"].lower()
+    subtopic = bp["subtopic"].lower()
     q_count = bp["question_count"] or 5
     strategy = bp["assessment_strategy"] or "balanced"
     difficulty = bp["difficulty"] or "medium"
