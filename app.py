@@ -3398,6 +3398,55 @@ def api_school_rebuild():
     return jsonify(res)
 
 
+# =============================================================================
+# RESEARCH & ANALYTICS TWIN COGNITIVE COMPANION API ENDPOINTS (Week 22)
+# =============================================================================
+
+import research_analytics_twin
+
+@app.route('/api/v1/research/decay', methods=['GET'])
+def api_research_decay():
+    """Concept decay speed rankings."""
+    res = research_analytics_twin.get_concept_decay()
+    return jsonify(res)
+
+@app.route('/api/v1/research/misconceptions', methods=['GET'])
+def api_research_misconceptions():
+    """Misconception occurrence frequencies and impacts."""
+    res = research_analytics_twin.get_misconception_frequency()
+    return jsonify(res)
+
+@app.route('/api/v1/research/interventions', methods=['GET'])
+def api_research_interventions():
+    """Intervention and recommendation success rates."""
+    res = research_analytics_twin.get_intervention_effectiveness()
+    return jsonify(res)
+
+@app.route('/api/v1/research/discrimination', methods=['GET'])
+def api_research_discrimination():
+    """Item discrimination (D) statistics for questions."""
+    res = research_analytics_twin.get_question_discrimination()
+    return jsonify(res)
+
+@app.route('/api/v1/research/classrooms/speed', methods=['GET'])
+def api_research_classroom_speed():
+    """Classroom learning growth speed rankings."""
+    res = research_analytics_twin.get_classroom_speed()
+    return jsonify(res)
+
+@app.route('/api/v1/research/correlation/load-decay', methods=['GET'])
+def api_research_load_decay_correlation():
+    """Cognitive load and memory decay correlations."""
+    res = research_analytics_twin.get_load_decay_correlation()
+    return jsonify(res)
+
+@app.route('/api/v1/research/rebuild', methods=['POST'])
+def api_research_rebuild():
+    """Triggers SAFE projection rebuild with checksum validation (Decision 5)."""
+    res = research_analytics_twin.rebuild_projections()
+    return jsonify(res)
+
+
 import teacher_twin
 
 

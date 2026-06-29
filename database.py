@@ -1606,6 +1606,70 @@ def init_db():
     )
     """)
 
+    # Research & Analytics Twin Projections (Week 22)
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS research_concept_decay (
+        concept_id          TEXT PRIMARY KEY,
+        decay_count         INTEGER DEFAULT 0,
+        avg_decay_time_days REAL DEFAULT 0.0,
+        total_students      INTEGER DEFAULT 0,
+        updated_at          TEXT
+    )
+    """)
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS research_misconception_frequency (
+        cluster_id           TEXT PRIMARY KEY,
+        misconception_name   TEXT NOT NULL,
+        concept_id           TEXT,
+        occurrence_count     INTEGER DEFAULT 0,
+        student_impact_count INTEGER DEFAULT 0,
+        updated_at           TEXT
+    )
+    """)
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS research_intervention_effectiveness (
+        recommendation_type  TEXT PRIMARY KEY,
+        total_generated      INTEGER DEFAULT 0,
+        total_completed      INTEGER DEFAULT 0,
+        total_successful     INTEGER DEFAULT 0,
+        success_rate         REAL DEFAULT 0.0,
+        updated_at           TEXT
+    )
+    """)
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS research_question_discrimination (
+        question_id          INTEGER PRIMARY KEY,
+        discrimination_index REAL DEFAULT 0.0,
+        total_attempts       INTEGER DEFAULT 0,
+        correct_rate         REAL DEFAULT 0.0,
+        updated_at           TEXT
+    )
+    """)
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS research_classroom_speed (
+        room_code        TEXT PRIMARY KEY,
+        initial_health   REAL DEFAULT 0.0,
+        current_health   REAL DEFAULT 0.0,
+        improvement_rate REAL DEFAULT 0.0,
+        updated_at       TEXT
+    )
+    """)
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS research_load_decay_correlation (
+        metric_name   TEXT PRIMARY KEY,
+        average_value REAL DEFAULT 0.0,
+        sample_size   INTEGER DEFAULT 0,
+        updated_at    TEXT
+    )
+    """)
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS research_projection_metadata (
+        projection_version TEXT PRIMARY KEY,
+        checksum           TEXT NOT NULL,
+        rebuilt_at         TEXT NOT NULL
+    )
+    """)
+
     # Seed dynamic subscriptions (Decision 7)
     default_subscriptions = [
         ("memory_engine", "ResponseSubmitted", "v1.0", "memory_engine.handle_response_submitted"),
@@ -1641,7 +1705,10 @@ def init_db():
         ("school_admin_twin", "MemoryUpdated", "v1.0", "school_admin_twin.handle_memory_updated"),
         ("school_admin_twin", "DecisionGenerated", "v1.0", "school_admin_twin.handle_decision_generated"),
         ("school_admin_twin", "AttentionUpdated", "v1.0", "school_admin_twin.handle_attention_updated"),
-        ("school_admin_twin", "TeacherOverrideApplied", "v1.0", "school_admin_twin.handle_teacher_override_applied")
+        ("school_admin_twin", "TeacherOverrideApplied", "v1.0", "school_admin_twin.handle_teacher_override_applied"),
+        # Research & Analytics Twin subscriptions (Week 22)
+        ("research_analytics_twin", "MemoryUpdated", "v1.0", "research_analytics_twin.handle_memory_updated"),
+        ("research_analytics_twin", "DecisionGenerated", "v1.0", "research_analytics_twin.handle_decision_generated")
     ]
     for consumer, event, ver, handler in default_subscriptions:
         cur.execute("""
@@ -3889,6 +3956,70 @@ def upgrade_database_schema():
     """)
     cur.execute("""
     CREATE TABLE IF NOT EXISTS school_projection_metadata (
+        projection_version TEXT PRIMARY KEY,
+        checksum           TEXT NOT NULL,
+        rebuilt_at         TEXT NOT NULL
+    )
+    """)
+
+    # Research & Analytics Twin Projections (Week 22)
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS research_concept_decay (
+        concept_id          TEXT PRIMARY KEY,
+        decay_count         INTEGER DEFAULT 0,
+        avg_decay_time_days REAL DEFAULT 0.0,
+        total_students      INTEGER DEFAULT 0,
+        updated_at          TEXT
+    )
+    """)
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS research_misconception_frequency (
+        cluster_id           TEXT PRIMARY KEY,
+        misconception_name   TEXT NOT NULL,
+        concept_id           TEXT,
+        occurrence_count     INTEGER DEFAULT 0,
+        student_impact_count INTEGER DEFAULT 0,
+        updated_at           TEXT
+    )
+    """)
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS research_intervention_effectiveness (
+        recommendation_type  TEXT PRIMARY KEY,
+        total_generated      INTEGER DEFAULT 0,
+        total_completed      INTEGER DEFAULT 0,
+        total_successful     INTEGER DEFAULT 0,
+        success_rate         REAL DEFAULT 0.0,
+        updated_at           TEXT
+    )
+    """)
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS research_question_discrimination (
+        question_id          INTEGER PRIMARY KEY,
+        discrimination_index REAL DEFAULT 0.0,
+        total_attempts       INTEGER DEFAULT 0,
+        correct_rate         REAL DEFAULT 0.0,
+        updated_at           TEXT
+    )
+    """)
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS research_classroom_speed (
+        room_code        TEXT PRIMARY KEY,
+        initial_health   REAL DEFAULT 0.0,
+        current_health   REAL DEFAULT 0.0,
+        improvement_rate REAL DEFAULT 0.0,
+        updated_at       TEXT
+    )
+    """)
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS research_load_decay_correlation (
+        metric_name   TEXT PRIMARY KEY,
+        average_value REAL DEFAULT 0.0,
+        sample_size   INTEGER DEFAULT 0,
+        updated_at    TEXT
+    )
+    """)
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS research_projection_metadata (
         projection_version TEXT PRIMARY KEY,
         checksum           TEXT NOT NULL,
         rebuilt_at         TEXT NOT NULL
