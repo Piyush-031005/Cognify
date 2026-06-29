@@ -120,8 +120,8 @@ questions = [
 "tags":"roots","estimated_time":20,
 "explanation":"Discriminant determines nature of roots.",
 "prompt":"What determines nature of roots?",
-"options":["a","b","c","discriminant"],
-"correct_index":3
+"options":["Coefficients","Discriminant","Constant term","Degree"],
+"correct_index":1
 },
 
 {
@@ -670,9 +670,10 @@ def run_seed_questions(conn=None):
             correct_index,
             explanation,
             tags,
-            estimated_time
+            estimated_time,
+            status
         )
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'Approved')
         """, (
             q["subject"],
             q["topic"],

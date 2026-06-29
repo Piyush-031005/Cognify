@@ -19,11 +19,13 @@ export default function Quiz() {
   const [isLoading, setIsLoading] = useState(true);
   const [loadingState, setLoadingState] = useState("Analyzing cognitive memory history...");
   const [manualConfidence, setManualConfidence] = useState<number>(0.7);
-  const [timeLeft, setTimeLeft] = useState(600); // 10 minutes default
-  const [isSubmitting, setIsSubmitting] = useState(false);
-
   const user = getCurrentUser();
   const navigate = useNavigate();
+
+  const [timeLeft, setTimeLeft] = useState(() => {
+    return (user?.roomDuration ? Number(user.roomDuration) : 10) * 60;
+  });
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const startedAt = useRef<number>(Date.now());
   const lastInteract = useRef<number>(Date.now());
@@ -434,7 +436,7 @@ export default function Quiz() {
               {/* Confidence Selector */}
               <div className="mt-6 border-t border-white/5 pt-4 space-y-2">
                 <label className="text-xs uppercase text-muted-foreground font-semibold block">
-                  How confident are you with this answer?
+                  How certain are you before submitting?
                 </label>
                 <div className="flex gap-2">
                   {[

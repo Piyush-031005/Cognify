@@ -97,7 +97,7 @@ def seed_data():
 
         print("[PILOT SEED] Seeding generated concept variants...")
         from question_generator import run_generator
-        run_generator(count_per_concept=2)
+        run_generator(count_per_concept=5)
 
         # Reopen connection for subsequent inserts
         conn = get_conn()

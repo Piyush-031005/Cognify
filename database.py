@@ -1877,9 +1877,23 @@ def join_room(data):
     ))
 
     conn.commit()
+    
+    room_dict = dict(room)
+    duration = 10
+    if room_dict.get("assessment_blueprint_id"):
+        cur.execute("SELECT duration FROM assessment_blueprints WHERE id = ?", (room_dict["assessment_blueprint_id"],))
+        bp_row = cur.fetchone()
+        if bp_row:
+            duration = bp_row["duration"]
+        else:
+            duration = int(room_dict.get("question_count") or 5) * 2
+    else:
+        duration = int(room_dict.get("question_count") or 5) * 2
+        
+    room_dict["duration"] = duration
     conn.close()
 
-    return dict(room)
+    return room_dict
 
 
 def get_student_room(email):
@@ -1895,9 +1909,26 @@ def get_student_room(email):
     """, (email,))
 
     row = cur.fetchone()
+    if not row:
+        conn.close()
+        return None
+
+    room_dict = dict(row)
+    duration = 10
+    if room_dict.get("assessment_blueprint_id"):
+        cur.execute("SELECT duration FROM assessment_blueprints WHERE id = ?", (room_dict["assessment_blueprint_id"],))
+        bp_row = cur.fetchone()
+        if bp_row:
+            duration = bp_row["duration"]
+        else:
+            duration = int(room_dict.get("question_count") or 5) * 2
+    else:
+        duration = int(room_dict.get("question_count") or 5) * 2
+        
+    room_dict["duration"] = duration
     conn.close()
 
-    return dict(row) if row else None
+    return room_dict
 
 
 # =========================

@@ -296,7 +296,8 @@ export default function Dashboard() {
       difficulty: room.difficulty,
       questionMix: room.question_mix,
       questionCount: room.question_count,
-      assessmentStrategy: room.assessment_strategy
+      assessmentStrategy: room.assessment_strategy,
+      roomDuration: room.duration
     });
 
     toast({ title: "Room joined successfully!" });
