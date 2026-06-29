@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { getCurrentUser, saveReport, type QuestionAnalytics } from "@/lib/storage";
 
 export default function Quiz() {
-  const API = "http://127.0.0.1:10000";
+  const API = import.meta.env.VITE_API_URL || "http://127.0.0.1:10000";
 
   const [questions, setQuestions] = useState<any[]>([]);
   const [idx, setIdx] = useState(0);

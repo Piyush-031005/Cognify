@@ -28,7 +28,7 @@ const signupSchema = z.object({
 
 export default function Auth() {
   const navigate = useNavigate();
-  const API = "http://127.0.0.1:10000";
+  const API = import.meta.env.VITE_API_URL || "http://127.0.0.1:10000";
   const [mode, setMode] = useState<"signin" | "signup">("signup");
 
   const [form, setForm] = useState<Omit<CognifyUser, "createdAt">>({

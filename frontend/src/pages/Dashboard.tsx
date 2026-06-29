@@ -16,7 +16,7 @@ export default function Dashboard() {
   const navigate = useNavigate();
   if (!user) return <Navigate to="/auth" replace />;
 
-  const API = "http://127.0.0.1:10000";
+  const API = import.meta.env.VITE_API_URL || "http://127.0.0.1:10000";
   
   // Navigation tabs for Teacher Workspace
   const [activeMode, setActiveMode] = useState<"observe" | "assess" | "intervene" | "improve" | "designer" | "lifecycle" | "explorer" | "validation">("observe");
