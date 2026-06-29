@@ -11,8 +11,8 @@
 ## ===================================
 
 * **Architecture Status:** Frozen
-* **Current Version:** `v2.3.0`
-* **Current Sprint:** Week 14 Complete (CTE ✅)
+* **Current Version:** `v2.4.0`
+* **Current Sprint:** Week 15 Complete (ACI ✅)
 * **Current Focus:** Phase 3 Execution
 
 

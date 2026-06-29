@@ -240,6 +240,38 @@ def generate_contextual_recommendations(student_email, context_overrides=None):
     device_type = device_type.lower()
     network_quality = network_quality.lower()
 
+    # Fetch attention rolling state & circadian factor
+    rolling_decay = 1.0
+    circadian_factor = 1.0
+    lambda_val = 0.35
+    try:
+        cur.execute("""
+            SELECT rolling_decay FROM student_attention_state
+            WHERE student_email = ?
+        """, (student_email,))
+        att_row = cur.fetchone()
+        if att_row and att_row["rolling_decay"] is not None:
+            rolling_decay = att_row["rolling_decay"]
+
+        cur.execute("""
+            SELECT circadian_factor FROM attention_events
+            WHERE student_email = ?
+            ORDER BY timestamp DESC LIMIT 1
+        """, (student_email,))
+        circ_row = cur.fetchone()
+        if circ_row and circ_row["circadian_factor"] is not None:
+            circadian_factor = circ_row["circadian_factor"]
+
+        cur.execute("""
+            SELECT value FROM attention_config
+            WHERE key = 'lambda_attention_modulation'
+        """)
+        l_row = cur.fetchone()
+        if l_row and l_row["value"] is not None:
+            lambda_val = l_row["value"]
+    except Exception:
+        pass
+
     # -------------------------------------------------------------
     # 3. Fetch Cognitive States & Candidate Targets
     # -------------------------------------------------------------
@@ -558,6 +590,9 @@ def generate_contextual_recommendations(student_email, context_overrides=None):
 
             # Apply multipliers and clamp
             S_final = S_base * M_dev * M_net * M_time * M_class
+
+            # Apply Week 15: Soft Attention & Circadian modulation (Change 3)
+            S_final = S_final * (1.0 - lambda_val) + S_final * (circadian_factor * rolling_decay) * lambda_val
 
             # Apply Cognitive Recovery Mode dampening/boosts
             fatigue_dampener_applied = False

@@ -4475,6 +4475,89 @@ def api_telemetry_features(email):
         return jsonify({"status": "error", "error": str(e)}), 500
 
 
+# =============================================================================
+# WEEK 15: ATTENTION & CIRCADIAN INTELLIGENCE (ACI) ENDPOINTS
+# =============================================================================
+
+@app.route('/attention/compute', methods=['POST'])
+def api_attention_compute():
+    """
+    POST /attention/compute
+    Manually triggers an ACI engine calculation run for a student and concept.
+    """
+    try:
+        import attention_engine
+        data = request.get_json(silent=True) or {}
+        student_email = data.get("student_email")
+        concept_id = data.get("concept_id")
+        if not student_email or not concept_id:
+            return jsonify({"status": "error", "error": "Missing student_email or concept_id"}), 400
+        result = attention_engine.compute_and_save_attention(student_email, concept_id)
+        if "error" in result:
+            return jsonify({"status": "error", "error": result["error"]}), 400
+        return jsonify({"status": "success", "data": result})
+    except Exception as e:
+        return jsonify({"status": "error", "error": str(e)}), 500
+
+
+@app.route('/attention/student/<email>', methods=['GET'])
+def api_attention_student(email):
+    """
+    GET /attention/student/<email>
+    Returns active attention state and transition history audits.
+    """
+    try:
+        import attention_engine
+        result = attention_engine.get_student_attention_state(email)
+        return jsonify({"status": "success", "data": result})
+    except Exception as e:
+        return jsonify({"status": "error", "error": str(e)}), 500
+
+
+@app.route('/attention/history', methods=['GET'])
+def api_attention_history():
+    """
+    GET /attention/history
+    Returns transition history audits.
+    """
+    try:
+        from database import get_conn
+        conn = get_conn()
+        cur = conn.cursor()
+        limit = int(request.args.get("limit", 20))
+        cur.execute("""
+            SELECT * FROM attention_history
+            ORDER BY timestamp DESC LIMIT ?
+        """, (limit,))
+        rows = [dict(r) for r in cur.fetchall()]
+        conn.close()
+        return jsonify({"status": "success", "count": len(rows), "data": rows})
+    except Exception as e:
+        return jsonify({"status": "error", "error": str(e)}), 500
+
+
+@app.route('/attention/config', methods=['GET', 'POST'])
+def api_attention_config():
+    """
+    GET /attention/config - Returns CCLI configurations.
+    POST /attention/config - Updates one or more configuration keys.
+    """
+    try:
+        import attention_engine
+        if request.method == 'POST':
+            data = request.get_json(silent=True) or {}
+            updated = []
+            for key, val in data.items():
+                result = attention_engine.update_attention_config(key, val)
+                updated.append(result)
+            return jsonify({"status": "success", "updated": updated})
+        else:
+            rows = attention_engine.get_attention_config()
+            return jsonify({"status": "success", "data": rows})
+    except Exception as e:
+        return jsonify({"status": "error", "error": str(e)}), 500
+
+
 if __name__ == "__main__":
     upgrade_question_bank_schema()
     upgrade_semantic_schema()

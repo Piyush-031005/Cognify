@@ -1074,6 +1074,72 @@ def init_db():
             (k, v, now_cdo)
         )
 
+    # --- Week 15: Attention & Circadian Intelligence (ACI) ---
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS attention_config (
+        key TEXT PRIMARY KEY,
+        value REAL,
+        config_version TEXT DEFAULT 'v1.0',
+        updated_by TEXT DEFAULT 'system',
+        updated_at TEXT
+    )
+    """)
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS attention_events (
+        event_id TEXT PRIMARY KEY,
+        student_email TEXT,
+        concept_id TEXT,
+        attention_score REAL,
+        attention_decay REAL,
+        circadian_factor REAL,
+        session_fatigue REAL,
+        focus_state TEXT,
+        confidence REAL,
+        explanation_json TEXT,
+        attention_engine_version TEXT DEFAULT 'v1.0',
+        timestamp TEXT
+    )
+    """)
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS student_attention_state (
+        student_email TEXT PRIMARY KEY,
+        rolling_attention REAL,
+        rolling_decay REAL,
+        last_computed_at TEXT
+    )
+    """)
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS attention_history (
+        history_id INTEGER PRIMARY KEY AUTOINCREMENT,
+        student_email TEXT,
+        old_state TEXT,
+        new_state TEXT,
+        timestamp TEXT
+    )
+    """)
+
+    now_aci = datetime.now().isoformat()
+    aci_defaults = {
+        "circadian_range_06_11": 1.0,
+        "circadian_range_11_17": 0.95,
+        "circadian_range_17_21": 0.90,
+        "circadian_range_21_02": 0.75,
+        "circadian_range_02_06": 0.60,
+        "weight_focus_loss": 0.35,
+        "weight_hesitation": 0.25,
+        "weight_interaction_entropy": 0.20,
+        "weight_typing_cadence": 0.10,
+        "weight_reading_speed": 0.10,
+        "attention_decay_alpha": 0.25,
+        "lambda_attention_modulation": 0.35,
+        "fatigue_limit": 0.65
+    }
+    for k, v in aci_defaults.items():
+        cur.execute(
+            "INSERT OR IGNORE INTO attention_config (key, value, config_version, updated_by, updated_at) VALUES (?, ?, 'v1.0', 'system', ?)",
+            (k, v, now_aci)
+        )
+
     conn.commit()
     conn.close()
 
@@ -2786,6 +2852,72 @@ def upgrade_database_schema():
         cur.execute(
             "INSERT OR IGNORE INTO decision_config (key, value, config_version, updated_by, updated_at) VALUES (?, ?, 'v1.0', 'system', ?)",
             (k, v, now_cdo)
+        )
+
+    # --- Week 15: Attention & Circadian Intelligence (ACI) ---
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS attention_config (
+        key TEXT PRIMARY KEY,
+        value REAL,
+        config_version TEXT DEFAULT 'v1.0',
+        updated_by TEXT DEFAULT 'system',
+        updated_at TEXT
+    )
+    """)
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS attention_events (
+        event_id TEXT PRIMARY KEY,
+        student_email TEXT,
+        concept_id TEXT,
+        attention_score REAL,
+        attention_decay REAL,
+        circadian_factor REAL,
+        session_fatigue REAL,
+        focus_state TEXT,
+        confidence REAL,
+        explanation_json TEXT,
+        attention_engine_version TEXT DEFAULT 'v1.0',
+        timestamp TEXT
+    )
+    """)
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS student_attention_state (
+        student_email TEXT PRIMARY KEY,
+        rolling_attention REAL,
+        rolling_decay REAL,
+        last_computed_at TEXT
+    )
+    """)
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS attention_history (
+        history_id INTEGER PRIMARY KEY AUTOINCREMENT,
+        student_email TEXT,
+        old_state TEXT,
+        new_state TEXT,
+        timestamp TEXT
+    )
+    """)
+
+    now_aci = datetime.now().isoformat()
+    aci_defaults = {
+        "circadian_range_06_11": 1.0,
+        "circadian_range_11_17": 0.95,
+        "circadian_range_17_21": 0.90,
+        "circadian_range_21_02": 0.75,
+        "circadian_range_02_06": 0.60,
+        "weight_focus_loss": 0.35,
+        "weight_hesitation": 0.25,
+        "weight_interaction_entropy": 0.20,
+        "weight_typing_cadence": 0.10,
+        "weight_reading_speed": 0.10,
+        "attention_decay_alpha": 0.25,
+        "lambda_attention_modulation": 0.35,
+        "fatigue_limit": 0.65
+    }
+    for k, v in aci_defaults.items():
+        cur.execute(
+            "INSERT OR IGNORE INTO attention_config (key, value, config_version, updated_by, updated_at) VALUES (?, ?, 'v1.0', 'system', ?)",
+            (k, v, now_aci)
         )
 
     conn.commit()

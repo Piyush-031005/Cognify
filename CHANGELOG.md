@@ -5,6 +5,16 @@ All notable changes to the Cognify platform will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to Semantic Versioning.
 
+## [2.4.0] - 2026-06-29
+
+### Added (Week 15 — Attention & Circadian Intelligence)
+- **Attention & Circadian Intelligence (ACI)**: Formulated an inference module (`attention_engine.py`) calculating instantaneous focus scores, session fatigue, dynamic circadian factors, and EWMA attention decay.
+- **Config-Driven Circadian Intervals**: Supported start/end hour boundaries in `attention_config` to customize circadian multipliers.
+- **Attention Confidence Scoring**: Added telemetry completeness metric mapping populated features to confidence ($0.0 - 1.0$).
+- **Soft Score Modulation**: Modulated Context Engine recommendations softly: $S_{\text{final}} = S_{\text{base}} \cdot (1 - \lambda) + S_{\text{base}} \cdot (CF \cdot AD) \cdot \lambda$.
+- **Continuous Session Streak Tracking**: Parsed raw events to sum continuous study minutes, resetting if breaks are $> 10$ minutes.
+- **New REST APIs**: Added endpoints for computation, configuration overrides, and transition logs.
+
 ## [2.3.0] - 2026-06-29
 
 ### Added (Week 14 — Cross-Platform Cognitive Telemetry Engine)
