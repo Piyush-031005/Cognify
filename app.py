@@ -4384,6 +4384,97 @@ def api_decision_config():
         return jsonify({"status": "error", "error": str(e)}), 500
 
 
+# =============================================================================
+# WEEK 14: CROSS-PLATFORM COGNITIVE TELEMETRY ENGINE (CTE) ENDPOINTS
+# =============================================================================
+
+@app.route('/telemetry/sync', methods=['POST'])
+def api_telemetry_sync():
+    """
+    POST /telemetry/sync
+    Accepts compressed/json batch raw telemetry events from Android/Desktop clients,
+    normalizes them, inserts them idempotently, and triggers feature extraction.
+    """
+    try:
+        import telemetry_normalizer
+        import feature_extractor
+        from database import get_conn
+
+        data = request.get_json(silent=True) or {}
+        events = data.get("events", [])
+        if not isinstance(events, list):
+            return jsonify({"status": "error", "error": "events parameter must be a list"}), 400
+
+        inserted_count = 0
+        students_concepts_to_extract = set()
+
+        conn = get_conn()
+        cur = conn.cursor()
+
+        try:
+            for ev in events:
+                norm = telemetry_normalizer.normalize_telemetry_payload(ev)
+                cur.execute("""
+                    INSERT OR IGNORE INTO raw_telemetry_store (
+                        event_id, student_email, device_type, event_type, payload_json, timestamp
+                    ) VALUES (?, ?, ?, ?, ?, ?)
+                """, (
+                    norm["event_id"], norm["student_email"], norm["device_type"],
+                    norm["event_type"], norm["payload_json"], norm["timestamp"]
+                ))
+                if cur.rowcount > 0:
+                    inserted_count += 1
+                    # Extract concept_id if present in raw event or default to 'general'
+                    concept_id = ev.get("concept_id", "general")
+                    students_concepts_to_extract.add((norm["student_email"], concept_id))
+            conn.commit()
+        except Exception as e:
+            conn.rollback()
+            raise e
+        finally:
+            conn.close()
+
+        # Run feature extraction on the added streams
+        extracted = []
+        for email, concept in students_concepts_to_extract:
+            res = feature_extractor.extract_and_cache_behavior_features(email, concept)
+            extracted.append(res)
+
+        return jsonify({
+            "status": "success",
+            "inserted": inserted_count,
+            "extracted": extracted
+        })
+    except Exception as e:
+        return jsonify({"status": "error", "error": str(e)}), 500
+
+
+@app.route('/telemetry/features/<email>', methods=['GET'])
+def api_telemetry_features(email):
+    """
+    GET /telemetry/features/<email>
+    Returns derived behavior features for a student.
+    """
+    try:
+        from database import get_conn
+        concept_id = request.args.get("concept_id", "general")
+        conn = get_conn()
+        cur = conn.cursor()
+        cur.execute("""
+            SELECT * FROM derived_behavior_features
+            WHERE student_email = ? AND concept_id = ?
+        """, (email, concept_id))
+        row = cur.fetchone()
+        conn.close()
+
+        if row:
+            return jsonify({"status": "success", "data": dict(row)})
+        else:
+            return jsonify({"status": "success", "data": None})
+    except Exception as e:
+        return jsonify({"status": "error", "error": str(e)}), 500
+
+
 if __name__ == "__main__":
     upgrade_question_bank_schema()
     upgrade_semantic_schema()

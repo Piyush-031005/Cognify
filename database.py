@@ -2723,6 +2723,8 @@ def upgrade_database_schema():
         concept_id TEXT,
         final_decision TEXT,
         confidence_score REAL,
+        decision_stability TEXT,
+        stability_score REAL,
         decision_policy_version TEXT DEFAULT 'v1.0',
         trigger_source TEXT,
         timestamp TEXT
@@ -2737,8 +2739,37 @@ def upgrade_database_schema():
         candidates_json TEXT,
         conflicts_json TEXT,
         decision_reason TEXT,
+        decision_stability TEXT,
+        stability_score REAL,
         decision_policy_version TEXT DEFAULT 'v1.0',
         FOREIGN KEY (run_id) REFERENCES decision_runs(run_id)
+    )
+    """)
+
+    # --- Week 14: Cross-Platform Cognitive Telemetry Engine (CTE) ---
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS raw_telemetry_store (
+        event_id TEXT PRIMARY KEY,
+        student_email TEXT,
+        device_type TEXT,
+        event_type TEXT,
+        payload_json TEXT,
+        timestamp TEXT
+    )
+    """)
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS derived_behavior_features (
+        student_email TEXT,
+        concept_id TEXT,
+        interaction_entropy REAL DEFAULT 0.0,
+        hesitation_index REAL DEFAULT 0.0,
+        reading_speed REAL DEFAULT 0.0,
+        correction_rate REAL DEFAULT 0.0,
+        focus_loss_count INTEGER DEFAULT 0,
+        typing_cadence REAL DEFAULT 0.0,
+        scroll_entropy REAL DEFAULT 0.0,
+        last_computed_at TEXT,
+        PRIMARY KEY (student_email, concept_id)
     )
     """)
 

@@ -303,6 +303,26 @@ def execute_decision_pipeline(student_email, concept_id, trigger_source="api"):
     # Losing candidates are conflicts
     conflicts = [c for c in candidates if c != winning_candidate]
 
+    # Calculate Decision Stability
+    # Filter conflicts that recommend a DIFFERENT action from the winning action
+    conflicting_candidates = [c for c in conflicts if c["action"] != final_decision]
+    if conflicting_candidates:
+        max_alt_conf = max(c["confidence"] for c in conflicting_candidates)
+        if confidence_score > 0.0:
+            stability_score = max(0.0, min(1.0, 1.0 - (max_alt_conf / confidence_score)))
+        else:
+            stability_score = 0.0
+    else:
+        stability_score = 1.0
+
+    # Classify stability level
+    if stability_score >= 0.7:
+        decision_stability = "HIGH"
+    elif stability_score >= 0.4:
+        decision_stability = "MEDIUM"
+    else:
+        decision_stability = "LOW"
+
     run_id = str(uuid.uuid4())
     now = datetime.now().isoformat()
     policy_version = "v1.0"
@@ -312,21 +332,25 @@ def execute_decision_pipeline(student_email, concept_id, trigger_source="api"):
         cur.execute("""
             INSERT INTO decision_runs (
                 run_id, student_email, concept_id, final_decision,
-                confidence_score, decision_policy_version, trigger_source, timestamp
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                confidence_score, decision_stability, stability_score,
+                decision_policy_version, trigger_source, timestamp
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """, (
             run_id, student_email, concept_id, final_decision,
-            round(confidence_score, 3), policy_version, trigger_source, now
+            round(confidence_score, 3), decision_stability, round(stability_score, 3),
+            policy_version, trigger_source, now
         ))
 
         cur.execute("""
             INSERT INTO decision_explanations (
                 run_id, student_email, concept_id, winning_rule,
-                candidates_json, conflicts_json, decision_reason, decision_policy_version
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                candidates_json, conflicts_json, decision_reason,
+                decision_stability, stability_score, decision_policy_version
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """, (
             run_id, student_email, concept_id, winning_rule,
-            json.dumps(candidates), json.dumps(conflicts), decision_reason, policy_version
+            json.dumps(candidates), json.dumps(conflicts), decision_reason,
+            decision_stability, round(stability_score, 3), policy_version
         ))
         conn.commit()
     except Exception as e:
@@ -342,6 +366,8 @@ def execute_decision_pipeline(student_email, concept_id, trigger_source="api"):
         "concept_id": concept_id,
         "final_decision": final_decision,
         "confidence_score": round(confidence_score, 3),
+        "decision_stability": decision_stability,
+        "stability_score": round(stability_score, 3),
         "winning_rule": winning_rule,
         "decision_reason": decision_reason,
         "candidates": candidates,

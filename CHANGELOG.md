@@ -5,6 +5,15 @@ All notable changes to the Cognify platform will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to Semantic Versioning.
 
+## [2.3.0] - 2026-06-29
+
+### Added (Week 14 — Cross-Platform Cognitive Telemetry Engine)
+- **Cross-Platform Cognitive Telemetry Engine (CTE)**: Integrates desktop/Android telemetry normalizing adapters, standardizing mouse movement coordinates, velocity, click coordinates, scrolling velocity, orientation, and focus lost/gained events.
+- **Derived Behavior Feature Extractor** (`feature_extractor.py`): Performs processing on raw telemetry to derive high-level interaction entropy, hesitation index, scroll entropy, typing cadence, and focus lost events.
+- **Derived Features Cache**: Caches student behavior features in `derived_behavior_features`.
+- **CDO Stability & Confidence Calibration**: Upgraded `decision_engine.py` to calculate stability score indicator based on alternative candidate conflict differentials.
+- **REST Sync Endpoint**: `POST /telemetry/sync` handles batch upload from offline mobile storage, performing idempotent UUID-checked event insertion.
+
 ## [2.2.0] - 2026-06-29
 
 ### Added (Week 13 — Cognitive Decision Orchestrator)

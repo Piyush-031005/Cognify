@@ -21,6 +21,7 @@ class MockConn:
     def __init__(self, c): self.conn = c
     def cursor(self): return self.conn.cursor()
     def commit(self): self.conn.commit()
+    def rollback(self): self.conn.rollback()
     def close(self): pass
 
 import database
@@ -184,6 +185,8 @@ def setup_test_db():
         concept_id TEXT,
         final_decision TEXT,
         confidence_score REAL,
+        decision_stability TEXT,
+        stability_score REAL,
         decision_policy_version TEXT DEFAULT 'v1.0',
         trigger_source TEXT,
         timestamp TEXT
@@ -198,6 +201,8 @@ def setup_test_db():
         candidates_json TEXT,
         conflicts_json TEXT,
         decision_reason TEXT,
+        decision_stability TEXT,
+        stability_score REAL,
         decision_policy_version TEXT DEFAULT 'v1.0',
         FOREIGN KEY (run_id) REFERENCES decision_runs(run_id)
     )
