@@ -118,6 +118,40 @@ DIGITAL_TWIN_ALPHA = 0.7
 init_db()
 upgrade_database_schema()
 
+def verify_and_repair_database():
+    import sqlite3
+    from database import get_conn
+    from question_generator import MASTER_MAP
+    import seed_pilot_data
+
+    print("[STARTUP VALIDATION] Checking database health...")
+    try:
+        conn = get_conn()
+        cur = conn.cursor()
+        
+        missing_combos = []
+        for s, t, st in MASTER_MAP.keys():
+            cur.execute("""
+                SELECT COUNT(*) FROM question_bank 
+                WHERE subject = ? AND topic = ? AND subtopic = ? AND status = 'Approved'
+            """, (s, t, st))
+            count = cur.fetchone()[0]
+            if count == 0:
+                missing_combos.append(f"{s} -> {t} -> {st}")
+                
+        conn.close()
+        
+        if missing_combos:
+            print(f"[STARTUP VALIDATION] Found {len(missing_combos)} missing/empty subtopics: {missing_combos}. Triggering database auto-repair...")
+            seed_pilot_data.seed_data()
+            print("[STARTUP VALIDATION] Auto-repair and seeding completed successfully.")
+        else:
+            print("[STARTUP VALIDATION] Database is healthy. All 16 subjects, topics, and subtopics have approved questions.")
+    except Exception as e:
+        print("[STARTUP VALIDATION ERROR] Database health check failed:", e)
+
+verify_and_repair_database()
+
 
 # =========================
 # AUTH ROUTES
@@ -5512,6 +5546,96 @@ def api_admin_restore():
         return jsonify(res)
     except Exception as e:
         return jsonify({"status": "error", "error": str(e)}), 500
+
+
+@app.route('/api/v1/admin/verify-dataset', methods=['GET'])
+def admin_verify_dataset():
+    import sqlite3
+    from database import get_conn
+    from question_generator import MASTER_MAP
+    
+    conn = get_conn()
+    cur = conn.cursor()
+    
+    # 1. Total and Approved
+    cur.execute("SELECT COUNT(*) FROM question_bank")
+    total_q = cur.fetchone()[0]
+    
+    cur.execute("SELECT COUNT(*) FROM question_bank WHERE status = 'Approved'")
+    approved_q = cur.fetchone()[0]
+    
+    # 2. Subjects breakdown
+    cur.execute("""
+        SELECT subject, topic, subtopic, COUNT(*) as cnt 
+        FROM question_bank 
+        GROUP BY subject, topic, subtopic
+    """)
+    rows = [dict(r) for r in cur.fetchall()]
+    
+    subjects_stats = {}
+    for r in rows:
+        subj = r["subject"]
+        top = r["topic"]
+        subt = r["subtopic"]
+        cnt = r["cnt"]
+        
+        if subj not in subjects_stats:
+            subjects_stats[subj] = {
+                "topics": set(),
+                "subtopics": set(),
+                "questions": 0
+            }
+        subjects_stats[subj]["topics"].add(top)
+        subjects_stats[subj]["subtopics"].add(subt)
+        subjects_stats[subj]["questions"] += cnt
+
+    # Convert sets to lengths
+    subjects_final = {}
+    for subj, data in subjects_stats.items():
+        subjects_final[subj] = {
+            "topics": len(data["topics"]),
+            "subtopics": len(data["subtopics"]),
+            "questions": data["questions"]
+        }
+        
+    # 3. Missing combos
+    missing = []
+    for s, t, st in MASTER_MAP.keys():
+        cur.execute("""
+            SELECT COUNT(*) FROM question_bank 
+            WHERE subject = ? AND topic = ? AND subtopic = ? AND status = 'Approved'
+        """, (s, t, st))
+        count = cur.fetchone()[0]
+        if count == 0:
+            missing.append(f"{s}/{t}/{st}")
+            
+    # 4. Orphan questions
+    cur.execute("""
+        SELECT id FROM question_bank 
+        WHERE subject IS NULL OR subject = '' 
+           OR topic IS NULL OR topic = '' 
+           OR subtopic IS NULL OR subtopic = ''
+           OR prompt IS NULL OR prompt = ''
+    """)
+    orphan_questions = [r[0] for r in cur.fetchall()]
+    
+    # 5. Unmapped questions
+    cur.execute("SELECT id FROM question_bank WHERE id NOT IN (SELECT DISTINCT question_id FROM room_questions_map)")
+    unmapped_questions = [r[0] for r in cur.fetchall()]
+    
+    conn.close()
+    
+    health = "PASS" if not missing else "FAIL"
+    
+    return jsonify({
+        "total_questions": total_q,
+        "approved_questions": approved_q,
+        "subjects": subjects_final,
+        "missing": missing,
+        "orphan_questions": orphan_questions,
+        "unmapped_questions": unmapped_questions,
+        "health": health
+    })
 
 
 if __name__ == "__main__":

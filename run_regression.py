@@ -80,7 +80,8 @@ def run_regression_suite():
         "tests/test_school_admin_twin.py",
         "tests/test_research_analytics_twin.py",
         "tests/test_production_hardening.py",
-        "tests/test_pilot_dataset.py"
+        "tests/test_pilot_dataset.py",
+        "tests/test_dataset_validation.py"
     ]
     
     results = {}

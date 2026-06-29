@@ -91,9 +91,9 @@ def fuse_evidence(question_sessions, reflection=""):
     confident_ratio = sum(1 for x in behavior_labels if "confident" in x or "stable" in x) / total
     hesitant_ratio = sum(1 for x in behavior_labels if "hesitation" in x or "confused" in x) / total
 
-    avg_hesitation = safe_avg([q.get("hesitation_score", 0.5) for q in question_sessions])
-    avg_conf_error = safe_avg([q.get("confidence_error", 0.5) for q in question_sessions])
-    avg_engagement = safe_avg([q.get("engagement_score", 0.5) for q in question_sessions])
+    avg_hesitation = safe_avg([q.get("hesitation_score") if q.get("hesitation_score") is not None else 0.5 for q in question_sessions])
+    avg_conf_error = safe_avg([q.get("confidence_error") if q.get("confidence_error") is not None else 0.5 for q in question_sessions])
+    avg_engagement = safe_avg([q.get("engagement_score") if q.get("engagement_score") is not None else 0.5 for q in question_sessions])
 
     # Fused Assessment Metrics using configurable FUSION_RULES weights
     w = FUSION_RULES["weights"]
