@@ -4690,6 +4690,135 @@ def api_question_family(family_id):
         return jsonify({"status": "error", "error": str(e)}), 500
 
 
+# =============================================================================
+# WEEK 17: COGNITIVE EVENT BUS (CEB) ENDPOINTS
+# =============================================================================
+
+@app.route('/events/publish', methods=['POST'])
+def api_events_publish():
+    """
+    POST /events/publish
+    Publishes a domain event onto the Event Bus.
+    """
+    try:
+        import event_bus
+        data = request.get_json(silent=True) or {}
+        event_type = data.get("event_type")
+        entity_type = data.get("entity_type")
+        entity_id = data.get("entity_id")
+        producer = data.get("producer")
+        producer_version = data.get("producer_version", "v1.0")
+        schema_version = data.get("schema_version", "v1.0")
+        metadata_json = data.get("metadata_json", {})
+        payload_json = data.get("payload_json", {})
+
+        if not event_type or not entity_id or not producer:
+            return jsonify({"status": "error", "error": "Missing event_type, entity_id, or producer"}), 400
+
+        ev_id = event_bus.publish(
+            event_type, entity_type, entity_id, producer, producer_version,
+            schema_version, metadata_json, payload_json
+        )
+        return jsonify({"status": "success", "event_id": ev_id})
+    except Exception as e:
+        return jsonify({"status": "error", "error": str(e)}), 500
+
+
+@app.route('/events/replay', methods=['POST'])
+def api_events_replay():
+    """
+    POST /events/replay
+    Triggers chronological event replay.
+    """
+    try:
+        import event_replay
+        data = request.get_json(silent=True) or {}
+        consumer_name = data.get("consumer_name")
+        mode = data.get("mode", "SAFE")
+        replay_type = data.get("replay_type", "all") # 'all' | 'entity' | 'engine'
+
+        if not consumer_name:
+            return jsonify({"status": "error", "error": "Missing consumer_name"}), 400
+
+        if replay_type == "entity":
+            entity_type = data.get("entity_type")
+            entity_id = data.get("entity_id")
+            if not entity_type or not entity_id:
+                return jsonify({"status": "error", "error": "Missing entity_type or entity_id for entity replay"}), 400
+            res = event_replay.replay_entity_events(consumer_name, entity_type, entity_id, mode)
+        elif replay_type == "engine":
+            event_type = data.get("event_type")
+            if not event_type:
+                return jsonify({"status": "error", "error": "Missing event_type for engine replay"}), 400
+            res = event_replay.replay_engine_events(consumer_name, event_type, mode)
+        else:
+            from_ts = data.get("from_timestamp")
+            to_ts = data.get("to_timestamp")
+            res = event_replay.replay_all_events(consumer_name, mode, from_ts, to_ts)
+
+        if "error" in res:
+            return jsonify({"status": "error", "error": res["error"]}), 400
+        return jsonify({"status": "success", "data": res})
+    except Exception as e:
+        return jsonify({"status": "error", "error": str(e)}), 500
+
+
+@app.route('/events', methods=['GET'])
+def api_events_list():
+    """
+    GET /events
+    Lists all events stored in the append-only ledger.
+    """
+    try:
+        from database import get_conn
+        conn = get_conn()
+        cur = conn.cursor()
+        limit = int(request.args.get("limit", 50))
+        cur.execute("SELECT * FROM event_store ORDER BY created_at DESC LIMIT ?", (limit,))
+        rows = [dict(r) for r in cur.fetchall()]
+        conn.close()
+        return jsonify({"status": "success", "count": len(rows), "data": rows})
+    except Exception as e:
+        return jsonify({"status": "error", "error": str(e)}), 500
+
+
+@app.route('/events/history', methods=['GET'])
+def api_events_history():
+    """
+    GET /events/history
+    Returns processed event records status to audit consumer executions.
+    """
+    try:
+        from database import get_conn
+        conn = get_conn()
+        cur = conn.cursor()
+        limit = int(request.args.get("limit", 50))
+        cur.execute("SELECT * FROM processed_events ORDER BY processed_at DESC LIMIT ?", (limit,))
+        rows = [dict(r) for r in cur.fetchall()]
+        conn.close()
+        return jsonify({"status": "success", "count": len(rows), "data": rows})
+    except Exception as e:
+        return jsonify({"status": "error", "error": str(e)}), 500
+
+
+@app.route('/events/subscriptions', methods=['GET'])
+def api_events_subscriptions():
+    """
+    GET /events/subscriptions
+    Lists registered subscriptions mapping.
+    """
+    try:
+        from database import get_conn
+        conn = get_conn()
+        cur = conn.cursor()
+        cur.execute("SELECT * FROM event_subscriptions")
+        rows = [dict(r) for r in cur.fetchall()]
+        conn.close()
+        return jsonify({"status": "success", "count": len(rows), "data": rows})
+    except Exception as e:
+        return jsonify({"status": "error", "error": str(e)}), 500
+
+
 if __name__ == "__main__":
     upgrade_question_bank_schema()
     upgrade_semantic_schema()

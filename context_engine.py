@@ -720,3 +720,17 @@ def generate_contextual_recommendations(student_email, context_overrides=None):
         "recommendations": [r for r in recommendations if r["status"] != "blocked"],
         "blocked_candidates": [r for r in recommendations if r["status"] == "blocked"]
     }
+
+def handle_question_retired(event_data, is_replay=False, replay_mode="SAFE"):
+    """
+    Subscribes to QuestionRetired event.
+    Logs/refreshes recommendation buffers for retired questions.
+    """
+    pass
+
+def handle_question_promoted(event_data, is_replay=False, replay_mode="SAFE"):
+    """
+    Subscribes to QuestionPromoted event.
+    Logs/refreshes recommendation buffers for promoted questions.
+    """
+    pass

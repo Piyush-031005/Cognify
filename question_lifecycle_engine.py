@@ -191,6 +191,23 @@ def promote_question_status(question_id, new_status, actor="system"):
         """, (question_id, old_status, new_status, actor, now))
 
         conn.commit()
+
+        if new_status == 'Active':
+            try:
+                import event_bus
+                event_bus.publish(
+                    event_type="QuestionPromoted",
+                    entity_type="question",
+                    entity_id=str(question_id),
+                    producer="qbl_engine",
+                    producer_version="v2.5.0",
+                    schema_version="v1.0",
+                    metadata_json={},
+                    payload_json={"new_status": new_status, "old_status": old_status}
+                )
+            except Exception:
+                pass
+
         return {"status": "success", "old_status": old_status, "new_status": new_status}
     except Exception as e:
         conn.rollback()
@@ -240,6 +257,22 @@ def retire_question_version(question_id, reason, replaced_by_question_id=None, m
         """, (question_id, old_status, reason, m_json_str, actor, now))
 
         conn.commit()
+
+        try:
+            import event_bus
+            event_bus.publish(
+                event_type="QuestionRetired",
+                entity_type="question",
+                entity_id=str(question_id),
+                producer="qbl_engine",
+                producer_version="v2.5.0",
+                schema_version="v1.0",
+                metadata_json={},
+                payload_json={"reason": reason, "replaced_by_question_id": replaced_by_question_id, "metrics": metrics_json}
+            )
+        except Exception:
+            pass
+
         return {
             "status": "success",
             "question_id": question_id,

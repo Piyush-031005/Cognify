@@ -1219,6 +1219,83 @@ def init_db():
     )
     """)
 
+    # --- Week 17: Cognitive Event Bus (CEB) ---
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS event_store (
+        event_id TEXT PRIMARY KEY,
+        event_type TEXT NOT NULL,
+        entity_type TEXT,
+        entity_id TEXT,
+        entity_sequence INTEGER NOT NULL,
+        producer TEXT,
+        producer_version TEXT,
+        schema_version TEXT,
+        metadata_json TEXT,
+        payload_json TEXT,
+        created_at TEXT
+    )
+    """)
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS event_subscriptions (
+        consumer_name TEXT,
+        event_type TEXT,
+        schema_version TEXT,
+        handler TEXT,
+        enabled INTEGER DEFAULT 1,
+        PRIMARY KEY (consumer_name, event_type, schema_version)
+    )
+    """)
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS processed_events (
+        event_id TEXT,
+        consumer_name TEXT,
+        processed_at TEXT,
+        PRIMARY KEY (event_id, consumer_name),
+        FOREIGN KEY (event_id) REFERENCES event_store(event_id)
+    )
+    """)
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS dead_letter_events (
+        event_id TEXT,
+        consumer_name TEXT,
+        error_message TEXT,
+        retry_count INTEGER,
+        failed_at TEXT,
+        payload_json TEXT,
+        PRIMARY KEY (event_id, consumer_name)
+    )
+    """)
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS event_replay_runs (
+        replay_id TEXT PRIMARY KEY,
+        consumer_name TEXT,
+        from_timestamp TEXT,
+        to_timestamp TEXT,
+        events_processed INTEGER,
+        started_at TEXT,
+        completed_at TEXT,
+        status TEXT,
+        mode TEXT
+    )
+    """)
+
+    # Seed dynamic subscriptions (Decision 7)
+    default_subscriptions = [
+        ("memory_engine", "ResponseSubmitted", "v1.0", "memory_engine.handle_response_submitted"),
+        ("qqi_engine", "MemoryUpdated", "v1.0", "qqi_engine.handle_memory_updated"),
+        ("nbirt_engine", "QQIUpdated", "v1.0", "nbirt_engine.handle_qqi_updated"),
+        ("ccli_engine", "MemoryUpdated", "v1.0", "cognitive_load_engine.handle_memory_updated"),
+        ("attention_engine", "CCLIUpdated", "v1.0", "attention_engine.handle_ccli_updated"),
+        ("cdo_engine", "AttentionUpdated", "v1.0", "decision_engine.handle_attention_updated"),
+        ("context_engine", "QuestionRetired", "v1.0", "context_engine.handle_question_retired"),
+        ("context_engine", "QuestionPromoted", "v1.0", "context_engine.handle_question_promoted")
+    ]
+    for consumer, event, ver, handler in default_subscriptions:
+        cur.execute("""
+            INSERT OR IGNORE INTO event_subscriptions (consumer_name, event_type, schema_version, handler, enabled)
+            VALUES (?, ?, ?, ?, 1)
+        """, (consumer, event, ver, handler))
+
     conn.commit()
     conn.close()
 
@@ -3078,6 +3155,66 @@ def upgrade_database_schema():
     )
     """)
 
+    # --- Week 17: Cognitive Event Bus (CEB) ---
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS event_store (
+        event_id TEXT PRIMARY KEY,
+        event_type TEXT NOT NULL,
+        entity_type TEXT,
+        entity_id TEXT,
+        entity_sequence INTEGER NOT NULL,
+        producer TEXT,
+        producer_version TEXT,
+        schema_version TEXT,
+        metadata_json TEXT,
+        payload_json TEXT,
+        created_at TEXT
+    )
+    """)
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS event_subscriptions (
+        consumer_name TEXT,
+        event_type TEXT,
+        schema_version TEXT,
+        handler TEXT,
+        enabled INTEGER DEFAULT 1,
+        PRIMARY KEY (consumer_name, event_type, schema_version)
+    )
+    """)
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS processed_events (
+        event_id TEXT,
+        consumer_name TEXT,
+        processed_at TEXT,
+        PRIMARY KEY (event_id, consumer_name),
+        FOREIGN KEY (event_id) REFERENCES event_store(event_id)
+    )
+    """)
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS dead_letter_events (
+        event_id TEXT,
+        consumer_name TEXT,
+        error_message TEXT,
+        retry_count INTEGER,
+        failed_at TEXT,
+        payload_json TEXT,
+        PRIMARY KEY (event_id, consumer_name)
+    )
+    """)
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS event_replay_runs (
+        replay_id TEXT PRIMARY KEY,
+        consumer_name TEXT,
+        from_timestamp TEXT,
+        to_timestamp TEXT,
+        events_processed INTEGER,
+        started_at TEXT,
+        completed_at TEXT,
+        status TEXT,
+        mode TEXT
+    )
+    """)
+
     conn.commit()
     conn.close()
 
@@ -3544,7 +3681,23 @@ def seed_knowledge_graph():
                 INSERT OR IGNORE INTO kg_edges (source_id, target_id, relation_type, weight, confidence)
                 VALUES (?, ?, ?, ?, 0.95)
             """, (concept_nid, qn_id, 'tested_by', 1.0))
-            
+               # Seed dynamic subscriptions (Decision 7)
+    default_subscriptions = [
+        ("memory_engine", "ResponseSubmitted", "v1.0", "memory_engine.handle_response_submitted"),
+        ("qqi_engine", "MemoryUpdated", "v1.0", "qqi_engine.handle_memory_updated"),
+        ("nbirt_engine", "QQIUpdated", "v1.0", "nbirt_engine.handle_qqi_updated"),
+        ("ccli_engine", "MemoryUpdated", "v1.0", "cognitive_load_engine.handle_memory_updated"),
+        ("attention_engine", "CCLIUpdated", "v1.0", "attention_engine.handle_ccli_updated"),
+        ("cdo_engine", "AttentionUpdated", "v1.0", "decision_engine.handle_attention_updated"),
+        ("context_engine", "QuestionRetired", "v1.0", "context_engine.handle_question_retired"),
+        ("context_engine", "QuestionPromoted", "v1.0", "context_engine.handle_question_promoted")
+    ]
+    for consumer, event, ver, handler in default_subscriptions:
+        cur.execute("""
+            INSERT OR IGNORE INTO event_subscriptions (consumer_name, event_type, schema_version, handler, enabled)
+            VALUES (?, ?, ?, ?, 1)
+        """, (consumer, event, ver, handler))
+
     conn.commit()
     conn.close()
     print("[OK] Seeding of living Knowledge Graph completed successfully.")

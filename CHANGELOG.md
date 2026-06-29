@@ -5,6 +5,18 @@ All notable changes to the Cognify platform will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to Semantic Versioning.
 
+## [2.6.0] - 2026-06-29
+
+### Added (Week 17 — Cognitive Event Bus)
+- **Cognitive Event Bus (CEB)**: Established an event-driven pub/sub communication backbone (`event_bus.py`, `event_dispatcher.py`, `event_registry.py`) decoupling cognitive engines.
+- **At-Least-Once Delivery & Idempotency**: Implemented `processed_events` idempotency ledger preventing duplicate event executions.
+- **Entity Sequence Numbering**: Incremented `entity_sequence` monotonically per entity inside `event_store` to guarantee chronological replaying.
+- **Metadata Separation**: Split `metadata_json` (correlation/causation/trace ids) from `payload_json` (raw domain parameters).
+- **Dead Letter Queue (DLQ)**: Routed failed handler events to `dead_letter_events` after exactly 3 execution retries.
+- **Versioned Subscriptions**: Keyed subscriptions using `schema_version` to support clean downstream evolutionary versions.
+- **Chronological Replay (SAFE & LIVE modes)**: Added `event_replay.py` querying historical event sequences. `SAFE` mode isolates side effects and blocks downstream cascading publishes.
+- **New REST API Endpoints**: Bound `/events/publish`, `/events/replay`, `/events`, `/events/history`, and `/events/subscriptions` endpoints in Flask.
+
 ## [2.5.0] - 2026-06-29
 
 ### Added (Week 16 — Question Blueprint & Lifecycle Engine)

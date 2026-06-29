@@ -1937,3 +1937,39 @@ def update_qqi_config(key, value, updated_by="teacher"):
         return {"error": str(e)}
     finally:
         conn.close()
+
+def handle_memory_updated(event_data, is_replay=False, replay_mode="SAFE"):
+    """
+    Subscribes to MemoryUpdated event.
+    Updates question QQI calibration and Living KG mastery, and publishes QQIUpdated.
+    """
+    payload = event_data["payload_json"]
+    if isinstance(payload, str):
+        import json
+        payload = json.loads(payload)
+
+    email = event_data["entity_id"]
+    question_id = payload.get("question_id")
+    is_correct = payload.get("is_correct", False)
+    concept_id = payload.get("concept_id")
+
+    if question_id:
+        update_question_qqi(question_id)
+        update_living_kg_mastery(email, question_id, is_correct)
+
+    if not is_replay or replay_mode == "LIVE":
+        import event_bus
+        event_bus.publish(
+            event_type="QQIUpdated",
+            entity_type="student",
+            entity_id=email,
+            producer="qqi_engine",
+            producer_version="v2.5.0",
+            schema_version="v1.0",
+            metadata_json=event_data.get("metadata_json", {}),
+            payload_json={
+                "concept_id": concept_id,
+                "question_id": question_id,
+                "is_correct": is_correct
+            }
+        )

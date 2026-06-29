@@ -554,3 +554,59 @@ def get_full_student_memory(email):
         "forgetting": forgetting,
         "active_misconceptions": misconceptions
     }
+
+def handle_response_submitted(event_data, is_replay=False, replay_mode="SAFE"):
+    """
+    Subscribes to ResponseSubmitted event.
+    Logs memory event, projects states, and publishes MemoryUpdated.
+    """
+    payload = event_data["payload_json"]
+    if isinstance(payload, str):
+        payload = json.loads(payload)
+
+    email = event_data["entity_id"]
+    question_id = payload.get("question_id")
+    is_correct = payload.get("is_correct", False)
+    
+    # Resolve concept for question
+    conn = get_conn()
+    cur = conn.cursor()
+    cur.execute("""
+        SELECT qc.concept_id FROM question_concepts qc 
+        JOIN question_bank qb ON qb.id = qc.question_id
+        WHERE qb.id = ? OR qb.semantic_id = ?
+        LIMIT 1
+    """, (question_id, question_id))
+    row = cur.fetchone()
+    conn.close()
+    
+    concept_id = row["concept_id"] if row else "algebra"
+    
+    event_type = "correct_answer" if is_correct else "wrong_answer"
+    
+    # Record memory event
+    record_memory_event(
+        email=email,
+        node_id=concept_id,
+        memory_type_or_event_type=event_type,
+        update_reason_or_payload={"question_id": question_id, "is_correct": is_correct},
+        source_module="event_bus"
+    )
+    
+    # Downstream publication (suppressed in SAFE replay mode)
+    if not is_replay or replay_mode == "LIVE":
+        import event_bus
+        event_bus.publish(
+            event_type="MemoryUpdated",
+            entity_type="student",
+            entity_id=email,
+            producer="memory_engine",
+            producer_version="v2.5.0",
+            schema_version="v1.0",
+            metadata_json=event_data.get("metadata_json", {}),
+            payload_json={
+                "concept_id": concept_id,
+                "is_correct": is_correct,
+                "question_id": question_id
+            }
+        )

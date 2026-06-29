@@ -397,3 +397,77 @@ def get_student_load_state(student_email):
         "alerts": alerts,
         "history": history
     }
+
+def handle_memory_updated(event_data, is_replay=False, replay_mode="SAFE"):
+    """
+    Subscribes to MemoryUpdated event.
+    Calculates cognitive load and publishes CCLIUpdated.
+    """
+    payload = event_data["payload_json"]
+    if isinstance(payload, str):
+        import json
+        payload = json.loads(payload)
+
+    email = event_data["entity_id"]
+    concept_id = payload.get("concept_id")
+    question_id = payload.get("question_id")
+    is_correct = payload.get("is_correct", False)
+
+    # Defaults
+    response_time = 45.0
+    idle_time = 5.0
+    rewrite_count = 0
+    backspace_count = 0
+    focus_lost_count = 0
+
+    conn = get_conn()
+    cur = conn.cursor()
+    try:
+        # Fetch latest response details
+        if question_id:
+            cur.execute("""
+                SELECT response_time FROM responses
+                WHERE student_email = ? AND question_id = ?
+                ORDER BY id DESC LIMIT 1
+            """, (email, question_id))
+            r_row = cur.fetchone()
+            if r_row:
+                response_time = r_row["response_time"] or 45.0
+
+        # Fetch latest derived behavior features
+        cur.execute("""
+            SELECT hesitation_index, focus_loss_count, correction_rate
+            FROM derived_behavior_features
+            WHERE student_email = ? AND concept_id = ?
+            LIMIT 1
+        """, (email, concept_id))
+        f_row = cur.fetchone()
+        if f_row:
+            idle_time = (f_row["hesitation_index"] or 0.2) * response_time
+            focus_lost_count = f_row["focus_loss_count"] or 0
+            rewrite_count = int((f_row["correction_rate"] or 0.1) * 10)
+    except Exception:
+        pass
+    finally:
+        conn.close()
+
+    compute_cognitive_load_state(
+        email, concept_id, is_correct, response_time,
+        idle_time, rewrite_count, backspace_count, focus_lost_count
+    )
+
+    if not is_replay or replay_mode == "LIVE":
+        import event_bus
+        event_bus.publish(
+            event_type="CCLIUpdated",
+            entity_type="student",
+            entity_id=email,
+            producer="ccli_engine",
+            producer_version="v2.5.0",
+            schema_version="v1.0",
+            metadata_json=event_data.get("metadata_json", {}),
+            payload_json={
+                "concept_id": concept_id,
+                "is_correct": is_correct
+            }
+        )

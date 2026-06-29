@@ -73,7 +73,8 @@ def run_regression_suite():
         "tests/test_cdo.py",
         "tests/test_cte.py",
         "tests/test_attention.py",
-        "tests/test_question_lifecycle.py"
+        "tests/test_question_lifecycle.py",
+        "tests/test_event_bus.py"
     ]
     
     results = {}

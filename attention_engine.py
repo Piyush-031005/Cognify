@@ -352,3 +352,34 @@ def get_student_attention_state(student_email):
         "state": state,
         "history": history
     }
+
+def handle_ccli_updated(event_data, is_replay=False, replay_mode="SAFE"):
+    """
+    Subscribes to CCLIUpdated event.
+    Calculates attention rolling focus metrics and publishes AttentionUpdated.
+    """
+    payload = event_data["payload_json"]
+    if isinstance(payload, str):
+        import json
+        payload = json.loads(payload)
+
+    email = event_data["entity_id"]
+    concept_id = payload.get("concept_id")
+
+    if email and concept_id:
+        compute_student_attention_state(email, concept_id)
+
+    if not is_replay or replay_mode == "LIVE":
+        import event_bus
+        event_bus.publish(
+            event_type="AttentionUpdated",
+            entity_type="student",
+            entity_id=email,
+            producer="attention_engine",
+            producer_version="v2.5.0",
+            schema_version="v1.0",
+            metadata_json=event_data.get("metadata_json", {}),
+            payload_json={
+                "concept_id": concept_id
+            }
+        )
