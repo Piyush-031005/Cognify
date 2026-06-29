@@ -11,8 +11,8 @@
 ## ===================================
 
 * **Architecture Status:** Frozen
-* **Current Version:** `v2.6.0`
-* **Current Sprint:** Week 17 Complete (CEB ✅)
+* **Current Version:** `v2.7.0`
+* **Current Sprint:** Week 18 Complete (Teacher Twin ✅)
 * **Current Focus:** Phase 3 Execution
 
 

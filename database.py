@@ -1279,6 +1279,72 @@ def init_db():
     )
     """)
 
+    # Teacher Twin Projections (CQRS Lock 1 & Lock 2)
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS teacher_classroom_retention (
+        room_code TEXT,
+        concept_id TEXT,
+        mastered_count INTEGER DEFAULT 0,
+        forgetting_count INTEGER DEFAULT 0,
+        at_risk_count INTEGER DEFAULT 0,
+        total_students INTEGER DEFAULT 0,
+        projection_version TEXT DEFAULT 'v1.0',
+        updated_at TEXT,
+        PRIMARY KEY (room_code, concept_id)
+    )
+    """)
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS teacher_intervention_queue (
+        student_email TEXT PRIMARY KEY,
+        room_code TEXT,
+        risk_level TEXT,
+        ccli_value REAL,
+        decision TEXT,
+        winning_rule TEXT,
+        projection_version TEXT DEFAULT 'v1.0',
+        updated_at TEXT
+    )
+    """)
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS teacher_engagement_summary (
+        room_code TEXT PRIMARY KEY,
+        optimal_count INTEGER DEFAULT 0,
+        decay_count INTEGER DEFAULT 0,
+        fatigue_count INTEGER DEFAULT 0,
+        total_students INTEGER DEFAULT 0,
+        projection_version TEXT DEFAULT 'v1.0',
+        updated_at TEXT
+    )
+    """)
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS teacher_override_history (
+        override_id TEXT PRIMARY KEY,
+        student_email TEXT NOT NULL,
+        concept_id TEXT NOT NULL,
+        override_type TEXT NOT NULL,
+        decision_before_override TEXT,
+        decision_after_override TEXT,
+        reason TEXT,
+        actor TEXT,
+        timestamp TEXT
+    )
+    """)
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS teacher_recommendation_history (
+        id TEXT PRIMARY KEY,
+        teacher_id TEXT NOT NULL,
+        student_email TEXT NOT NULL,
+        recommendation TEXT NOT NULL,
+        priority_score REAL NOT NULL,
+        confidence REAL NOT NULL,
+        evidence_count INTEGER NOT NULL,
+        supporting_events TEXT NOT NULL,
+        evidence_snapshot_json TEXT NOT NULL,
+        status TEXT DEFAULT 'PENDING',
+        generated_at TEXT NOT NULL
+    )
+    """)
+
     # Seed dynamic subscriptions (Decision 7)
     default_subscriptions = [
         ("memory_engine", "ResponseSubmitted", "v1.0", "memory_engine.handle_response_submitted"),
@@ -1288,7 +1354,15 @@ def init_db():
         ("attention_engine", "CCLIUpdated", "v1.0", "attention_engine.handle_ccli_updated"),
         ("cdo_engine", "AttentionUpdated", "v1.0", "decision_engine.handle_attention_updated"),
         ("context_engine", "QuestionRetired", "v1.0", "context_engine.handle_question_retired"),
-        ("context_engine", "QuestionPromoted", "v1.0", "context_engine.handle_question_promoted")
+        ("context_engine", "QuestionPromoted", "v1.0", "context_engine.handle_question_promoted"),
+        # Teacher Twin subscriptions
+        ("teacher_twin", "MemoryUpdated", "v1.0", "teacher_twin.handle_memory_updated"),
+        ("teacher_twin", "NBIRTUpdated", "v1.0", "teacher_twin.handle_nbirt_updated"),
+        ("teacher_twin", "AttentionUpdated", "v1.0", "teacher_twin.handle_attention_updated"),
+        ("teacher_twin", "DecisionGenerated", "v1.0", "teacher_twin.handle_decision_generated"),
+        ("teacher_twin", "QuestionRetired", "v1.0", "teacher_twin.handle_question_retired"),
+        ("teacher_twin", "QuestionPromoted", "v1.0", "teacher_twin.handle_question_promoted"),
+        ("teacher_twin", "TeacherOverride", "v1.0", "teacher_twin.handle_teacher_override")
     ]
     for consumer, event, ver, handler in default_subscriptions:
         cur.execute("""
@@ -3215,6 +3289,72 @@ def upgrade_database_schema():
     )
     """)
 
+    # Teacher Twin Projections (CQRS Lock 1 & Lock 2)
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS teacher_classroom_retention (
+        room_code TEXT,
+        concept_id TEXT,
+        mastered_count INTEGER DEFAULT 0,
+        forgetting_count INTEGER DEFAULT 0,
+        at_risk_count INTEGER DEFAULT 0,
+        total_students INTEGER DEFAULT 0,
+        projection_version TEXT DEFAULT 'v1.0',
+        updated_at TEXT,
+        PRIMARY KEY (room_code, concept_id)
+    )
+    """)
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS teacher_intervention_queue (
+        student_email TEXT PRIMARY KEY,
+        room_code TEXT,
+        risk_level TEXT,
+        ccli_value REAL,
+        decision TEXT,
+        winning_rule TEXT,
+        projection_version TEXT DEFAULT 'v1.0',
+        updated_at TEXT
+    )
+    """)
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS teacher_engagement_summary (
+        room_code TEXT PRIMARY KEY,
+        optimal_count INTEGER DEFAULT 0,
+        decay_count INTEGER DEFAULT 0,
+        fatigue_count INTEGER DEFAULT 0,
+        total_students INTEGER DEFAULT 0,
+        projection_version TEXT DEFAULT 'v1.0',
+        updated_at TEXT
+    )
+    """)
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS teacher_override_history (
+        override_id TEXT PRIMARY KEY,
+        student_email TEXT NOT NULL,
+        concept_id TEXT NOT NULL,
+        override_type TEXT NOT NULL,
+        decision_before_override TEXT,
+        decision_after_override TEXT,
+        reason TEXT,
+        actor TEXT,
+        timestamp TEXT
+    )
+    """)
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS teacher_recommendation_history (
+        id TEXT PRIMARY KEY,
+        teacher_id TEXT NOT NULL,
+        student_email TEXT NOT NULL,
+        recommendation TEXT NOT NULL,
+        priority_score REAL NOT NULL,
+        confidence REAL NOT NULL,
+        evidence_count INTEGER NOT NULL,
+        supporting_events TEXT NOT NULL,
+        evidence_snapshot_json TEXT NOT NULL,
+        status TEXT DEFAULT 'PENDING',
+        generated_at TEXT NOT NULL
+    )
+    """)
+
     conn.commit()
     conn.close()
 
@@ -3690,7 +3830,15 @@ def seed_knowledge_graph():
         ("attention_engine", "CCLIUpdated", "v1.0", "attention_engine.handle_ccli_updated"),
         ("cdo_engine", "AttentionUpdated", "v1.0", "decision_engine.handle_attention_updated"),
         ("context_engine", "QuestionRetired", "v1.0", "context_engine.handle_question_retired"),
-        ("context_engine", "QuestionPromoted", "v1.0", "context_engine.handle_question_promoted")
+        ("context_engine", "QuestionPromoted", "v1.0", "context_engine.handle_question_promoted"),
+        # Teacher Twin subscriptions
+        ("teacher_twin", "MemoryUpdated", "v1.0", "teacher_twin.handle_memory_updated"),
+        ("teacher_twin", "NBIRTUpdated", "v1.0", "teacher_twin.handle_nbirt_updated"),
+        ("teacher_twin", "AttentionUpdated", "v1.0", "teacher_twin.handle_attention_updated"),
+        ("teacher_twin", "DecisionGenerated", "v1.0", "teacher_twin.handle_decision_generated"),
+        ("teacher_twin", "QuestionRetired", "v1.0", "teacher_twin.handle_question_retired"),
+        ("teacher_twin", "QuestionPromoted", "v1.0", "teacher_twin.handle_question_promoted"),
+        ("teacher_twin", "TeacherOverride", "v1.0", "teacher_twin.handle_teacher_override")
     ]
     for consumer, event, ver, handler in default_subscriptions:
         cur.execute("""

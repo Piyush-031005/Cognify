@@ -3254,6 +3254,32 @@ def api_teacher_feedback():
     )
     return jsonify(result)
 
+@app.route('/api/v1/teacher/override', methods=['POST'])
+def api_teacher_override():
+    data = request.json or {}
+    student_email = data.get("student_email")
+    concept_id = data.get("concept_id")
+    override_type = data.get("override_type")
+    reason = data.get("reason", "")
+    actor = data.get("actor", "teacher")
+    
+    if not student_email or not concept_id or not override_type:
+        return jsonify({"error": "Missing student_email, concept_id, or override_type"}), 400
+        
+    res = teacher_twin.record_override(student_email, concept_id, override_type, reason, actor)
+    return jsonify(res)
+
+@app.route('/api/v1/teacher/rebuild', methods=['POST'])
+def api_teacher_rebuild():
+    res = teacher_twin.rebuild_projections()
+    return jsonify(res)
+
+@app.route('/api/v1/teacher/rooms/<room_id>/report', methods=['GET'])
+def api_teacher_report(room_id):
+    period = request.args.get("period", "daily")
+    report = teacher_twin.generate_classroom_report(room_id, period=period)
+    return jsonify(report)
+
 
 import pilot_analytics
 from datetime import datetime

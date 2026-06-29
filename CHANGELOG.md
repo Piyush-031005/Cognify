@@ -5,6 +5,17 @@ All notable changes to the Cognify platform will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to Semantic Versioning.
 
+## [2.7.0] - 2026-06-29
+
+### Added (Week 18 — Teacher Twin)
+- **Modular Policy Engine Structure**: Structurally segregated the engine into four submodules: `aggregator.py`, `intervention.py`, `overrides.py`, and `reports.py` under the `teacher_twin/` subfolder package.
+- **CQRS Projection Queries**: Confined normal dashboard/API requests strictly to local projection tables (`teacher_classroom_retention`, `teacher_intervention_queue`, `teacher_engagement_summary`, `teacher_override_history`, `teacher_recommendation_history`), bypassing raw cognitive tables.
+- **Recommendation Status Lifecycle**: Implemented status lifecycle transitions (`PENDING`, `VIEWED`, `ACCEPTED`, `REJECTED`, `EXPIRED`) instead of binary accepted/ignored columns.
+- **Explainability Evidence Snapshot**: Added `evidence_snapshot_json` capturing immutable cognitive parameters at recommendation generation.
+- **Safe Replay Rebuilds**: Programmed `rebuild_projections()` which truncates projection records and safely replays historical events sequentially.
+- **Urgency Priority Score**: Decoupled `priority_score` (urgency/impact) from `confidence` (predictive certainty).
+- **New REST API Endpoints**: Bound `/teacher/override`, `/teacher/rebuild`, and `/rooms/<room_id>/report` routes.
+
 ## [2.6.0] - 2026-06-29
 
 ### Added (Week 17 — Cognitive Event Bus)

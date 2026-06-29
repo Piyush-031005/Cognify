@@ -52,12 +52,27 @@ EVENT_TYPES = {
     },
     "TeacherOverride": {
         "producer": "teacher_twin",
-        "allowed_consumers": ["cdo_engine", "context_engine"],
+        "allowed_consumers": ["cdo_engine", "context_engine", "teacher_twin"],
         "schema_version": "v1.0"
     },
     "TelemetryBatchReceived": {
         "producer": "telemetry_engine",
         "allowed_consumers": ["feature_extractor", "analytics_engine"],
+        "schema_version": "v1.0"
+    },
+    "TeacherRecommendationGenerated": {
+        "producer": "teacher_twin",
+        "allowed_consumers": ["dashboard", "student_twin", "analytics_engine"],
+        "schema_version": "v1.0"
+    },
+    "TeacherOverrideApplied": {
+        "producer": "teacher_twin",
+        "allowed_consumers": ["cdo_engine", "context_engine", "analytics_engine"],
+        "schema_version": "v1.0"
+    },
+    "TeacherPolicyUpdated": {
+        "producer": "teacher_twin",
+        "allowed_consumers": ["cdo_engine", "context_engine", "analytics_engine"],
         "schema_version": "v1.0"
     }
 }
