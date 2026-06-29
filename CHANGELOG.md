@@ -5,6 +5,63 @@ All notable changes to the Cognify platform will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to Semantic Versioning.
 
+## [3.0.0] - 2026-06-29
+
+### Added (Week 24 — Pilot Release & v3.0 Finalization)
+- **Deployment Suite**: Built production-ready `Dockerfile`, `docker-compose.yml`, and `.env.example` templates.
+- **Pilot Demo Dataset**: Created `seed_pilot_data.py` to seed realistic schools, classrooms, teachers, students, parents, responses, and recommendations.
+- **Performance Benchmarks**: Created `benchmark.py` validating replay throughput, API latencies, and memory/disk footprints in `docs/BENCHMARK_RESULTS.md`.
+- **System Documentation**: Generated guides for Architecture, API, Events, Database Schema, Deployment, Administrator, and Developer operations under `docs/`.
+- **Release Verification**: Upgraded integration regression test suites to target **27/27 PASS**.
+
+## [3.0.0-rc1] - 2026-06-29
+
+### Added (Week 23 — Production Hardening)
+- **Pluggable Auth Layer**: Built pluggable `AuthProvider` interface with `HMACTokenProvider` in `auth.py`.
+- **Central Permissions**: Implemented `permissions.py` with roles validations separate from decorators.
+- **Audit Trails**: Created `audit_logs` table tracking request, correlation, and event IDs with IP, user agent, and timings.
+- **Observability Endpoints**: Added `/health`, `/readiness`, and `/metrics` returning timings, queue, and database sizes.
+- **Centralized Validation**: Added `validation/` package verifying payload schemas.
+- **Online Backup**: SQLite online non-blocking backup with version metadata sidecar.
+- **OpenAPI/Swagger dynamic spec**: Dynamically generates spec at `/swagger.json` and interactive UI at `/docs`.
+- **Feature Flags Framework**: Added `feature_flags.py` supporting modular rollouts.
+
+## [3.0.0-beta2] - 2026-06-29
+
+### Added (Week 22 — Research & Analytics Twin)
+- **Research & Analytics Twin (RAT)**: Extracted learning science indicators from event store & projections.
+- **Decay rankings**: Analyzed Stable state transitions to compute decay rates.
+- **Intervention effectiveness**: Measured recommendation completion vs cognitive health.
+- **Item discrimination index (D)**: Calculated correct rates contrast between top 27% and bottom 27% health students.
+- **Load-decay correlation**: Evaluated Composite CCLI 24h prior to forgetting transitions.
+- **Rebuild checksum**: `rebuild_projections()` calculates MD5 checksum over research row counts.
+
+## [3.0.0-beta1] - 2026-06-29
+
+### Added (Week 21 — School/Admin Twin)
+- **School/Admin Twin**: Created school-wide projections dashboard.
+- **Classroom summaries**: Tracks average health, coverages, risk counts, and adoption rates.
+- **Curriculum coverage**: Maps active concept mastery percentages across classroom groups.
+- **Weekly snapshots**: Auto-generates and caches weekly performance snapshots.
+- **Rebuild verification**: Calculates MD5 checksum for reconstruction checks.
+
+## [2.9.0] - 2026-06-29
+
+### Added (Week 20 — Parent Twin)
+- **Parent Twin**: Dedicated translation layer translating profiles into Parent digests.
+- **Multi-child mapping table**: Mapped parent-student relationships safely in `parent_student_mapping`.
+- **Notifications ledger**: Tracks events like report generated, read, and viewed.
+- **Rebuild checksum**: Computes verification check hash over parent tables.
+
+## [2.8.0] - 2026-06-29
+
+### Added (Week 19 — Student Twin)
+- **Student Twin**: Built personal dashboard projection submodules.
+- **Weekly Progress trends**: Saves health scores and concept counts in `student_trend_projection`.
+- **Activity calendars**: Weekly heatmaps indicating completed assessments.
+- **Explainability interface**: Outputs detail logs explaining state adjustments.
+- **Rebuild verification**: SQLite checksum check over student tables.
+
 ## [2.7.0] - 2026-06-29
 
 ### Added (Week 18 — Teacher Twin)
