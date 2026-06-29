@@ -1506,6 +1506,106 @@ def init_db():
     )
     """)
 
+    # School/Admin Twin Projections (Week 21)
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS school_org (
+        school_id   TEXT PRIMARY KEY,
+        school_name TEXT NOT NULL,
+        created_at  TEXT NOT NULL
+    )
+    """)
+    # Seed default school
+    cur.execute("""
+    INSERT OR IGNORE INTO school_org (school_id, school_name, created_at)
+    VALUES ('default', 'Default School', ?)
+    """, (datetime.now().isoformat(),))
+
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS school_classroom_summary (
+        room_code            TEXT PRIMARY KEY,
+        school_id            TEXT NOT NULL DEFAULT 'default',
+        teacher_email        TEXT NOT NULL,
+        subject              TEXT,
+        total_students       INTEGER DEFAULT 0,
+        avg_cognitive_health REAL DEFAULT 0.0,
+        at_risk_count        INTEGER DEFAULT 0,
+        mastery_rate         REAL DEFAULT 0.0,
+        engagement_score     REAL DEFAULT 0.0,
+        projection_version   TEXT DEFAULT 'v1.0',
+        updated_at           TEXT
+    )
+    """)
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS school_teacher_summary (
+        teacher_email        TEXT PRIMARY KEY,
+        school_id            TEXT NOT NULL DEFAULT 'default',
+        total_rooms          INTEGER DEFAULT 0,
+        total_students       INTEGER DEFAULT 0,
+        avg_class_health     REAL DEFAULT 0.0,
+        override_count       INTEGER DEFAULT 0,
+        intervention_count   INTEGER DEFAULT 0,
+        projection_version   TEXT DEFAULT 'v1.0',
+        updated_at           TEXT
+    )
+    """)
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS school_concept_coverage (
+        school_id          TEXT NOT NULL DEFAULT 'default',
+        subject            TEXT NOT NULL,
+        concept_id         TEXT NOT NULL,
+        school_mastery_rate REAL DEFAULT 0.0,
+        total_students     INTEGER DEFAULT 0,
+        projection_version TEXT DEFAULT 'v1.0',
+        updated_at         TEXT,
+        PRIMARY KEY (school_id, subject, concept_id)
+    )
+    """)
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS school_risk_dashboard (
+        school_id          TEXT NOT NULL DEFAULT 'default',
+        room_code          TEXT NOT NULL,
+        high_risk_count    INTEGER DEFAULT 0,
+        medium_risk_count  INTEGER DEFAULT 0,
+        low_risk_count     INTEGER DEFAULT 0,
+        total_students     INTEGER DEFAULT 0,
+        updated_at         TEXT,
+        projection_version TEXT DEFAULT 'v1.0',
+        PRIMARY KEY (school_id, room_code)
+    )
+    """)
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS school_adoption_metrics (
+        school_id            TEXT PRIMARY KEY DEFAULT 'default',
+        total_teachers       INTEGER DEFAULT 0,
+        active_teachers      INTEGER DEFAULT 0,
+        total_students       INTEGER DEFAULT 0,
+        active_students      INTEGER DEFAULT 0,
+        total_rooms          INTEGER DEFAULT 0,
+        avg_session_health   REAL DEFAULT 0.0,
+        projection_version   TEXT DEFAULT 'v1.0',
+        updated_at           TEXT
+    )
+    """)
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS school_weekly_snapshot (
+        snapshot_id          TEXT PRIMARY KEY,
+        school_id            TEXT NOT NULL DEFAULT 'default',
+        week_start_date      TEXT NOT NULL,
+        week_end_date        TEXT NOT NULL,
+        summary_json         TEXT NOT NULL,
+        is_latest            INTEGER DEFAULT 1,
+        generated_at         TEXT NOT NULL,
+        projection_version   TEXT DEFAULT 'v1.0'
+    )
+    """)
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS school_projection_metadata (
+        projection_version TEXT PRIMARY KEY,
+        checksum           TEXT NOT NULL,
+        rebuilt_at         TEXT NOT NULL
+    )
+    """)
+
     # Seed dynamic subscriptions (Decision 7)
     default_subscriptions = [
         ("memory_engine", "ResponseSubmitted", "v1.0", "memory_engine.handle_response_submitted"),
@@ -1536,7 +1636,12 @@ def init_db():
         ("parent_twin", "MemoryUpdated", "v1.0", "parent_twin.handle_memory_updated"),
         ("parent_twin", "AttentionUpdated", "v1.0", "parent_twin.handle_attention_updated"),
         ("parent_twin", "CCLIUpdated", "v1.0", "parent_twin.handle_ccli_updated"),
-        ("parent_twin", "DecisionGenerated", "v1.0", "parent_twin.handle_decision_generated")
+        ("parent_twin", "DecisionGenerated", "v1.0", "parent_twin.handle_decision_generated"),
+        # School Admin Twin subscriptions (Week 21)
+        ("school_admin_twin", "MemoryUpdated", "v1.0", "school_admin_twin.handle_memory_updated"),
+        ("school_admin_twin", "DecisionGenerated", "v1.0", "school_admin_twin.handle_decision_generated"),
+        ("school_admin_twin", "AttentionUpdated", "v1.0", "school_admin_twin.handle_attention_updated"),
+        ("school_admin_twin", "TeacherOverrideApplied", "v1.0", "school_admin_twin.handle_teacher_override_applied")
     ]
     for consumer, event, ver, handler in default_subscriptions:
         cur.execute("""
@@ -3684,6 +3789,106 @@ def upgrade_database_schema():
     """)
     cur.execute("""
     CREATE TABLE IF NOT EXISTS parent_projection_metadata (
+        projection_version TEXT PRIMARY KEY,
+        checksum           TEXT NOT NULL,
+        rebuilt_at         TEXT NOT NULL
+    )
+    """)
+
+    # School/Admin Twin Projections (Week 21)
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS school_org (
+        school_id   TEXT PRIMARY KEY,
+        school_name TEXT NOT NULL,
+        created_at  TEXT NOT NULL
+    )
+    """)
+    # Seed default school
+    cur.execute("""
+    INSERT OR IGNORE INTO school_org (school_id, school_name, created_at)
+    VALUES ('default', 'Default School', ?)
+    """, (datetime.now().isoformat(),))
+
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS school_classroom_summary (
+        room_code            TEXT PRIMARY KEY,
+        school_id            TEXT NOT NULL DEFAULT 'default',
+        teacher_email        TEXT NOT NULL,
+        subject              TEXT,
+        total_students       INTEGER DEFAULT 0,
+        avg_cognitive_health REAL DEFAULT 0.0,
+        at_risk_count        INTEGER DEFAULT 0,
+        mastery_rate         REAL DEFAULT 0.0,
+        engagement_score     REAL DEFAULT 0.0,
+        projection_version   TEXT DEFAULT 'v1.0',
+        updated_at           TEXT
+    )
+    """)
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS school_teacher_summary (
+        teacher_email        TEXT PRIMARY KEY,
+        school_id            TEXT NOT NULL DEFAULT 'default',
+        total_rooms          INTEGER DEFAULT 0,
+        total_students       INTEGER DEFAULT 0,
+        avg_class_health     REAL DEFAULT 0.0,
+        override_count       INTEGER DEFAULT 0,
+        intervention_count   INTEGER DEFAULT 0,
+        projection_version   TEXT DEFAULT 'v1.0',
+        updated_at           TEXT
+    )
+    """)
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS school_concept_coverage (
+        school_id          TEXT NOT NULL DEFAULT 'default',
+        subject            TEXT NOT NULL,
+        concept_id         TEXT NOT NULL,
+        school_mastery_rate REAL DEFAULT 0.0,
+        total_students     INTEGER DEFAULT 0,
+        projection_version TEXT DEFAULT 'v1.0',
+        updated_at         TEXT,
+        PRIMARY KEY (school_id, subject, concept_id)
+    )
+    """)
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS school_risk_dashboard (
+        school_id          TEXT NOT NULL DEFAULT 'default',
+        room_code          TEXT NOT NULL,
+        high_risk_count    INTEGER DEFAULT 0,
+        medium_risk_count  INTEGER DEFAULT 0,
+        low_risk_count     INTEGER DEFAULT 0,
+        total_students     INTEGER DEFAULT 0,
+        updated_at         TEXT,
+        projection_version TEXT DEFAULT 'v1.0',
+        PRIMARY KEY (school_id, room_code)
+    )
+    """)
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS school_adoption_metrics (
+        school_id            TEXT PRIMARY KEY DEFAULT 'default',
+        total_teachers       INTEGER DEFAULT 0,
+        active_teachers      INTEGER DEFAULT 0,
+        total_students       INTEGER DEFAULT 0,
+        active_students      INTEGER DEFAULT 0,
+        total_rooms          INTEGER DEFAULT 0,
+        avg_session_health   REAL DEFAULT 0.0,
+        projection_version   TEXT DEFAULT 'v1.0',
+        updated_at           TEXT
+    )
+    """)
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS school_weekly_snapshot (
+        snapshot_id          TEXT PRIMARY KEY,
+        school_id            TEXT NOT NULL DEFAULT 'default',
+        week_start_date      TEXT NOT NULL,
+        week_end_date        TEXT NOT NULL,
+        summary_json         TEXT NOT NULL,
+        is_latest            INTEGER DEFAULT 1,
+        generated_at         TEXT NOT NULL,
+        projection_version   TEXT DEFAULT 'v1.0'
+    )
+    """)
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS school_projection_metadata (
         projection_version TEXT PRIMARY KEY,
         checksum           TEXT NOT NULL,
         rebuilt_at         TEXT NOT NULL

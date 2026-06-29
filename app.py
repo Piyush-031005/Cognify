@@ -3337,6 +3337,67 @@ def api_parent_rebuild():
     return jsonify(res)
 
 
+# =============================================================================
+# SCHOOL/ADMIN TWIN COGNITIVE COMPANION API ENDPOINTS (Week 21)
+# =============================================================================
+
+import school_admin_twin
+
+@app.route('/api/v1/admin/school/overview', methods=['GET'])
+def api_school_overview():
+    """School-wide adoption metrics and stats."""
+    res = school_admin_twin.get_school_overview()
+    return jsonify(res)
+
+@app.route('/api/v1/admin/school/classrooms', methods=['GET'])
+def api_school_classrooms():
+    """All classroom summaries in the school."""
+    res = school_admin_twin.get_classroom_summaries()
+    return jsonify(res)
+
+@app.route('/api/v1/admin/school/classrooms/<room_code>', methods=['GET'])
+def api_school_classroom_detail(room_code):
+    """Detail for a single classroom."""
+    res = school_admin_twin.get_classroom_detail(room_code)
+    return jsonify(res)
+
+@app.route('/api/v1/admin/school/teachers', methods=['GET'])
+def api_school_teachers():
+    """All teacher summaries in the school."""
+    res = school_admin_twin.get_teacher_summaries()
+    return jsonify(res)
+
+@app.route('/api/v1/admin/school/teachers/<teacher_email>', methods=['GET'])
+def api_school_teacher_detail(teacher_email):
+    """Detail for a single teacher."""
+    res = school_admin_twin.get_teacher_detail(teacher_email)
+    return jsonify(res)
+
+@app.route('/api/v1/admin/school/curriculum', methods=['GET'])
+def api_school_curriculum():
+    """School-wide concept coverage statistics."""
+    res = school_admin_twin.get_curriculum_coverage()
+    return jsonify(res)
+
+@app.route('/api/v1/admin/school/risk', methods=['GET'])
+def api_school_risk():
+    """School-wide student risk dashboard."""
+    res = school_admin_twin.get_risk_dashboard()
+    return jsonify(res)
+
+@app.route('/api/v1/admin/school/weekly-snapshot', methods=['GET'])
+def api_school_weekly_snapshot():
+    """Returns or generates the latest weekly snapshot (Decision 4)."""
+    res = school_admin_twin.get_weekly_snapshot()
+    return jsonify(res)
+
+@app.route('/api/v1/admin/school/rebuild', methods=['POST'])
+def api_school_rebuild():
+    """Triggers safe projection rebuild with MD5 checksum validation (Decision 5)."""
+    res = school_admin_twin.rebuild_projections()
+    return jsonify(res)
+
+
 import teacher_twin
 
 

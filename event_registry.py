@@ -12,7 +12,7 @@ EVENT_TYPES = {
     },
     "MemoryUpdated": {
         "producer": "memory_engine",
-        "allowed_consumers": ["qqi_engine", "nbirt_engine", "ccli_engine", "teacher_twin", "student_twin", "parent_twin"],
+        "allowed_consumers": ["qqi_engine", "nbirt_engine", "ccli_engine", "teacher_twin", "student_twin", "parent_twin", "school_admin_twin"],
         "schema_version": "v1.0"
     },
     "QQIUpdated": {
@@ -32,12 +32,12 @@ EVENT_TYPES = {
     },
     "AttentionUpdated": {
         "producer": "attention_engine",
-        "allowed_consumers": ["cdo_engine", "student_twin", "parent_twin", "analytics_engine"],
+        "allowed_consumers": ["cdo_engine", "student_twin", "parent_twin", "school_admin_twin", "analytics_engine"],
         "schema_version": "v1.0"
     },
     "DecisionGenerated": {
         "producer": "cdo_engine",
-        "allowed_consumers": ["teacher_twin", "student_twin", "parent_twin", "analytics_engine"],
+        "allowed_consumers": ["teacher_twin", "student_twin", "parent_twin", "school_admin_twin", "analytics_engine"],
         "schema_version": "v1.0"
     },
     "QuestionRetired": {
@@ -67,7 +67,7 @@ EVENT_TYPES = {
     },
     "TeacherOverrideApplied": {
         "producer": "teacher_twin",
-        "allowed_consumers": ["cdo_engine", "context_engine", "student_twin", "analytics_engine"],
+        "allowed_consumers": ["cdo_engine", "context_engine", "student_twin", "school_admin_twin", "analytics_engine"],
         "schema_version": "v1.0"
     },
     "TeacherPolicyUpdated": {
