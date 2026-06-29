@@ -147,18 +147,26 @@ const onSignin = async (e: React.FormEvent) => {
 };
 
   return (
-    <div className="min-h-screen bg-background text-foreground">
+    <div className="min-h-screen bg-background text-foreground relative overflow-hidden grid-bg">
+      {/* ambient lime glows */}
+      <div className="pointer-events-none absolute -top-32 -left-32 h-[480px] w-[480px] rounded-full bg-primary/30 blur-[120px]" />
+      <div className="pointer-events-none absolute top-[50%] -right-40 h-[480px] w-[480px] rounded-full bg-primary/20 blur-[120px]" />
+      
       <Navbar />
 
-      <div className="container grid lg:grid-cols-2 gap-12 py-14 lg:py-20">
+      <div className="container grid lg:grid-cols-2 gap-12 py-14 lg:py-20 relative">
         <motion.div
           initial={{ opacity: 0, x: -10 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.5 }}
-          className="hidden lg:flex flex-col gap-6 sticky top-28 h-fit"
+          className="hidden lg:flex flex-col gap-6 sticky top-28 h-fit relative z-10"
         >
-          <div className="inline-flex items-center gap-2 self-start rounded-full border border-border bg-card px-4 py-1.5 text-sm">
-            <span className="h-2 w-2 rounded-full bg-primary" /> Tell us about you
+          {/* Circular techy wireframes */}
+          <div className="absolute -left-20 -top-20 w-64 h-64 border border-dashed border-primary/15 rounded-full animate-spin [animation-duration:35s] pointer-events-none -z-10" />
+          <div className="absolute -left-12 -top-12 w-48 h-48 border border-primary/10 rounded-full pointer-events-none -z-10" />
+
+          <div className="inline-flex items-center gap-2 self-start rounded-full border border-border bg-card/80 backdrop-blur-md px-4 py-1.5 text-sm font-medium">
+            <span className="h-2 w-2 rounded-full bg-primary shadow-[0_0_8px_hsl(var(--lime))]" /> Tell us about you
           </div>
 
           <h1 className="font-display text-5xl font-bold tracking-tight leading-tight">
@@ -171,8 +179,8 @@ const onSignin = async (e: React.FormEvent) => {
           </p>
         </motion.div>
 
-        <div className="flex flex-col gap-6">
-          <div className="inline-flex self-start rounded-full border border-border p-1 bg-card">
+        <div className="flex flex-col gap-6 relative z-10">
+          <div className="inline-flex self-start rounded-full border border-border p-1 bg-card/85 backdrop-blur-md">
             {(["signup", "signin"] as const).map(t => (
               <button
                 key={t}
@@ -195,7 +203,7 @@ const onSignin = async (e: React.FormEvent) => {
               initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.4 }}
-              className="rounded-3xl border border-border bg-card p-6 sm:p-8 shadow-soft space-y-5"
+              className="rounded-3xl border border-border bg-card/80 backdrop-blur-md p-6 sm:p-8 shadow-soft space-y-5"
             >
               <div className="grid sm:grid-cols-2 gap-4">
                 <Field label="Name">
@@ -273,7 +281,7 @@ const onSignin = async (e: React.FormEvent) => {
               initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.4 }}
-              className="rounded-3xl border border-border bg-card p-6 sm:p-8 shadow-soft space-y-5 max-w-md"
+              className="rounded-3xl border border-border bg-card/80 backdrop-blur-md p-6 sm:p-8 shadow-soft space-y-5 max-w-md"
             >
               <Field label="Email">
                 <Input type="email" value={signinForm.email} onChange={e => setSigninForm({ ...signinForm, email: e.target.value })} />
