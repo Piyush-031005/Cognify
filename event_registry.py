@@ -27,12 +27,12 @@ EVENT_TYPES = {
     },
     "CCLIUpdated": {
         "producer": "ccli_engine",
-        "allowed_consumers": ["attention_engine", "cdo_engine", "analytics_engine"],
+        "allowed_consumers": ["attention_engine", "cdo_engine", "student_twin", "analytics_engine"],
         "schema_version": "v1.0"
     },
     "AttentionUpdated": {
         "producer": "attention_engine",
-        "allowed_consumers": ["cdo_engine", "analytics_engine"],
+        "allowed_consumers": ["cdo_engine", "student_twin", "analytics_engine"],
         "schema_version": "v1.0"
     },
     "DecisionGenerated": {
@@ -67,7 +67,7 @@ EVENT_TYPES = {
     },
     "TeacherOverrideApplied": {
         "producer": "teacher_twin",
-        "allowed_consumers": ["cdo_engine", "context_engine", "analytics_engine"],
+        "allowed_consumers": ["cdo_engine", "context_engine", "student_twin", "analytics_engine"],
         "schema_version": "v1.0"
     },
     "TeacherPolicyUpdated": {

@@ -1345,6 +1345,105 @@ def init_db():
     )
     """)
 
+    # Student Twin Projections (CQRS Separation)
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS student_profile_projection (
+        student_email TEXT PRIMARY KEY,
+        strengths_json TEXT NOT NULL,
+        weaknesses_json TEXT NOT NULL,
+        memory_health_json TEXT NOT NULL,
+        cognitive_health_score REAL DEFAULT 1.0,
+        projection_version TEXT DEFAULT 'v1.0',
+        updated_at TEXT
+    )
+    """)
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS student_progress_projection (
+        student_email TEXT PRIMARY KEY,
+        streak_count INTEGER DEFAULT 0,
+        last_activity_date TEXT,
+        completed_concepts_count INTEGER DEFAULT 0,
+        total_attempts INTEGER DEFAULT 0,
+        projection_version TEXT DEFAULT 'v1.0',
+        updated_at TEXT
+    )
+    """)
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS student_goal_projection (
+        goal_id TEXT PRIMARY KEY,
+        student_email TEXT NOT NULL,
+        target_concept TEXT NOT NULL,
+        target_mastery REAL NOT NULL,
+        current_mastery REAL NOT NULL,
+        status TEXT DEFAULT 'IN_PROGRESS',
+        projection_version TEXT DEFAULT 'v1.0',
+        updated_at TEXT
+    )
+    """)
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS student_daily_summary (
+        student_email TEXT,
+        summary_date TEXT,
+        avg_ccli REAL,
+        focus_state_counts_json TEXT,
+        response_count INTEGER DEFAULT 0,
+        projection_version TEXT DEFAULT 'v1.0',
+        updated_at TEXT,
+        PRIMARY KEY (student_email, summary_date)
+    )
+    """)
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS student_timeline_projection (
+        student_email TEXT,
+        event_id TEXT,
+        event_type TEXT NOT NULL,
+        event_description TEXT NOT NULL,
+        importance TEXT DEFAULT 'medium',
+        timestamp TEXT NOT NULL,
+        projection_version TEXT DEFAULT 'v1.0',
+        PRIMARY KEY (student_email, event_id)
+    )
+    """)
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS student_recommendation_history (
+        id TEXT PRIMARY KEY,
+        student_email TEXT NOT NULL,
+        recommendation TEXT NOT NULL,
+        priority_score REAL NOT NULL,
+        confidence REAL NOT NULL,
+        evidence_snapshot_json TEXT NOT NULL,
+        status TEXT DEFAULT 'PENDING',
+        generated_at TEXT NOT NULL,
+        projection_version TEXT DEFAULT 'v1.0'
+    )
+    """)
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS student_trend_projection (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        student_email TEXT NOT NULL,
+        metric_name TEXT NOT NULL,
+        metric_value REAL NOT NULL,
+        recorded_at TEXT NOT NULL,
+        projection_version TEXT DEFAULT 'v1.0'
+    )
+    """)
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS student_achievements (
+        id TEXT PRIMARY KEY,
+        student_email TEXT NOT NULL,
+        achievement_type TEXT NOT NULL,
+        unlocked_at TEXT NOT NULL,
+        projection_version TEXT DEFAULT 'v1.0'
+    )
+    """)
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS student_projection_metadata (
+        projection_version TEXT PRIMARY KEY,
+        checksum TEXT NOT NULL,
+        rebuilt_at TEXT NOT NULL
+    )
+    """)
+
     # Seed dynamic subscriptions (Decision 7)
     default_subscriptions = [
         ("memory_engine", "ResponseSubmitted", "v1.0", "memory_engine.handle_response_submitted"),
@@ -1362,7 +1461,15 @@ def init_db():
         ("teacher_twin", "DecisionGenerated", "v1.0", "teacher_twin.handle_decision_generated"),
         ("teacher_twin", "QuestionRetired", "v1.0", "teacher_twin.handle_question_retired"),
         ("teacher_twin", "QuestionPromoted", "v1.0", "teacher_twin.handle_question_promoted"),
-        ("teacher_twin", "TeacherOverride", "v1.0", "teacher_twin.handle_teacher_override")
+        ("teacher_twin", "TeacherOverride", "v1.0", "teacher_twin.handle_teacher_override"),
+        # Student Twin subscriptions
+        ("student_twin", "MemoryUpdated", "v1.0", "student_twin.handle_memory_updated"),
+        ("student_twin", "NBIRTUpdated", "v1.0", "student_twin.handle_nbirt_updated"),
+        ("student_twin", "AttentionUpdated", "v1.0", "student_twin.handle_attention_updated"),
+        ("student_twin", "CCLIUpdated", "v1.0", "student_twin.handle_ccli_updated"),
+        ("student_twin", "DecisionGenerated", "v1.0", "student_twin.handle_decision_generated"),
+        ("student_twin", "TeacherOverrideApplied", "v1.0", "student_twin.handle_teacher_override_applied"),
+        ("student_twin", "TeacherRecommendationGenerated", "v1.0", "student_twin.handle_teacher_recommendation")
     ]
     for consumer, event, ver, handler in default_subscriptions:
         cur.execute("""
@@ -3355,6 +3462,105 @@ def upgrade_database_schema():
     )
     """)
 
+    # Student Twin Projections (CQRS Separation)
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS student_profile_projection (
+        student_email TEXT PRIMARY KEY,
+        strengths_json TEXT NOT NULL,
+        weaknesses_json TEXT NOT NULL,
+        memory_health_json TEXT NOT NULL,
+        cognitive_health_score REAL DEFAULT 1.0,
+        projection_version TEXT DEFAULT 'v1.0',
+        updated_at TEXT
+    )
+    """)
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS student_progress_projection (
+        student_email TEXT PRIMARY KEY,
+        streak_count INTEGER DEFAULT 0,
+        last_activity_date TEXT,
+        completed_concepts_count INTEGER DEFAULT 0,
+        total_attempts INTEGER DEFAULT 0,
+        projection_version TEXT DEFAULT 'v1.0',
+        updated_at TEXT
+    )
+    """)
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS student_goal_projection (
+        goal_id TEXT PRIMARY KEY,
+        student_email TEXT NOT NULL,
+        target_concept TEXT NOT NULL,
+        target_mastery REAL NOT NULL,
+        current_mastery REAL NOT NULL,
+        status TEXT DEFAULT 'IN_PROGRESS',
+        projection_version TEXT DEFAULT 'v1.0',
+        updated_at TEXT
+    )
+    """)
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS student_daily_summary (
+        student_email TEXT,
+        summary_date TEXT,
+        avg_ccli REAL,
+        focus_state_counts_json TEXT,
+        response_count INTEGER DEFAULT 0,
+        projection_version TEXT DEFAULT 'v1.0',
+        updated_at TEXT,
+        PRIMARY KEY (student_email, summary_date)
+    )
+    """)
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS student_timeline_projection (
+        student_email TEXT,
+        event_id TEXT,
+        event_type TEXT NOT NULL,
+        event_description TEXT NOT NULL,
+        importance TEXT DEFAULT 'medium',
+        timestamp TEXT NOT NULL,
+        projection_version TEXT DEFAULT 'v1.0',
+        PRIMARY KEY (student_email, event_id)
+    )
+    """)
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS student_recommendation_history (
+        id TEXT PRIMARY KEY,
+        student_email TEXT NOT NULL,
+        recommendation TEXT NOT NULL,
+        priority_score REAL NOT NULL,
+        confidence REAL NOT NULL,
+        evidence_snapshot_json TEXT NOT NULL,
+        status TEXT DEFAULT 'PENDING',
+        generated_at TEXT NOT NULL,
+        projection_version TEXT DEFAULT 'v1.0'
+    )
+    """)
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS student_trend_projection (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        student_email TEXT NOT NULL,
+        metric_name TEXT NOT NULL,
+        metric_value REAL NOT NULL,
+        recorded_at TEXT NOT NULL,
+        projection_version TEXT DEFAULT 'v1.0'
+    )
+    """)
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS student_achievements (
+        id TEXT PRIMARY KEY,
+        student_email TEXT NOT NULL,
+        achievement_type TEXT NOT NULL,
+        unlocked_at TEXT NOT NULL,
+        projection_version TEXT DEFAULT 'v1.0'
+    )
+    """)
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS student_projection_metadata (
+        projection_version TEXT PRIMARY KEY,
+        checksum TEXT NOT NULL,
+        rebuilt_at TEXT NOT NULL
+    )
+    """)
+
     conn.commit()
     conn.close()
 
@@ -3838,7 +4044,15 @@ def seed_knowledge_graph():
         ("teacher_twin", "DecisionGenerated", "v1.0", "teacher_twin.handle_decision_generated"),
         ("teacher_twin", "QuestionRetired", "v1.0", "teacher_twin.handle_question_retired"),
         ("teacher_twin", "QuestionPromoted", "v1.0", "teacher_twin.handle_question_promoted"),
-        ("teacher_twin", "TeacherOverride", "v1.0", "teacher_twin.handle_teacher_override")
+        ("teacher_twin", "TeacherOverride", "v1.0", "teacher_twin.handle_teacher_override"),
+        # Student Twin subscriptions
+        ("student_twin", "MemoryUpdated", "v1.0", "student_twin.handle_memory_updated"),
+        ("student_twin", "NBIRTUpdated", "v1.0", "student_twin.handle_nbirt_updated"),
+        ("student_twin", "AttentionUpdated", "v1.0", "student_twin.handle_attention_updated"),
+        ("student_twin", "CCLIUpdated", "v1.0", "student_twin.handle_ccli_updated"),
+        ("student_twin", "DecisionGenerated", "v1.0", "student_twin.handle_decision_generated"),
+        ("student_twin", "TeacherOverrideApplied", "v1.0", "student_twin.handle_teacher_override_applied"),
+        ("student_twin", "TeacherRecommendationGenerated", "v1.0", "student_twin.handle_teacher_recommendation")
     ]
     for consumer, event, ver, handler in default_subscriptions:
         cur.execute("""

@@ -3226,6 +3226,59 @@ def api_context_recommendations(email):
     recommendations = context_engine.generate_contextual_recommendations(email)
     return jsonify(recommendations)
 
+# =============================================================================
+# STUDENT TWIN COGNITIVE COMPANION API ENDPOINTS (Week 19)
+# =============================================================================
+
+import student_twin
+
+@app.route('/api/v1/student/<email>/profile', methods=['GET'])
+def api_student_profile(email):
+    res = student_twin.get_student_profile(email)
+    return jsonify(res)
+
+@app.route('/api/v1/student/<email>/progress', methods=['GET'])
+def api_student_progress(email):
+    res = student_twin.get_student_progress(email)
+    return jsonify(res)
+
+@app.route('/api/v1/student/<email>/timeline', methods=['GET'])
+def api_student_timeline(email):
+    res = student_twin.get_student_timeline(email)
+    return jsonify(res)
+
+@app.route('/api/v1/student/<email>/recommendations', methods=['GET'])
+def api_student_recommendations(email):
+    res = student_twin.get_student_recommendations(email)
+    return jsonify(res)
+
+@app.route('/api/v1/student/<email>/goals', methods=['POST'])
+def api_student_goals(email):
+    data = request.json or {}
+    target_concept = data.get("target_concept")
+    target_mastery = float(data.get("target_mastery", 0.8))
+    if not target_concept:
+        return jsonify({"error": "Missing target_concept"}), 400
+    res = student_twin.progression.add_student_goal(email, target_concept, target_mastery)
+    return jsonify(res)
+
+@app.route('/api/v1/student/rebuild', methods=['POST'])
+def api_student_rebuild():
+    res = student_twin.rebuild_projections()
+    return jsonify(res)
+
+@app.route('/api/v1/student/recommendations/<rec_id>/feedback', methods=['POST'])
+def api_student_recommendation_feedback(rec_id):
+    data = request.json or {}
+    status = data.get("status")
+    if not status:
+        return jsonify({"error": "Missing status"}), 400
+    try:
+        student_twin.recommendations.update_recommendation_status(rec_id, status)
+        return jsonify({"status": "success"})
+    except ValueError as ve:
+        return jsonify({"error": str(ve)}), 400
+
 
 import teacher_twin
 
