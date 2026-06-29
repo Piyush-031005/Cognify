@@ -1670,6 +1670,27 @@ def init_db():
     )
     """)
 
+    # Audit Logs (Week 23 — Decision 3 / Refinement 3)
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS audit_logs (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        actor TEXT NOT NULL,
+        role TEXT NOT NULL,
+        action TEXT NOT NULL,
+        resource TEXT NOT NULL,
+        old_value TEXT,
+        new_value TEXT,
+        reason TEXT,
+        timestamp TEXT NOT NULL,
+        request_id TEXT,
+        correlation_id TEXT,
+        event_id TEXT,
+        ip_address TEXT,
+        user_agent TEXT,
+        duration_ms INTEGER
+    )
+    """)
+
     # Seed dynamic subscriptions (Decision 7)
     default_subscriptions = [
         ("memory_engine", "ResponseSubmitted", "v1.0", "memory_engine.handle_response_submitted"),
@@ -4023,6 +4044,27 @@ def upgrade_database_schema():
         projection_version TEXT PRIMARY KEY,
         checksum           TEXT NOT NULL,
         rebuilt_at         TEXT NOT NULL
+    )
+    """)
+
+    # Audit Logs (Week 23 — Decision 3 / Refinement 3)
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS audit_logs (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        actor TEXT NOT NULL,
+        role TEXT NOT NULL,
+        action TEXT NOT NULL,
+        resource TEXT NOT NULL,
+        old_value TEXT,
+        new_value TEXT,
+        reason TEXT,
+        timestamp TEXT NOT NULL,
+        request_id TEXT,
+        correlation_id TEXT,
+        event_id TEXT,
+        ip_address TEXT,
+        user_agent TEXT,
+        duration_ms INTEGER
     )
     """)
 

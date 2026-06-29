@@ -44,15 +44,57 @@ from session_data import (
 
 import os
 import json
+import time
+import uuid
+
+# Production Hardening Imports (Week 23)
+import config
+import auth
+import permissions
+import validation
+import audit_logger
+import backup_recovery
+import swagger
+import feature_flags
 
 app = Flask(__name__)
 CORS(app, resources={r"/*": {"origins": "*"}})
 
+@app.before_request
+def before_request_hook():
+    """Tracks latency metrics and sets correlation IDs (Refinements 3 & 4)."""
+    request.start_time = time.time()
+    request.request_id = request.headers.get("X-Request-Id", str(uuid.uuid4()))
+    request.correlation_id = request.headers.get("X-Correlation-Id", request.request_id)
+
+def get_current_user_identity():
+    """Helper to extract user email and role from JWT auth tokens."""
+    if config.COGNIFY_BYPASS_AUTH:
+        return "bypass_user@test.com", "super_admin"
+    token = auth.get_token_from_header()
+    if token:
+        payload = auth.auth_provider.verify_token(token)
+        if payload:
+            return payload.get("email"), payload.get("role")
+    return "anonymous@test.com", "anonymous"
+
+def log_api_mutation(action, resource, old_value=None, new_value=None, reason=None, event_id=None):
+    """Utility to log mutations with request details (Refinement 3)."""
+    actor, role = get_current_user_identity()
+    duration_ms = int((time.time() - getattr(request, 'start_time', time.time())) * 1000)
+    audit_logger.log_mutation(
+        actor=actor, role=role, action=action, resource=resource,
+        old_value=old_value, new_value=new_value, reason=reason,
+        event_id=event_id, request_id=getattr(request, 'request_id', None),
+        correlation_id=getattr(request, 'correlation_id', None),
+        ip_address=request.remote_addr,
+        user_agent=request.headers.get("User-Agent", ""),
+        duration_ms=duration_ms
+    )
+
 DIGITAL_TWIN_ALPHA = 0.7
 
-
 init_db()
-
 upgrade_database_schema()
 
 
@@ -61,16 +103,28 @@ upgrade_database_schema()
 # =========================
 @app.route('/signup', methods=['POST'])
 def signup():
-    data = request.json
+    data = request.json or {}
+    
+    # 1. Centralized Validation (Refinement 5)
+    is_valid, err = validation.validate_signup(data)
+    if not is_valid:
+        return jsonify({"success": False, "error_code": "VALIDATION_ERROR", "message": err}), 400
 
     existing = get_user(data["email"])
     if existing:
-        return jsonify({"success": False, "message": "User already exists"})
+        return jsonify({"success": False, "message": "User already exists"}), 400
 
     create_user(data)
+    
+    # 2. Issue Auth Token (Refinement 1)
+    token = auth.auth_provider.issue_token(data["email"], data["role"])
+
+    # 3. Log mutation audit trail (Refinement 3)
+    log_api_mutation(action="SIGNUP", resource=data["email"], new_value={"name": data["name"], "role": data["role"]})
 
     return jsonify({
         "success": True,
+        "token": token,
         "user": {
             "name": data["name"],
             "email": data["email"],
@@ -81,15 +135,27 @@ def signup():
 
 @app.route('/signin', methods=['POST'])
 def signin():
-    data = request.json
+    data = request.json or {}
+    
+    # 1. Centralized Validation (Refinement 5)
+    is_valid, err = validation.validate_signin(data)
+    if not is_valid:
+        return jsonify({"success": False, "error_code": "VALIDATION_ERROR", "message": err}), 400
 
     user = get_user(data["email"])
 
     if not user or user["password"] != data["password"]:
-        return jsonify({"success": False, "message": "Invalid credentials"})
+        return jsonify({"success": False, "message": "Invalid credentials"}), 401
+
+    # 2. Issue Auth Token (Refinement 1)
+    token = auth.auth_provider.issue_token(user["email"], user["role"])
+
+    # 3. Log mutation audit trail (Refinement 3)
+    log_api_mutation(action="SIGNIN", resource=user["email"])
 
     return jsonify({
         "success": True,
+        "token": token,
         "user": {
             "name": user["name"],
             "email": user["email"],
@@ -102,15 +168,27 @@ def signin():
 # QUIZ SUBMIT
 # =========================
 @app.route('/submit', methods=['POST'])
+@auth.require_auth(roles=["student", "super_admin"])
 def submit():
-    data = request.json
+    data = request.json or {}
+    
+    # 1. Centralized Validation (Refinement 5)
+    is_valid, err = validation.validate_quiz_submission(data)
+    if not is_valid:
+        return jsonify({"success": False, "error_code": "VALIDATION_ERROR", "message": err}), 400
+
+    student_email = data["student_email"]
+
+    # 2. Centralized Permissions (Refinement 2)
+    actor_email, actor_role = get_current_user_identity()
+    if not permissions.can_view_student(actor_email, actor_role, student_email):
+        return jsonify({"success": False, "error_code": "FORBIDDEN", "message": "Permission denied"}), 403
 
     session_obj = process_question(data)
     print("MASTER SESSION:", session_obj)
 
     add_question_session(session_obj)
     set_reflection(data.get("reflection", ""))
-    student_email = data.get("student_email", "anonymous")
     attempt_id = data.get("attempt_id", "default_attempt")
 
     session_obj["room_code"] = data.get("room_code", "solo")
@@ -150,8 +228,13 @@ def submit():
     # 1. Save response in main table & retrieve generated key
     response_id = save_response(student_email, session_obj)
 
-    # 2. Save Raw Telemetry Events
+    # 1.1 Save Audit Log Mutation (Refinement 3)
     question_id = session_obj.get("question_id")
+    log_api_mutation(
+        action="SUBMIT_QUIZ_RESPONSE",
+        resource=student_email,
+        new_value={"question_id": question_id, "correct": session_obj.get("correct")}
+    )
     save_raw_telemetry_event(student_email, attempt_id, question_id, "response_time", session_obj.get("response_time"))
     save_raw_telemetry_event(student_email, attempt_id, question_id, "idle_time", session_obj.get("idle_time"))
     save_raw_telemetry_event(student_email, attempt_id, question_id, "rewrite_count", session_obj.get("rewrite_count"))
@@ -3289,51 +3372,85 @@ import parent_twin.weekly_report as parent_weekly_report
 import parent_twin.notifications as parent_notifications
 
 @app.route('/api/v1/parent/<parent_email>/children', methods=['GET'])
+@auth.require_auth(roles=["parent", "super_admin"])
 def api_parent_children(parent_email):
     """Lists all students linked to this parent (multi-child support — Decision 4)."""
+    actor_email, actor_role = get_current_user_identity()
+    if not permissions.can_view_parent(actor_email, actor_role, parent_email):
+        return jsonify({"success": False, "error_code": "FORBIDDEN", "message": "Permission denied"}), 403
+        
     children = parent_twin.get_children(parent_email)
     return jsonify(children)
 
 @app.route('/api/v1/parent/<parent_email>/child/<student_email>/link', methods=['POST'])
+@auth.require_auth(roles=["parent", "super_admin"])
 def api_parent_link_child(parent_email, student_email):
     """Creates or updates a parent-child mapping."""
+    actor_email, actor_role = get_current_user_identity()
+    if not permissions.can_view_parent(actor_email, actor_role, parent_email):
+        return jsonify({"success": False, "error_code": "FORBIDDEN", "message": "Permission denied"}), 403
+        
     data = request.json or {}
     rel = data.get("relationship_type", "guardian")
     is_primary = int(data.get("is_primary", 1))
     try:
         res = parent_twin.link_child(parent_email, student_email, rel, is_primary)
+        log_api_mutation(action="LINK_PARENT_CHILD", resource=student_email, new_value={"parent_email": parent_email, "relation": rel})
         return jsonify(res)
     except ValueError as ve:
         return jsonify({"error": str(ve)}), 400
 
 @app.route('/api/v1/parent/<parent_email>/child/<student_email>/snapshot', methods=['GET'])
+@auth.require_auth(roles=["parent", "super_admin"])
 def api_parent_snapshot(parent_email, student_email):
     """Live parent-facing child projection — all raw metrics translated through digest.py."""
+    actor_email, actor_role = get_current_user_identity()
+    if not permissions.can_view_student(actor_email, actor_role, student_email) or not permissions.can_view_parent(actor_email, actor_role, parent_email):
+        return jsonify({"success": False, "error_code": "FORBIDDEN", "message": "Permission denied"}), 403
+        
     res = parent_twin.get_snapshot(parent_email, student_email)
     return jsonify(res)
 
 @app.route('/api/v1/parent/<parent_email>/child/<student_email>/weekly-report', methods=['GET'])
+@auth.require_auth(roles=["parent", "super_admin"])
 def api_parent_weekly_report(parent_email, student_email):
     """Returns the current week's latest report. Generates if missing (Decision 6 — append-only)."""
+    actor_email, actor_role = get_current_user_identity()
+    if not permissions.can_view_student(actor_email, actor_role, student_email) or not permissions.can_view_parent(actor_email, actor_role, parent_email):
+        return jsonify({"success": False, "error_code": "FORBIDDEN", "message": "Permission denied"}), 403
+        
     report = parent_weekly_report.get_latest_weekly_report(parent_email, student_email)
     return jsonify(report)
 
 @app.route('/api/v1/parent/<parent_email>/child/<student_email>/weekly-report/read', methods=['POST'])
+@auth.require_auth(roles=["parent", "super_admin"])
 def api_parent_report_read(parent_email, student_email):
     """Marks a weekly report as read in the notification log."""
+    actor_email, actor_role = get_current_user_identity()
+    if not permissions.can_view_parent(actor_email, actor_role, parent_email):
+        return jsonify({"success": False, "error_code": "FORBIDDEN", "message": "Permission denied"}), 403
+        
     data = request.json or {}
     report_id = data.get("report_id")
     if not report_id:
         return jsonify({"error": "Missing report_id"}), 400
+        
     parent_notifications.mark_report_read(parent_email, student_email, report_id)
     parent_notifications.log_notification(parent_email, student_email, "WeeklyReportViewed",
                                           {"report_id": report_id})
+    log_api_mutation(action="MARK_REPORT_READ", resource=report_id)
     return jsonify({"status": "success"})
 
 @app.route('/api/v1/parent/rebuild', methods=['POST'])
+@auth.require_auth(roles=["super_admin", "school_admin"])
 def api_parent_rebuild():
     """Triggers a safe projection rebuild with checksum validation."""
+    actor_email, actor_role = get_current_user_identity()
+    if not permissions.can_rebuild(actor_email, actor_role):
+        return jsonify({"success": False, "error_code": "FORBIDDEN", "message": "Permission denied"}), 403
+        
     res = parent_twin.rebuild_projections()
+    log_api_mutation(action="REBUILD_PARENT_PROJECTIONS", resource="parent_twin", new_value=res)
     return jsonify(res)
 
 
@@ -3344,57 +3461,95 @@ def api_parent_rebuild():
 import school_admin_twin
 
 @app.route('/api/v1/admin/school/overview', methods=['GET'])
+@auth.require_auth(roles=["school_admin", "super_admin"])
 def api_school_overview():
     """School-wide adoption metrics and stats."""
+    actor_email, actor_role = get_current_user_identity()
+    if not permissions.can_view_school(actor_email, actor_role):
+        return jsonify({"success": False, "error_code": "FORBIDDEN", "message": "Permission denied"}), 403
     res = school_admin_twin.get_school_overview()
     return jsonify(res)
 
 @app.route('/api/v1/admin/school/classrooms', methods=['GET'])
+@auth.require_auth(roles=["school_admin", "super_admin"])
 def api_school_classrooms():
     """All classroom summaries in the school."""
+    actor_email, actor_role = get_current_user_identity()
+    if not permissions.can_view_school(actor_email, actor_role):
+        return jsonify({"success": False, "error_code": "FORBIDDEN", "message": "Permission denied"}), 403
     res = school_admin_twin.get_classroom_summaries()
     return jsonify(res)
 
 @app.route('/api/v1/admin/school/classrooms/<room_code>', methods=['GET'])
+@auth.require_auth(roles=["school_admin", "super_admin"])
 def api_school_classroom_detail(room_code):
     """Detail for a single classroom."""
+    actor_email, actor_role = get_current_user_identity()
+    if not permissions.can_view_school(actor_email, actor_role):
+        return jsonify({"success": False, "error_code": "FORBIDDEN", "message": "Permission denied"}), 403
     res = school_admin_twin.get_classroom_detail(room_code)
     return jsonify(res)
 
 @app.route('/api/v1/admin/school/teachers', methods=['GET'])
+@auth.require_auth(roles=["school_admin", "super_admin"])
 def api_school_teachers():
     """All teacher summaries in the school."""
+    actor_email, actor_role = get_current_user_identity()
+    if not permissions.can_view_school(actor_email, actor_role):
+        return jsonify({"success": False, "error_code": "FORBIDDEN", "message": "Permission denied"}), 403
     res = school_admin_twin.get_teacher_summaries()
     return jsonify(res)
 
 @app.route('/api/v1/admin/school/teachers/<teacher_email>', methods=['GET'])
+@auth.require_auth(roles=["school_admin", "super_admin"])
 def api_school_teacher_detail(teacher_email):
     """Detail for a single teacher."""
+    actor_email, actor_role = get_current_user_identity()
+    if not permissions.can_view_school(actor_email, actor_role):
+        return jsonify({"success": False, "error_code": "FORBIDDEN", "message": "Permission denied"}), 403
     res = school_admin_twin.get_teacher_detail(teacher_email)
     return jsonify(res)
 
 @app.route('/api/v1/admin/school/curriculum', methods=['GET'])
+@auth.require_auth(roles=["school_admin", "super_admin"])
 def api_school_curriculum():
     """School-wide concept coverage statistics."""
+    actor_email, actor_role = get_current_user_identity()
+    if not permissions.can_view_school(actor_email, actor_role):
+        return jsonify({"success": False, "error_code": "FORBIDDEN", "message": "Permission denied"}), 403
     res = school_admin_twin.get_curriculum_coverage()
     return jsonify(res)
 
 @app.route('/api/v1/admin/school/risk', methods=['GET'])
+@auth.require_auth(roles=["school_admin", "super_admin"])
 def api_school_risk():
     """School-wide student risk dashboard."""
+    actor_email, actor_role = get_current_user_identity()
+    if not permissions.can_view_school(actor_email, actor_role):
+        return jsonify({"success": False, "error_code": "FORBIDDEN", "message": "Permission denied"}), 403
     res = school_admin_twin.get_risk_dashboard()
     return jsonify(res)
 
 @app.route('/api/v1/admin/school/weekly-snapshot', methods=['GET'])
+@auth.require_auth(roles=["school_admin", "super_admin"])
 def api_school_weekly_snapshot():
     """Returns or generates the latest weekly snapshot (Decision 4)."""
+    actor_email, actor_role = get_current_user_identity()
+    if not permissions.can_view_school(actor_email, actor_role):
+        return jsonify({"success": False, "error_code": "FORBIDDEN", "message": "Permission denied"}), 403
     res = school_admin_twin.get_weekly_snapshot()
+    log_api_mutation(action="GENERATE_SCHOOL_SNAPSHOT", resource="school_weekly_snapshot")
     return jsonify(res)
 
 @app.route('/api/v1/admin/school/rebuild', methods=['POST'])
+@auth.require_auth(roles=["super_admin", "school_admin"])
 def api_school_rebuild():
     """Triggers safe projection rebuild with MD5 checksum validation (Decision 5)."""
+    actor_email, actor_role = get_current_user_identity()
+    if not permissions.can_rebuild(actor_email, actor_role):
+        return jsonify({"success": False, "error_code": "FORBIDDEN", "message": "Permission denied"}), 403
     res = school_admin_twin.rebuild_projections()
+    log_api_mutation(action="REBUILD_SCHOOL_PROJECTIONS", resource="school_admin_twin", new_value=res)
     return jsonify(res)
 
 
@@ -3405,45 +3560,74 @@ def api_school_rebuild():
 import research_analytics_twin
 
 @app.route('/api/v1/research/decay', methods=['GET'])
+@auth.require_auth(roles=["research_viewer", "super_admin"])
 def api_research_decay():
     """Concept decay speed rankings."""
+    actor_email, actor_role = get_current_user_identity()
+    if not permissions.can_view_research(actor_email, actor_role):
+        return jsonify({"success": False, "error_code": "FORBIDDEN", "message": "Permission denied"}), 403
     res = research_analytics_twin.get_concept_decay()
     return jsonify(res)
 
 @app.route('/api/v1/research/misconceptions', methods=['GET'])
+@auth.require_auth(roles=["research_viewer", "super_admin"])
 def api_research_misconceptions():
     """Misconception occurrence frequencies and impacts."""
+    actor_email, actor_role = get_current_user_identity()
+    if not permissions.can_view_research(actor_email, actor_role):
+        return jsonify({"success": False, "error_code": "FORBIDDEN", "message": "Permission denied"}), 403
     res = research_analytics_twin.get_misconception_frequency()
     return jsonify(res)
 
 @app.route('/api/v1/research/interventions', methods=['GET'])
+@auth.require_auth(roles=["research_viewer", "super_admin"])
 def api_research_interventions():
     """Intervention and recommendation success rates."""
+    actor_email, actor_role = get_current_user_identity()
+    if not permissions.can_view_research(actor_email, actor_role):
+        return jsonify({"success": False, "error_code": "FORBIDDEN", "message": "Permission denied"}), 403
     res = research_analytics_twin.get_intervention_effectiveness()
     return jsonify(res)
 
 @app.route('/api/v1/research/discrimination', methods=['GET'])
+@auth.require_auth(roles=["research_viewer", "super_admin"])
 def api_research_discrimination():
     """Item discrimination (D) statistics for questions."""
+    actor_email, actor_role = get_current_user_identity()
+    if not permissions.can_view_research(actor_email, actor_role):
+        return jsonify({"success": False, "error_code": "FORBIDDEN", "message": "Permission denied"}), 403
     res = research_analytics_twin.get_question_discrimination()
     return jsonify(res)
 
 @app.route('/api/v1/research/classrooms/speed', methods=['GET'])
+@auth.require_auth(roles=["research_viewer", "super_admin"])
 def api_research_classroom_speed():
     """Classroom learning growth speed rankings."""
+    actor_email, actor_role = get_current_user_identity()
+    if not permissions.can_view_research(actor_email, actor_role):
+        return jsonify({"success": False, "error_code": "FORBIDDEN", "message": "Permission denied"}), 403
     res = research_analytics_twin.get_classroom_speed()
     return jsonify(res)
 
 @app.route('/api/v1/research/correlation/load-decay', methods=['GET'])
+@auth.require_auth(roles=["research_viewer", "super_admin"])
 def api_research_load_decay_correlation():
     """Cognitive load and memory decay correlations."""
+    actor_email, actor_role = get_current_user_identity()
+    if not permissions.can_view_research(actor_email, actor_role):
+        return jsonify({"success": False, "error_code": "FORBIDDEN", "message": "Permission denied"}), 403
     res = research_analytics_twin.get_load_decay_correlation()
     return jsonify(res)
 
 @app.route('/api/v1/research/rebuild', methods=['POST'])
+@auth.require_auth(roles=["super_admin", "school_admin"])
 def api_research_rebuild():
     """Triggers SAFE projection rebuild with checksum validation (Decision 5)."""
+    actor_email, actor_role = get_current_user_identity()
+    if not permissions.can_rebuild(actor_email, actor_role):
+        return jsonify({"success": False, "error_code": "FORBIDDEN", "message": "Permission denied"}), 403
     res = research_analytics_twin.rebuild_projections()
+    log_api_mutation(action="REBUILD_RESEARCH_PROJECTIONS", resource="research_analytics_twin", new_value=res)
     return jsonify(res)
 
 
@@ -3451,11 +3635,13 @@ import teacher_twin
 
 
 @app.route('/api/v1/teacher/rooms/<room_id>/heatmap', methods=['GET'])
+@auth.require_auth(roles=["teacher", "super_admin"])
 def api_teacher_heatmap(room_id):
     heatmap = teacher_twin.get_classroom_heatmap(room_id)
     return jsonify(heatmap)
 
 @app.route('/api/v1/teacher/rooms/<room_id>/prioritization', methods=['POST'])
+@auth.require_auth(roles=["teacher", "super_admin"])
 def api_teacher_prioritization(room_id):
     data = request.json or {}
     session_context = data.get("session_context")
@@ -3463,8 +3649,9 @@ def api_teacher_prioritization(room_id):
     return jsonify(prioritization)
     
 @app.route('/api/v1/teacher/feedback', methods=['POST'])
+@auth.require_auth(roles=["teacher", "super_admin"])
 def api_teacher_feedback():
-    data = request.json
+    data = request.json or {}
     if not data or "context_id" not in data or "action_taken" not in data:
         return jsonify({"error": "Missing required fields"}), 400
         
@@ -3473,29 +3660,46 @@ def api_teacher_feedback():
         data["action_taken"],
         data.get("outcome_notes", "")
     )
+    log_api_mutation(action="RECORD_TEACHER_FEEDBACK", resource=data["context_id"])
     return jsonify(result)
 
 @app.route('/api/v1/teacher/override', methods=['POST'])
+@auth.require_auth(roles=["teacher", "super_admin"])
 def api_teacher_override():
     data = request.json or {}
-    student_email = data.get("student_email")
-    concept_id = data.get("concept_id")
-    override_type = data.get("override_type")
+    
+    # 1. Centralized Validation (Refinement 5)
+    is_valid, err = validation.validate_teacher_override(data)
+    if not is_valid:
+        return jsonify({"success": False, "error_code": "VALIDATION_ERROR", "message": err}), 400
+        
+    student_email = data["student_email"]
+    concept_id = data["concept_id"]
+    override_type = data["override_type"]
     reason = data.get("reason", "")
     actor = data.get("actor", "teacher")
     
-    if not student_email or not concept_id or not override_type:
-        return jsonify({"error": "Missing student_email, concept_id, or override_type"}), 400
+    # 2. Centralized Permissions (Refinement 2)
+    actor_email, actor_role = get_current_user_identity()
+    if not permissions.can_override(actor_email, actor_role, student_email):
+        return jsonify({"success": False, "error_code": "FORBIDDEN", "message": "Permission denied"}), 403
         
     res = teacher_twin.record_override(student_email, concept_id, override_type, reason, actor)
+    log_api_mutation(action="TEACHER_OVERRIDE", resource=student_email, new_value={"concept_id": concept_id, "type": override_type})
     return jsonify(res)
 
 @app.route('/api/v1/teacher/rebuild', methods=['POST'])
+@auth.require_auth(roles=["super_admin", "school_admin"])
 def api_teacher_rebuild():
+    actor_email, actor_role = get_current_user_identity()
+    if not permissions.can_rebuild(actor_email, actor_role):
+        return jsonify({"success": False, "error_code": "FORBIDDEN", "message": "Permission denied"}), 403
     res = teacher_twin.rebuild_projections()
+    log_api_mutation(action="REBUILD_TEACHER_PROJECTIONS", resource="teacher_twin", new_value=res)
     return jsonify(res)
 
 @app.route('/api/v1/teacher/rooms/<room_id>/report', methods=['GET'])
+@auth.require_auth(roles=["teacher", "super_admin"])
 def api_teacher_report(room_id):
     period = request.args.get("period", "daily")
     report = teacher_twin.generate_classroom_report(room_id, period=period)
@@ -5062,6 +5266,169 @@ def api_events_subscriptions():
         rows = [dict(r) for r in cur.fetchall()]
         conn.close()
         return jsonify({"status": "success", "count": len(rows), "data": rows})
+    except Exception as e:
+        return jsonify({"status": "error", "error": str(e)}), 500
+
+
+# =============================================================================
+# WEEK 23: PRODUCTION HARDENING ENDPOINTS
+# =============================================================================
+
+@app.route('/health', methods=['GET'])
+def api_health():
+    """Liveness status check (Decision 4)."""
+    try:
+        conn = get_conn()
+        conn.cursor().execute("SELECT 1")
+        conn.close()
+        return jsonify({"status": "healthy", "timestamp": datetime.now().isoformat()})
+    except Exception as e:
+        return jsonify({"status": "unhealthy", "error": str(e)}), 500
+
+@app.route('/readiness', methods=['GET'])
+def api_readiness():
+    """Readiness status check (Decision 4)."""
+    try:
+        conn = get_conn()
+        cur = conn.cursor()
+        cur.execute("SELECT 1")
+        # Check if basic tables exist
+        cur.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='users'")
+        if not cur.fetchone():
+            conn.close()
+            return jsonify({"status": "not_ready", "reason": "migrations not completed"}), 503
+        conn.close()
+        return jsonify({"status": "ready", "timestamp": datetime.now().isoformat()})
+    except Exception as e:
+        return jsonify({"status": "not_ready", "error": str(e)}), 503
+
+@app.route('/metrics', methods=['GET'])
+def api_metrics():
+    """Observability metrics displaying latencies, queues, and sizes (Refinement 4)."""
+    try:
+        conn = get_conn()
+        cur = conn.cursor()
+        
+        # 1. DLQ size
+        cur.execute("SELECT COUNT(*) as dlq_cnt FROM dead_letter_events")
+        dlq_size = cur.fetchone()["dlq_cnt"] or 0
+        
+        # 2. Event store size
+        cur.execute("SELECT COUNT(*) as ev_cnt FROM event_store")
+        event_store_size = cur.fetchone()["ev_cnt"] or 0
+
+        # 3. Average replay duration
+        cur.execute("""
+            SELECT started_at, completed_at 
+            FROM event_replay_runs 
+            WHERE status = 'COMPLETED'
+        """)
+        replay_runs = cur.fetchall()
+        durations = []
+        for r in replay_runs:
+            try:
+                start = datetime.fromisoformat(r["started_at"])
+                end = datetime.fromisoformat(r["completed_at"])
+                durations.append((end - start).total_seconds())
+            except Exception:
+                pass
+        avg_replay_duration_seconds = round(sum(durations) / len(durations), 3) if durations else 0.0
+
+        # 4. Average Rebuild and Mutation duration from audit logs
+        cur.execute("SELECT AVG(duration_ms) as avg_dur FROM audit_logs")
+        avg_api_latency_ms = round(cur.fetchone()["avg_dur"] or 0.0, 2)
+
+        cur.execute("SELECT AVG(duration_ms) as avg_dur FROM audit_logs WHERE action LIKE 'REBUILD%'")
+        avg_rebuild_duration_ms = round(cur.fetchone()["avg_dur"] or 0.0, 2)
+
+        # 5. Database file size
+        db_size_bytes = 0
+        if os.path.exists(config.DATABASE_URL):
+            db_size_bytes = os.path.getsize(config.DATABASE_URL)
+
+        conn.close()
+
+        metrics = {
+            "status": "success",
+            "release_tag": config.RELEASE_TAG,
+            "git_commit": config.GIT_COMMIT,
+            "database_size_bytes": db_size_bytes,
+            "dead_letter_queue_size": dlq_size,
+            "event_store_size": event_store_size,
+            "average_replay_duration_seconds": avg_replay_duration_seconds,
+            "average_api_latency_ms": avg_api_latency_ms,
+            "average_projection_rebuild_duration_ms": avg_rebuild_duration_ms,
+            "features": {
+                "parent_twin": feature_flags.is_enabled("ENABLE_PARENT_TWIN"),
+                "research_twin": feature_flags.is_enabled("ENABLE_RESEARCH_TWIN"),
+                "admin_twin": feature_flags.is_enabled("ENABLE_ADMIN_TWIN"),
+                "rat": feature_flags.is_enabled("ENABLE_RAT"),
+                "backups": feature_flags.is_enabled("ENABLE_BACKUPS"),
+                "swagger": feature_flags.is_enabled("ENABLE_SWAGGER")
+            }
+        }
+        return jsonify(metrics)
+    except Exception as e:
+        return jsonify({"status": "error", "error": str(e)}), 500
+
+@app.route('/swagger.json', methods=['GET'])
+def api_swagger_json():
+    """Serves the raw OpenAPI dynamic spec (Refinement 7 & Decision 7)."""
+    if not feature_flags.is_enabled("ENABLE_SWAGGER"):
+        return jsonify({"error": "Swagger is disabled"}), 404
+    return jsonify(swagger.get_swagger_spec())
+
+@app.route('/docs', methods=['GET'])
+def api_docs():
+    """Serves Swagger UI documentation page (Refinement 7 & Decision 7)."""
+    if not feature_flags.is_enabled("ENABLE_SWAGGER"):
+        return "Swagger UI is disabled", 404
+    return swagger.get_swagger_ui_html()
+
+@app.route('/api/v1/admin/audit-logs', methods=['GET'])
+@auth.require_auth(roles=["super_admin"])
+def api_admin_audit_logs():
+    """Retrieves system audit logs (restricted to super_admin)."""
+    limit = int(request.args.get("limit", 100))
+    offset = int(request.args.get("offset", 0))
+    logs = audit_logger.get_audit_logs(limit, offset)
+    return jsonify({"status": "success", "count": len(logs), "data": logs})
+
+@app.route('/api/v1/admin/backup', methods=['POST'])
+@auth.require_auth(roles=["super_admin"])
+def api_admin_backup():
+    """Performs online database backup (restricted to super_admin)."""
+    if not feature_flags.is_enabled("ENABLE_BACKUPS"):
+        return jsonify({"error": "Backup feature is disabled"}), 404
+        
+    data = request.json or {}
+    filename = data.get("filename", "cognify_backup.db")
+    # Store temporary inside workspace
+    backup_path = os.path.join(os.getcwd(), filename)
+    try:
+        res = backup_recovery.backup_database(backup_path)
+        log_api_mutation(action="DATABASE_BACKUP", resource=filename, new_value=res)
+        return jsonify(res)
+    except Exception as e:
+        return jsonify({"status": "error", "error": str(e)}), 500
+
+@app.route('/api/v1/admin/restore', methods=['POST'])
+@auth.require_auth(roles=["super_admin"])
+def api_admin_restore():
+    """Performs database restoration from backup (restricted to super_admin)."""
+    if not feature_flags.is_enabled("ENABLE_BACKUPS"):
+        return jsonify({"error": "Backup feature is disabled"}), 404
+        
+    data = request.json or {}
+    filename = data.get("filename")
+    if not filename:
+        return jsonify({"error": "Missing filename for restore"}), 400
+        
+    backup_path = os.path.join(os.getcwd(), filename)
+    try:
+        res = backup_recovery.restore_database(backup_path)
+        log_api_mutation(action="DATABASE_RESTORE", resource=filename, new_value=res)
+        return jsonify(res)
     except Exception as e:
         return jsonify({"status": "error", "error": str(e)}), 500
 
