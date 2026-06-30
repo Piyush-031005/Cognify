@@ -1,5 +1,6 @@
+import { useEffect, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { Brain, LogOut } from "lucide-react";
+import { Brain, LogOut, Sun, Moon } from "lucide-react";
 import { clearSession, getCurrentUser } from "@/lib/storage";
 import { Button } from "@/components/ui/button";
 
@@ -8,6 +9,24 @@ export default function Navbar({ variant = "outside" }: { variant?: "outside" | 
   const location = useLocation();
   const user = getCurrentUser();
   const inside = variant === "inside";
+
+  const [theme, setTheme] = useState(() => localStorage.getItem("theme") || "dark");
+
+  useEffect(() => {
+    if (theme === "light") {
+      document.documentElement.classList.remove("theme-inside");
+      document.documentElement.classList.add("theme-light-pop");
+    } else {
+      document.documentElement.classList.remove("theme-light-pop");
+      document.documentElement.classList.add("theme-inside");
+    }
+  }, [theme]);
+
+  const toggleTheme = () => {
+    const nextTheme = theme === "dark" ? "light" : "dark";
+    setTheme(nextTheme);
+    localStorage.setItem("theme", nextTheme);
+  };
 
   const onLogout = () => { clearSession(); navigate("/"); };
 
@@ -22,6 +41,21 @@ export default function Navbar({ variant = "outside" }: { variant?: "outside" | 
         </Link>
 
         <nav className="flex items-center gap-2">
+          {/* Theme Switcher Button */}
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={toggleTheme}
+            aria-label="Toggle Theme"
+            className="transition-all hover:bg-white/10"
+          >
+            {theme === "dark" ? (
+              <Sun className="h-4 w-4 text-yellow-400" />
+            ) : (
+              <Moon className="h-4 w-4 text-black" />
+            )}
+          </Button>
+
           {!user && location.pathname !== "/auth" && (
             <Button asChild variant="ghost" className="font-medium">
               <Link to="/auth">Sign in</Link>
