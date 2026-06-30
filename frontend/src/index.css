@@ -95,9 +95,9 @@
     --popover: 220 12% 9%;
     --popover-foreground: 210 20% 98%;
 
-    --primary: 38 92% 50%;              /* Premium Amber/Gold/Yellow-Orange (#F59E0B) */
-    --primary-foreground: 220 15% 5%;
-    --primary-glow: 38 92% 50%;
+    --primary: 24 95% 53%;              /* Premium Cool Bright Orange Accent (#F97316) */
+    --primary-foreground: 0 0% 100%;
+    --primary-glow: 24 95% 53%;
 
     --secondary: 220 10% 14%;           /* Neutral grey secondary */
     --secondary-foreground: 210 20% 98%;
@@ -105,15 +105,15 @@
     --muted: 220 12% 12%;
     --muted-foreground: 218 11% 75%;   /* Highly readable light grey secondary text (no hidden text!) */
 
-    --accent: 24 95% 53%;               /* Premium Orange Accent (#F97316) */
-    --accent-foreground: 220 15% 5%;
+    --accent: 24 95% 53%;               /* Premium Cool Bright Orange Accent (#F97316) */
+    --accent-foreground: 0 0% 100%;
 
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
 
     --border: 220 13% 13%;              /* Very clean subtle border */
     --input: 220 13% 11%;
-    --ring: 38 92% 50%;                 /* Yellow/Amber focus ring */
+    --ring: 24 95% 53%;                 /* Cool bright orange focus ring */
 
     --radius-sm: 8px;
     --radius-md: 12px;
@@ -126,36 +126,36 @@
     --shadow-card: 0 8px 30px -4px rgba(0, 0, 0, 0.5);
   }
 
-  /* ---- INSIDE APP THEME (Dashboard / Quiz / Report) — Awwwards Light Theme ---- */
+  /* ---- INSIDE APP THEME (Dashboard / Quiz) — Awwwards Light Theme ---- */
   .theme-light-pop {
-    --background: 210 33% 95%;          /* Soft light off-blue / white-swan background (#F0F3F6) */
-    --foreground: 220 15% 8%;           /* Dark charcoal for high contrast readability */
+    --background: 200 95% 91%;          /* Blend of light sky blue and polar white (#E0F2FE) */
+    --foreground: 222 47% 11%;          /* Dark charcoal for 100% readability (#0F172A) */
 
-    --card: 0 0% 100%;                  /* Pure white swan cards */
-    --card-foreground: 220 15% 8%;
+    --card: 0 0% 100%;                  /* Pure Polar White swan cards */
+    --card-foreground: 222 47% 11%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 220 15% 8%;
+    --popover-foreground: 222 47% 11%;
 
-    --primary: 198 90% 43%;              /* Soft premium slate-blue CTA */
+    --primary: 24 95% 53%;              /* Premium Cool Bright Orange Accent (#F97316) */
     --primary-foreground: 0 0% 100%;
-    --primary-glow: 198 90% 43%;
+    --primary-glow: 24 95% 53%;
 
-    --secondary: 210 25% 90%;           /* Soft grey-blue secondary tint */
-    --secondary-foreground: 220 15% 8%;
+    --secondary: 200 80% 86%;           /* Soft sky-blue secondary tint */
+    --secondary-foreground: 222 47% 11%;
 
-    --muted: 210 20% 92%;
-    --muted-foreground: 220 10% 40%;    /* Muted grey for readable details */
+    --muted: 200 60% 88%;
+    --muted-foreground: 215 25% 27%;    /* Highly readable dark slate text (#1E293B) */
 
-    --accent: 158 49% 48%;              /* Muted sage accent */
-    --accent-foreground: 220 15% 8%;
+    --accent: 158 49% 48%;              /* Sage Green Accent */
+    --accent-foreground: 222 47% 11%;
 
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 210 20% 88%;              /* Ultra soft grey-blue borders */
+    --border: 200 80% 84%;              /* Soft sky-blue borders */
     --input: 0 0% 100%;
-    --ring: 198 90% 43%;
+    --ring: 24 95% 53%;
 
     --radius-sm: 8px;
     --radius-md: 12px;
@@ -166,6 +166,112 @@
 
     --shadow-soft: 0 4px 15px -3px rgba(0, 0, 0, 0.05);
     --shadow-card: 0 10px 25px -5px rgba(0, 0, 0, 0.06);
+  }
+
+  /* ---- INSIDE APP THEME (Report View) — Light Brown Paper Editorial Theme ---- */
+  .theme-light-report {
+    --background: 32 20% 93%;           /* Warm light brown / sand paper backdrop (#EFECE5) */
+    --foreground: 20 15% 10%;           /* Dark brown-black for high contrast readability (#1A1612) */
+
+    --card: 0 0% 100%;                  /* Pure white swan cards/badges */
+    --card-foreground: 20 15% 10%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 20 15% 10%;
+
+    --primary: 24 95% 53%;              /* Cool Bright Orange Accent */
+    --primary-foreground: 0 0% 100%;
+    --primary-glow: 24 95% 53%;
+
+    --secondary: 30 15% 88%;            /* Soft warm grey secondary tint */
+    --secondary-foreground: 20 15% 10%;
+
+    --muted: 30 15% 85%;
+    --muted-foreground: 20 10% 30%;
+
+    --accent: 158 49% 48%;              /* Sage Green Accent */
+    --accent-foreground: 20 15% 10%;
+
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 30 15% 82%;               /* Warm paper borders */
+    --input: 0 0% 100%;
+    --ring: 24 95% 53%;
+
+    --radius-sm: 8px;
+    --radius-md: 12px;
+    --radius-lg: 16px;
+
+    --transition-fast: 120ms cubic-bezier(0.16, 1, 0.3, 1);
+    --transition-normal: 200ms cubic-bezier(0.16, 1, 0.3, 1);
+
+    --shadow-soft: 0 4px 15px -3px rgba(0, 0, 0, 0.05);
+    --shadow-card: 0 10px 25px -5px rgba(0, 0, 0, 0.06);
+  }
+
+  /* ---- READABILITY OVERRIDES FOR LIGHT THEMES (Dashboard & Quiz) ---- */
+  .theme-light-pop .text-white,
+  .theme-light-pop .text-gray-100,
+  .theme-light-pop .text-gray-200,
+  .theme-light-pop .text-gray-300,
+  .theme-light-pop .text-gray-400 {
+    color: hsl(var(--foreground)) !important;
+  }
+  
+  .theme-light-pop .text-muted-foreground,
+  .theme-light-pop .text-gray-500 {
+    color: hsl(var(--foreground) / 0.75) !important;
+  }
+
+  .theme-light-pop .bg-card,
+  .theme-light-pop .bg-black,
+  .theme-light-pop .bg-black\/40,
+  .theme-light-pop .bg-black\/50,
+  .theme-light-pop .bg-secondary {
+    background-color: hsl(var(--card)) !important;
+    border-color: hsl(var(--border)) !important;
+  }
+
+  .theme-light-pop .border-white\/10,
+  .theme-light-pop .border-white\/5 {
+    border-color: hsl(var(--border)) !important;
+  }
+
+  .theme-light-pop input,
+  .theme-light-pop textarea,
+  .theme-light-pop select {
+    background-color: hsl(var(--card)) !important;
+    color: hsl(var(--foreground)) !important;
+    border-color: hsl(var(--border)) !important;
+  }
+
+  /* ---- READABILITY OVERRIDES FOR LIGHT BROWN REPORT THEME ---- */
+  .theme-light-report .text-white,
+  .theme-light-report .text-gray-100,
+  .theme-light-report .text-gray-200,
+  .theme-light-report .text-gray-300,
+  .theme-light-report .text-gray-400 {
+    color: hsl(var(--foreground)) !important;
+  }
+  
+  .theme-light-report .text-muted-foreground,
+  .theme-light-report .text-gray-500 {
+    color: hsl(var(--foreground) / 0.75) !important;
+  }
+
+  .theme-light-report .bg-card,
+  .theme-light-report .bg-black,
+  .theme-light-report .bg-black\/40,
+  .theme-light-report .bg-black\/50,
+  .theme-light-report .bg-secondary {
+    background-color: hsl(var(--card)) !important;
+    border-color: hsl(var(--border)) !important;
+  }
+
+  .theme-light-report .border-white\/10,
+  .theme-light-report .border-white\/5 {
+    border-color: hsl(var(--border)) !important;
   }
 }
 

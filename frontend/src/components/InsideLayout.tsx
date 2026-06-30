@@ -7,7 +7,7 @@ export default function InsideLayout({ children, showNav = true }: { children: R
     const themeClass = currentTheme === "light" ? "theme-light-pop" : "theme-inside";
     document.documentElement.classList.add(themeClass);
     return () => {
-      document.documentElement.classList.remove("theme-inside", "theme-light-pop");
+      document.documentElement.classList.remove("theme-inside", "theme-light-pop", "theme-light-report");
     };
   }, []);
   return (

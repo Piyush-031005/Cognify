@@ -11,10 +11,10 @@ export default function Report() {
 
   useEffect(() => {
     const currentTheme = localStorage.getItem("theme") || "dark";
-    const themeClass = currentTheme === "light" ? "theme-light-pop" : "theme-inside";
+    const themeClass = currentTheme === "light" ? "theme-light-report" : "theme-inside";
     document.documentElement.classList.add(themeClass);
     return () => {
-      document.documentElement.classList.remove("theme-inside", "theme-light-pop");
+      document.documentElement.classList.remove("theme-inside", "theme-light-pop", "theme-light-report");
     };
   }, []);
 

@@ -13,20 +13,27 @@ export default function Navbar({ variant = "outside" }: { variant?: "outside" | 
   const [theme, setTheme] = useState(() => localStorage.getItem("theme") || "dark");
 
   useEffect(() => {
-    const isLanding = location.pathname === "/";
-    if (isLanding) {
+    const isLandingOrAuth = location.pathname === "/" || location.pathname === "/auth";
+    if (isLandingOrAuth) {
       if (theme === "light") {
-        document.documentElement.classList.remove("theme-inside", "theme-light-pop");
+        document.documentElement.classList.remove("theme-inside", "theme-light-pop", "theme-light-report");
       } else {
-        document.documentElement.classList.remove("theme-light-pop");
+        document.documentElement.classList.remove("theme-light-pop", "theme-light-report");
         document.documentElement.classList.add("theme-inside");
       }
     } else {
+      const isReportPage = location.pathname.startsWith("/report");
       if (theme === "light") {
         document.documentElement.classList.remove("theme-inside");
-        document.documentElement.classList.add("theme-light-pop");
+        if (isReportPage) {
+          document.documentElement.classList.remove("theme-light-pop");
+          document.documentElement.classList.add("theme-light-report");
+        } else {
+          document.documentElement.classList.remove("theme-light-report");
+          document.documentElement.classList.add("theme-light-pop");
+        }
       } else {
-        document.documentElement.classList.remove("theme-light-pop");
+        document.documentElement.classList.remove("theme-light-pop", "theme-light-report");
         document.documentElement.classList.add("theme-inside");
       }
     }
