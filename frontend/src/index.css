@@ -76,9 +76,9 @@
     );
 
     /* Shadows / glows */
-    --shadow-lime: 0 10px 40px -10px hsl(var(--lime) / 0.55);
-    --shadow-mint: none;
-    --shadow-soft: 0 8px 30px -12px hsl(0 0% 0% / 0.15);
+    --shadow-lime: 0 4px 20px -4px rgba(0, 0, 0, 0.08);
+    --shadow-mint: 0 4px 20px -4px rgba(0, 0, 0, 0.08);
+    --shadow-soft: 0 8px 30px -12px rgba(0, 0, 0, 0.15);
 
     /* Motion */
     --ease-out-soft: cubic-bezier(0.22, 1, 0.36, 1);
@@ -127,6 +127,8 @@
 
     --shadow-soft: 0 4px 20px -2px rgba(0, 0, 0, 0.4);
     --shadow-card: 0 8px 30px -4px rgba(0, 0, 0, 0.5);
+    --shadow-lime: 0 10px 30px -10px rgba(0, 0, 0, 0.45);
+    --shadow-mint: 0 10px 30px -10px rgba(0, 0, 0, 0.45);
   }
 
   /* ---- INSIDE APP THEME (Dashboard / Quiz) — Awwwards Light Theme ---- */
@@ -169,6 +171,8 @@
 
     --shadow-soft: 0 4px 15px -3px rgba(0, 0, 0, 0.05);
     --shadow-card: 0 10px 25px -5px rgba(0, 0, 0, 0.06);
+    --shadow-lime: 0 4px 15px -3px rgba(0, 0, 0, 0.05);
+    --shadow-mint: 0 4px 15px -3px rgba(0, 0, 0, 0.05);
   }
 
   /* ---- INSIDE APP THEME (Report View) — Light Brown Paper Editorial Theme ---- */
@@ -211,6 +215,8 @@
 
     --shadow-soft: 0 4px 15px -3px rgba(0, 0, 0, 0.05);
     --shadow-card: 0 10px 25px -5px rgba(0, 0, 0, 0.06);
+    --shadow-lime: 0 4px 15px -3px rgba(0, 0, 0, 0.05);
+    --shadow-mint: 0 4px 15px -3px rgba(0, 0, 0, 0.05);
   }
 
   /* ---- READABILITY OVERRIDES FOR LIGHT THEMES (Dashboard & Quiz) ---- */

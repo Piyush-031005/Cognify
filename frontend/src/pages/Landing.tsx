@@ -31,7 +31,7 @@ export default function Landing() {
           <div className="lg:col-span-7 flex flex-col gap-8">
             <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }}
               className="inline-flex items-center gap-2 self-start rounded-full border border-border bg-card px-4 py-1.5 text-sm font-medium">
-              <span className="h-2 w-2 rounded-full bg-primary shadow-[0_0_12px_hsl(var(--lime))]" />
+              <span className="h-2 w-2 rounded-full bg-primary" />
               <TextScrambler text="Cognitive Analysis System · v1" />
             </motion.div>
 

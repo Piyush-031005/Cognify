@@ -166,7 +166,7 @@ const onSignin = async (e: React.FormEvent) => {
           <div className="absolute -left-12 -top-12 w-48 h-48 border border-primary/10 rounded-full pointer-events-none -z-10" />
 
           <div className="inline-flex items-center gap-2 self-start rounded-full border border-border bg-card/80 backdrop-blur-md px-4 py-1.5 text-sm font-medium">
-            <span className="h-2 w-2 rounded-full bg-primary shadow-[0_0_8px_hsl(var(--lime))]" /> Tell us about you
+            <span className="h-2 w-2 rounded-full bg-primary" /> Tell us about you
           </div>
 
           <h1 className="font-display text-5xl font-bold tracking-tight leading-tight">
