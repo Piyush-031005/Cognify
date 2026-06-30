@@ -127,11 +127,11 @@ export default function Report() {
           </h1>
 
           <div className="mt-5 flex flex-wrap gap-2 print:flex">
-            <span className="inline-flex items-center gap-1.5 rounded-full bg-mint/10 border border-mint/20 text-mint px-3.5 py-1 text-xs font-bold uppercase">
-              <Brain className="h-3 w-3" /> Pattern: {report.pattern}
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-white/5 border border-white/10 text-white px-3.5 py-1 text-xs font-bold uppercase">
+              <Brain className="h-3 w-3 text-mint" /> Pattern: <span className="text-mint">{report.pattern}</span>
             </span>
-            <span className="inline-flex items-center gap-1.5 rounded-full bg-red-400/10 border border-red-400/20 text-red-300 px-3.5 py-1 text-xs font-bold uppercase">
-              <ShieldAlert className="h-3 w-3" /> {riskBadge}
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-white/5 border border-white/10 text-white px-3.5 py-1 text-xs font-bold uppercase">
+              <ShieldAlert className="h-3 w-3 text-rose-400" /> {riskBadge}
             </span>
           </div>
         </section>
@@ -163,7 +163,7 @@ export default function Report() {
                   onClick={() => setActiveReportTab(tab.id)}
                   className={`w-full text-left px-4 py-3 rounded-lg text-xs font-bold uppercase tracking-wider transition-all flex items-center gap-2.5 relative btn-active-push ${
                     activeReportTab === tab.id
-                      ? "bg-mint/5 text-mint font-bold"
+                      ? "bg-white/5 text-white font-bold"
                       : "text-muted-foreground hover:text-white hover:bg-white/5"
                   }`}
                 >

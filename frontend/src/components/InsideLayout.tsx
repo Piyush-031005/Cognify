@@ -7,7 +7,7 @@ export default function InsideLayout({ children, showNav = true }: { children: R
     return () => document.documentElement.classList.remove("theme-inside");
   }, []);
   return (
-    <div className="min-h-screen bg-gradient-cyan grid-bg-mint">
+    <div className="min-h-screen bg-background grid-bg-subtle relative overflow-hidden">
       {showNav && <Navbar variant="inside" />}
       {children}
     </div>

@@ -52,8 +52,8 @@
     --lime-glow: 74 100% 70%;
     --cyan-deep: 180 75% 4%;           /* #020E0E */
     --cyan-deep-2: 180 60% 7%;
-    --mint: 154 99% 44%;               /* #01DE82 */
-    --mint-glow: 154 99% 60%;
+    --mint: 158 49% 48%;               /* #3FB68B (Muted Sage Green) */
+    --mint-glow: 158 49% 48%;
 
     /* Report gradient stops */
     --report-1: 280 51% 20%;           /* #3F194D */
@@ -64,7 +64,7 @@
 
     /* Gradients */
     --gradient-lime: linear-gradient(135deg, hsl(var(--lime)), hsl(var(--lime-glow)));
-    --gradient-mint: linear-gradient(135deg, hsl(var(--mint)), hsl(var(--mint-glow)));
+    --gradient-mint: linear-gradient(135deg, hsl(var(--mint)), hsl(var(--mint)));
     --gradient-cyan: linear-gradient(180deg, hsl(var(--cyan-deep)), hsl(var(--cyan-deep-2)));
     --gradient-report: linear-gradient(
       135deg,
@@ -77,7 +77,7 @@
 
     /* Shadows / glows */
     --shadow-lime: 0 10px 40px -10px hsl(var(--lime) / 0.55);
-    --shadow-mint: 0 10px 40px -10px hsl(var(--mint) / 0.55);
+    --shadow-mint: none;
     --shadow-soft: 0 8px 30px -12px hsl(0 0% 0% / 0.15);
 
     /* Motion */
@@ -95,9 +95,9 @@
     --popover: 220 15% 10%;
     --popover-foreground: 210 20% 98%;
 
-    --primary: 154 99% 44%;            /* Classic Mint Green Primary */
+    --primary: 158 49% 48%;            /* Muted Sage Green Primary */
     --primary-foreground: 220 15% 5%;
-    --primary-glow: 154 99% 50%;
+    --primary-glow: 158 49% 48%;
 
     --secondary: 220 10% 16%;           /* Muted warm grey secondary surface */
     --secondary-foreground: 210 20% 98%;
@@ -113,7 +113,7 @@
 
     --border: 220 13% 15%;              /* Very subtle border */
     --input: 220 13% 13%;
-    --ring: 154 99% 44%;
+    --ring: 158 49% 48%;
 
     --radius-sm: 4px;
     --radius-md: 8px;
@@ -200,10 +200,10 @@
       linear-gradient(90deg, hsl(var(--foreground) / 0.04) 1px, transparent 1px);
     background-size: 48px 48px;
   }
-  .grid-bg-mint {
+  .grid-bg-subtle {
     background-image:
-      linear-gradient(hsl(var(--mint) / 0.06) 1px, transparent 1px),
-      linear-gradient(90deg, hsl(var(--mint) / 0.06) 1px, transparent 1px);
+      linear-gradient(hsl(var(--foreground) / 0.015) 1px, transparent 1px),
+      linear-gradient(90deg, hsl(var(--foreground) / 0.015) 1px, transparent 1px);
     background-size: 48px 48px;
   }
 }
@@ -221,7 +221,6 @@
     margin-left: 8px;
     border-radius: 9999px;
     background: hsl(var(--mint));
-    box-shadow: 0 0 12px hsl(var(--mint));
     animation: pulseDot 1.4s ease-in-out infinite;
   }
 }
@@ -256,8 +255,8 @@
 }
 .card-hover-lift:hover {
   transform: translateY(-2px);
-  border-color: rgba(16, 185, 129, 0.3);
-  box-shadow: var(--shadow-card);
+  border-color: hsl(var(--foreground) / 0.15);
+  box-shadow: 0 10px 30px -15px rgba(0, 0, 0, 0.4);
 }
 
 /* Button active push */

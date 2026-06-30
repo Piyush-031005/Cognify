@@ -387,7 +387,7 @@ export default function Quiz() {
             <div className="flex flex-col md:flex-row md:items-center justify-between border-b border-white/5 pb-4 gap-2">
               <div>
                 <span className="text-[10px] font-mono bg-white/5 border border-white/10 px-2 py-0.5 rounded-md text-muted-foreground uppercase font-bold">
-                  Question {idx + 1 < 10 ? `0${idx + 1}` : idx + 1}
+                  Question {idx + 1 < 10 ? `0${idx + 1}` : idx + 1} of {total}
                 </span>
                 <span className="text-xs font-bold text-mint uppercase tracking-wider ml-3">
                   {q.subtopic ? q.subtopic.replace(/_/g, ' ') : (user?.assignedSubtopic || 'General')}

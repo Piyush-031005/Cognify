@@ -59,12 +59,12 @@ export default function Landing() {
               </Button>
             </motion.div>
 
-            <div className="flex items-center gap-6 pt-4 text-sm text-muted-foreground">
-              <div><span className="font-display text-2xl font-bold text-foreground">7</span> smart questions</div>
-              <div className="h-8 w-px bg-border" />
-              <div><span className="font-display text-2xl font-bold text-foreground">12+</span> behavioral signals</div>
-              <div className="h-8 w-px bg-border" />
-              <div><span className="font-display text-2xl font-bold text-foreground">1</span> mind-blowing report</div>
+            <div className="flex flex-wrap items-center gap-6 pt-4 text-sm text-muted-foreground font-mono uppercase tracking-wider">
+              <div><span className="font-display text-lg font-bold text-foreground block">Adaptive</span> assessment</div>
+              <div className="h-8 w-px bg-border hidden sm:block" />
+              <div><span className="font-display text-lg font-bold text-foreground block">Behavioral</span> telemetry</div>
+              <div className="h-8 w-px bg-border hidden sm:block" />
+              <div><span className="font-display text-lg font-bold text-foreground block">Personalized</span> insights</div>
             </div>
           </div>
 

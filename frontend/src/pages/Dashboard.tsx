@@ -2104,7 +2104,7 @@ export default function Dashboard() {
                               }}
                               className={`p-4 rounded-xl border text-left transition-all card-hover-lift btn-active-push ${
                                 bpSubject === key
-                                  ? "border-mint bg-mint/5 text-mint font-bold"
+                                  ? "border-mint bg-transparent text-mint font-bold"
                                   : "border-white/10 bg-black/40 text-gray-300 hover:border-white/20 hover:text-white"
                               }`}
                             >
@@ -2129,7 +2129,7 @@ export default function Dashboard() {
                               key={key}
                               className={`p-3 rounded-xl border transition-all ${
                                 bpTopic === key
-                                  ? "border-mint bg-mint/5"
+                                  ? "border-mint bg-transparent"
                                   : "border-white/10 bg-black/40"
                               }`}
                             >
@@ -2155,7 +2155,7 @@ export default function Dashboard() {
                                     }}
                                     className={`px-3 py-1 rounded-lg border text-[11px] font-semibold transition-all ${
                                       bpTopic === key && bpSubtopic === subKey
-                                        ? "border-orange-500 bg-orange-500/10 text-orange-400"
+                                        ? "border-orange-500 bg-transparent text-orange-400"
                                         : "border-white/10 bg-black/20 text-gray-400 hover:text-white"
                                     }`}
                                   >
