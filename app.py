@@ -537,6 +537,50 @@ def teacher_rooms(email):
     return jsonify(rooms)
 
 
+@app.route('/api/v1/teacher/dashboard-stats/<email>', methods=['GET'])
+def api_teacher_dashboard_stats(email):
+    conn = get_conn()
+    cur = conn.cursor()
+    
+    # 1. Total assessments (rooms)
+    cur.execute("SELECT COUNT(*) FROM rooms WHERE teacher_email = ?", (email,))
+    total_assessments = cur.fetchone()[0] or 0
+    
+    # 2. Total unique students
+    cur.execute("""
+        SELECT COUNT(DISTINCT student_email) 
+        FROM room_students 
+        WHERE room_code IN (SELECT room_code FROM rooms WHERE teacher_email = ?)
+    """, (email,))
+    total_students = cur.fetchone()[0] or 0
+    
+    # 3. Total reports generated
+    cur.execute("""
+        SELECT COUNT(*) 
+        FROM reports 
+        WHERE room_code IN (SELECT room_code FROM rooms WHERE teacher_email = ?)
+    """, (email,))
+    total_reports = cur.fetchone()[0] or 0
+    
+    # 4. Average cognitive health (average understanding_pred from responses)
+    cur.execute("""
+        SELECT AVG(understanding_pred) 
+        FROM responses 
+        WHERE room_code IN (SELECT room_code FROM rooms WHERE teacher_email = ?)
+    """, (email,))
+    avg_health_raw = cur.fetchone()[0]
+    average_cognitive_health = round(avg_health_raw * 100) if avg_health_raw is not None else 0
+    
+    conn.close()
+    
+    return jsonify({
+        "total_assessments": total_assessments,
+        "total_students": total_students,
+        "total_reports": total_reports,
+        "average_cognitive_health": average_cognitive_health
+    })
+
+
 @app.route('/join-room', methods=['POST'])
 def join_room_api():
     data = request.json

@@ -206,6 +206,14 @@ export default function Dashboard() {
   const [roomCode, setRoomCode] = useState("");
   const [teacherRooms, setTeacherRooms] = useState<any[]>([]);
   const [blueprints, setBlueprints] = useState<any[]>([]);
+  const [stats, setStats] = useState({
+    total_assessments: 0,
+    total_students: 0,
+    total_reports: 0,
+    average_cognitive_health: 0
+  });
+  const [loadingStats, setLoadingStats] = useState(true);
+  const [wizardStep, setWizardStep] = useState(1);
   
   // Room Creation state
   const [selectedBlueprintId, setSelectedBlueprintId] = useState("");
@@ -400,6 +408,20 @@ export default function Dashboard() {
         if (demoRes.ok) {
           const demoData = await demoRes.json();
           setDemoMode(demoData.demo_mode);
+        }
+
+        // Load Teacher dashboard stats
+        try {
+          setLoadingStats(true);
+          const statsRes = await fetch(`${API}/api/v1/teacher/dashboard-stats/${user.email}`);
+          if (statsRes.ok) {
+            const statsData = await statsRes.json();
+            setStats(statsData);
+          }
+        } catch (sErr) {
+          console.error("Error fetching stats:", sErr);
+        } finally {
+          setLoadingStats(false);
         }
       } catch (err) {
         console.error("Error loading teacher data:", err);
@@ -1279,7 +1301,7 @@ export default function Dashboard() {
           <div className="mt-8">
             <AnimatePresence mode="wait">
               
-              {/* Observe View */}
+              {/* Observe View (Redesigned Dashboard Home) */}
               {activeMode === "observe" && (
                 <motion.div
                   key="observe"
@@ -1288,70 +1310,220 @@ export default function Dashboard() {
                   exit={{ opacity: 0, y: -10 }}
                   className="space-y-8"
                 >
-                  <div className="grid gap-4 sm:grid-cols-3">
-                    <div className="rounded-2xl border border-white/10 p-6 bg-card flex flex-col justify-between">
-                      <div className="text-xs uppercase tracking-wider text-muted-foreground">Class Conceptual Mastery</div>
-                      <div className="mt-3 flex items-baseline gap-2">
-                        <span className="text-4xl font-bold font-display text-mint">{classStats.conceptual}%</span>
-                        <span className="text-xs text-mint font-semibold">{classStats.conceptualDelta}</span>
+                  {/* Welcome Banner */}
+                  <div className="py-6 border-b border-white/5 mb-4">
+                    <h1 className="font-display text-5xl font-extrabold tracking-tight">
+                      Good Afternoon, <span className="text-mint">{user.name}</span>
+                    </h1>
+                    <p className="text-muted-foreground text-xs mt-1.5 tracking-wider uppercase">
+                      Understand how you think. • Beyond scores.
+                    </p>
+                  </div>
+
+                  {/* Metrics Cards Grid */}
+                  <div className="grid gap-4 sm:grid-cols-4">
+                    {/* Assessments Count */}
+                    <div className="rounded-2xl border border-white/10 p-5 bg-card flex flex-col justify-between card-hover-lift">
+                      <div className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">Assessments</div>
+                      <div className="mt-3">
+                        {loadingStats ? (
+                          <div className="h-9 w-16 skeleton-pulse rounded-md" />
+                        ) : (
+                          <span className="text-4xl font-bold font-display text-mint">{stats.total_assessments}</span>
+                        )}
                       </div>
-                      <p className="mt-2 text-xs text-muted-foreground">Avg grasp of conceptual relations from graph.</p>
+                      <p className="mt-2 text-[10px] text-muted-foreground">Total diagnostic test rooms.</p>
                     </div>
 
-                    <div className="rounded-2xl border border-white/10 p-6 bg-card flex flex-col justify-between">
-                      <div className="text-xs uppercase tracking-wider text-muted-foreground">Guessing Ratio</div>
-                      <div className="mt-3 flex items-baseline gap-2">
-                        <span className="text-4xl font-bold font-display text-red-400">{classStats.guessing}%</span>
-                        <span className="text-xs text-green-400 font-semibold">{classStats.guessingDelta}</span>
+                    {/* Enrolled Students */}
+                    <div className="rounded-2xl border border-white/10 p-5 bg-card flex flex-col justify-between card-hover-lift">
+                      <div className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">Students Enrolled</div>
+                      <div className="mt-3">
+                        {loadingStats ? (
+                          <div className="h-9 w-16 skeleton-pulse rounded-md" />
+                        ) : (
+                          <span className="text-4xl font-bold font-display text-white">{stats.total_students}</span>
+                        )}
                       </div>
-                      <p className="mt-2 text-xs text-muted-foreground">Responses entered in under 4s with high hesitation.</p>
+                      <p className="mt-2 text-[10px] text-muted-foreground">Unique student sessions.</p>
                     </div>
 
-                    <div className="rounded-2xl border border-white/10 p-6 bg-card flex flex-col justify-between">
-                      <div className="text-xs uppercase tracking-wider text-muted-foreground">Overthinking Rate</div>
-                      <div className="mt-3 flex items-baseline gap-2">
-                        <span className="text-4xl font-bold font-display text-yellow-400">{classStats.overthinking}%</span>
-                        <span className="text-xs text-yellow-400 font-semibold">{classStats.overthinkingDelta}</span>
+                    {/* Cognitive Reports */}
+                    <div className="rounded-2xl border border-white/10 p-5 bg-card flex flex-col justify-between card-hover-lift">
+                      <div className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">Reports Compiled</div>
+                      <div className="mt-3">
+                        {loadingStats ? (
+                          <div className="h-9 w-16 skeleton-pulse rounded-md" />
+                        ) : (
+                          <span className="text-4xl font-bold font-display text-white">{stats.total_reports}</span>
+                        )}
                       </div>
-                      <p className="mt-2 text-xs text-muted-foreground">Option re-clicks and hesitation on simple items.</p>
+                      <p className="mt-2 text-[10px] text-muted-foreground">Cognitive profiles generated.</p>
+                    </div>
+
+                    {/* Average Cognitive Health */}
+                    <div className="rounded-2xl border border-white/10 p-5 bg-card flex flex-col justify-between card-hover-lift">
+                      <div className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">Avg Cognitive Health</div>
+                      <div className="mt-3">
+                        {loadingStats ? (
+                          <div className="h-9 w-16 skeleton-pulse rounded-md" />
+                        ) : (
+                          <span className="text-4xl font-bold font-display text-orange-500">{stats.average_cognitive_health}%</span>
+                        )}
+                      </div>
+                      <p className="mt-2 text-[10px] text-muted-foreground">Calculated average understanding.</p>
                     </div>
                   </div>
 
-                  {/* Academic Knowledge Graph Concept Matrix */}
-                  <div className="rounded-3xl border border-white/10 p-6 bg-card">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <h3 className="text-lg font-bold">Academic Knowledge Graph Heatmap</h3>
-                        <p className="text-xs text-muted-foreground mt-1">
-                          Real-time class understanding mapped against hierarchical concept nodes.
-                        </p>
+                  {/* Main Grid: Assessments vs Analytics Side panels */}
+                  <div className="grid gap-6 lg:grid-cols-3 mt-8">
+                    {/* Left 2 Columns: Recent Assessments Cards */}
+                    <div className="lg:col-span-2 space-y-6">
+                      <div className="flex items-center justify-between border-b border-white/5 pb-3">
+                        <h2 className="text-lg font-bold tracking-tight uppercase text-white font-display">Recent Assessments</h2>
+                        <button
+                          onClick={() => setActiveMode("designer")}
+                          className="text-xs font-bold text-mint hover:text-mint-glow flex items-center gap-1 transition-fast btn-active-push"
+                        >
+                          + Create Assessment
+                        </button>
                       </div>
-                      <div className="flex items-center gap-3 text-xs">
-                        <span className="flex items-center gap-1"><span className="h-2.5 w-2.5 rounded-full bg-emerald-500" /> Stable (&gt;75%)</span>
-                        <span className="flex items-center gap-1"><span className="h-2.5 w-2.5 rounded-full bg-amber-500" /> Warning (50-75%)</span>
-                        <span className="flex items-center gap-1"><span className="h-2.5 w-2.5 rounded-full bg-rose-500" /> Critical (&lt;50%)</span>
-                      </div>
+
+                      {loadingStats ? (
+                        <div className="space-y-4">
+                          {[1, 2].map((i) => (
+                            <div key={i} className="h-28 w-full skeleton-pulse rounded-2xl" />
+                          ))}
+                        </div>
+                      ) : teacherRooms.length === 0 ? (
+                        <div className="text-center py-12 rounded-2xl border border-dashed border-white/10 text-muted-foreground">
+                          <Brain className="h-8 w-8 mx-auto mb-3 text-white/20" />
+                          <p className="text-sm">No assessments launched yet.</p>
+                          <button
+                            onClick={() => setActiveMode("designer")}
+                            className="text-xs text-mint hover:underline font-bold mt-2"
+                          >
+                            Create your first assessment.
+                          </button>
+                        </div>
+                      ) : (
+                        <div className="grid gap-4">
+                          {teacherRooms.map((r) => (
+                            <div
+                              key={r.room_code}
+                              className="rounded-2xl border border-white/10 p-5 bg-card flex flex-col justify-between card-hover-lift"
+                            >
+                              <div className="flex items-center justify-between">
+                                <div>
+                                  <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground bg-white/5 px-2 py-0.5 rounded-md border border-white/5 mr-2">
+                                    {r.subject.toUpperCase()}
+                                  </span>
+                                  <span className="text-[10px] font-mono bg-mint/10 text-mint px-2 py-0.5 rounded-md">
+                                    ROOM: {r.room_code}
+                                  </span>
+                                </div>
+                                <span className="text-[10px] text-muted-foreground">
+                                  {r.created_at ? r.created_at.split('T')[0] : 'Recently'}
+                                </span>
+                              </div>
+
+                              <h3 className="mt-3 text-base font-bold font-display text-white capitalize">
+                                {r.topic ? r.topic.replace(/_/g, ' ') : 'General Assessment'}
+                              </h3>
+                              
+                              <div className="mt-4 flex items-center justify-between border-t border-white/5 pt-4">
+                                <div className="flex gap-4 text-xs text-muted-foreground">
+                                  <span>
+                                    <strong className="text-white">{r.question_count || 5}</strong> Questions
+                                  </span>
+                                  <span>
+                                    <strong className="text-white font-capitalize">{r.difficulty || 'medium'}</strong> Difficulty
+                                  </span>
+                                </div>
+
+                                <div className="flex gap-2">
+                                  <button
+                                    onClick={() => {
+                                      setSelectedMonitorRoom(r.room_code);
+                                      setActiveMode("assess");
+                                    }}
+                                    className="px-3 py-1.5 rounded-lg bg-mint text-black text-xs font-bold transition-fast btn-active-push"
+                                  >
+                                    Monitor
+                                  </button>
+                                  <button
+                                    onClick={() => {
+                                      setSelectedMonitorRoom(r.room_code);
+                                      setActiveMode("intervene");
+                                    }}
+                                    className="px-3 py-1.5 rounded-lg bg-secondary text-white text-xs font-bold border border-white/5 hover:border-white/20 transition-fast btn-active-push"
+                                  >
+                                    AI Copilot
+                                  </button>
+                                  <button
+                                    onClick={() => {
+                                      setNoteRoomCode(r.room_code);
+                                      setActiveMode("improve");
+                                    }}
+                                    className="px-3 py-1.5 rounded-lg bg-secondary text-white text-xs font-bold border border-white/5 hover:border-white/20 transition-fast btn-active-push"
+                                  >
+                                    Notes
+                                  </button>
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
                     </div>
 
-                    <div className="grid gap-3 grid-cols-2 sm:grid-cols-5 mt-6">
-                      {conceptHeatmap.map((c) => (
-                        <div
-                          key={c.name}
-                          className={`rounded-xl border p-4 flex flex-col justify-between ${
-                            c.status === "stable" 
-                              ? "bg-emerald-950/20 border-emerald-500/20 text-emerald-300"
-                              : c.status === "warning"
-                              ? "bg-amber-950/20 border-amber-500/20 text-amber-300"
-                              : "bg-rose-950/20 border-rose-500/20 text-rose-300"
-                          }`}
-                        >
-                          <div>
-                            <span className="text-[10px] uppercase opacity-75 font-semibold block">{c.subject}</span>
-                            <span className="text-sm font-bold mt-1 block leading-tight">{c.name}</span>
+                    {/* Right 1 Column: Cognitive Analytics status panels */}
+                    <div className="space-y-6">
+                      <div className="flex items-center justify-between border-b border-white/5 pb-3">
+                        <h2 className="text-lg font-bold tracking-tight uppercase text-white font-display">Cognitive Health</h2>
+                      </div>
+
+                      <div className="grid gap-4">
+                        <div className="rounded-2xl border border-white/10 p-5 bg-card flex flex-col justify-between">
+                          <div className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">Guessing Ratio</div>
+                          <div className="mt-1 flex items-baseline gap-2">
+                            <span className="text-2xl font-bold font-display text-red-400">{classStats.guessing}%</span>
+                            <span className="text-xs text-green-400 font-semibold">{classStats.guessingDelta}</span>
                           </div>
-                          <div className="mt-4 text-xl font-bold font-display align-bottom">{c.rating}%</div>
+                          <p className="mt-1 text-[10px] text-muted-foreground">Responses entered in under 4s with high hesitation.</p>
                         </div>
-                      ))}
+
+                        <div className="rounded-2xl border border-white/10 p-5 bg-card flex flex-col justify-between">
+                          <div className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">Overthinking Rate</div>
+                          <div className="mt-1 flex items-baseline gap-2">
+                            <span className="text-2xl font-bold font-display text-yellow-400">{classStats.overthinking}%</span>
+                            <span className="text-xs text-yellow-400 font-semibold">{classStats.overthinkingDelta}</span>
+                          </div>
+                          <p className="mt-1 text-[10px] text-muted-foreground">Option re-clicks and hesitation on simple items.</p>
+                        </div>
+                      </div>
+
+                      {/* Heatmap Widget */}
+                      <div className="rounded-2xl border border-white/10 p-5 bg-card">
+                        <h3 className="text-[10px] uppercase font-bold text-white tracking-wider mb-3">Topic Mastery Matrix</h3>
+                        <div className="grid gap-2 grid-cols-2">
+                          {conceptHeatmap.slice(0, 6).map((c) => (
+                            <div
+                              key={c.name}
+                              className={`rounded-lg border p-2 flex flex-col justify-between text-[11px] transition-fast ${
+                                c.status === "stable" 
+                                  ? "bg-emerald-950/10 border-emerald-500/10 text-emerald-300"
+                                  : c.status === "warning"
+                                  ? "bg-amber-950/10 border-amber-500/10 text-amber-300"
+                                  : "bg-rose-950/10 border-rose-500/10 text-rose-300"
+                              }`}
+                            >
+                              <span className="font-semibold truncate">{c.name}</span>
+                              <span className="text-[9px] opacity-75 mt-1 font-mono">{c.rating}%</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </motion.div>
@@ -1883,206 +2055,342 @@ export default function Dashboard() {
                   className="grid gap-6 md:grid-cols-2"
                 >
                   <div className="rounded-3xl border border-white/10 p-6 bg-card">
-                    <h3 className="text-xl font-bold flex items-center gap-1.5"><Layers className="h-5 w-5 text-mint" /> Assessment Blueprint Designer</h3>
-                    <p className="text-xs text-muted-foreground mt-1">
-                      A blueprint enforces structural distribution rules. Systems select questions matching these targets.
-                    </p>
-
-                    <div className="space-y-4 mt-6">
-                      <div className="space-y-1">
-                        <label className="text-xs uppercase text-muted-foreground">Blueprint Name</label>
-                        <input
-                          value={bpName}
-                          onChange={(e) => setBpName(e.target.value)}
-                          placeholder="e.g. Mid Semester Diagnostic"
-                          className="p-3 rounded-xl bg-black border text-white w-full text-sm"
-                        />
-                      </div>
-
-                      <div className="grid grid-cols-3 gap-2">
-                        <div className="space-y-1">
-                          <label className="text-xs uppercase text-muted-foreground">Subject</label>
-                          <select
-                            value={bpSubject}
-                            onChange={(e) => handleSubjectChange(e.target.value)}
-                            className="p-3 rounded-xl bg-black border text-white w-full text-sm"
-                          >
-                            {Object.entries(SUBJECT_MAP).map(([key, val]) => (
-                              <option key={key} value={key}>{val.label}</option>
-                            ))}
-                          </select>
-                        </div>
-
-                        <div className="space-y-1">
-                          <label className="text-xs uppercase text-muted-foreground">Topic</label>
-                          <select
-                            value={bpTopic}
-                            onChange={(e) => handleTopicChange(e.target.value)}
-                            className="p-3 rounded-xl bg-black border text-white w-full text-sm"
-                          >
-                            {SUBJECT_MAP[bpSubject] && Object.entries(SUBJECT_MAP[bpSubject].topics).map(([key, val]) => (
-                              <option key={key} value={key}>{val.label}</option>
-                            ))}
-                          </select>
-                        </div>
-
-                        <div className="space-y-1">
-                          <label className="text-xs uppercase text-muted-foreground">Subtopic</label>
-                          <select
-                            value={bpSubtopic}
-                            onChange={(e) => setBpSubtopic(e.target.value)}
-                            className="p-3 rounded-xl bg-black border text-white w-full text-sm"
-                          >
-                            {SUBJECT_MAP[bpSubject] && SUBJECT_MAP[bpSubject].topics[bpTopic] &&
-                              Object.entries(SUBJECT_MAP[bpSubject].topics[bpTopic].subtopics).map(([key, val]) => (
-                                <option key={key} value={key}>{val}</option>
-                              ))
-                            }
-                          </select>
-                        </div>
-                      </div>
-
-                      <div className="grid grid-cols-2 gap-2">
-                        <div className="space-y-1">
-                          <label className="text-xs uppercase text-muted-foreground">Purpose</label>
-                          <select
-                            value={bpPurpose}
-                            onChange={(e) => setBpPurpose(e.target.value)}
-                            className="p-3 rounded-xl bg-black border text-white w-full text-sm"
-                          >
-                            <option value="diagnosis">Diagnosis</option>
-                            <option value="practice">Practice</option>
-                            <option value="exam">Exam</option>
-                          </select>
-                        </div>
-
-                        <div className="space-y-1">
-                          <label className="text-xs uppercase text-muted-foreground">Difficulty</label>
-                          <select
-                            value={bpDifficulty}
-                            onChange={(e) => setBpDifficulty(e.target.value)}
-                            className="p-3 rounded-xl bg-black border text-white w-full text-sm"
-                          >
-                            <option value="easy">Easy</option>
-                            <option value="medium">Medium</option>
-                            <option value="hard">Hard</option>
-                            <option value="adaptive">Adaptive</option>
-                          </select>
-                        </div>
-                      </div>
-
-                      <div className="grid grid-cols-3 gap-2">
-                        <div className="space-y-1">
-                          <label className="text-xs uppercase text-muted-foreground">Duration (Min)</label>
-                          <input
-                            type="number"
-                            value={bpDuration}
-                            onChange={(e) => setBpDuration(Number(e.target.value))}
-                            className="p-3 rounded-xl bg-black border text-white w-full text-sm"
-                          />
-                        </div>
-
-                        <div className="space-y-1">
-                          <label className="text-xs uppercase text-muted-foreground">Question Count</label>
-                          <input
-                            type="number"
-                            value={bpQuestionCount}
-                            onChange={(e) => setBpQuestionCount(Number(e.target.value))}
-                            className="p-3 rounded-xl bg-black border text-white w-full text-sm"
-                          />
-                        </div>
-
-                        <div className="space-y-1">
-                          <label className="text-xs uppercase text-muted-foreground">Strategy</label>
-                          <select
-                            value={bpStrategy}
-                            onChange={(e) => setBpStrategy(e.target.value)}
-                            className="p-3 rounded-xl bg-black border text-white w-full text-xs"
-                          >
-                            <option value="balanced">Balanced</option>
-                            <option value="random">Random</option>
-                            <option value="adaptive_difficulty">Adaptive Difficulty</option>
-                            <option value="adaptive_concepts">Adaptive Concepts</option>
-                            <option value="adaptive_behavior">Adaptive Behavior</option>
-                            <option value="adaptive_mixed">Adaptive Mixed</option>
-                          </select>
-                        </div>
-                      </div>
-
-                      {/* Sliders for Cognitive Distribution */}
-                      <div className="border border-white/5 rounded-2xl p-4 bg-black/40 space-y-4">
-                        <div className="text-xs uppercase text-muted-foreground font-semibold flex justify-between">
-                          <span>Cognitive Type Distribution</span>
-                          <span className={Number(bpConceptual)+Number(bpApplication)+Number(bpReasoning)+Number(bpMemory) !== 100 ? "text-rose-400" : "text-mint"}>
-                            Total: {Number(bpConceptual)+Number(bpApplication)+Number(bpReasoning)+Number(bpMemory)}% (Target: 100%, Remaining: {100 - (Number(bpConceptual)+Number(bpApplication)+Number(bpReasoning)+Number(bpMemory))}%)
-                          </span>
-                        </div>
-
-                        <div className="space-y-1">
-                          <div className="flex justify-between text-xs text-gray-300">
-                            <span>Conceptual</span>
-                            <span>{bpConceptual}%</span>
+                    {/* Step Wizard Header */}
+                    <div className="flex items-center justify-between border-b border-white/5 pb-4 mb-6">
+                      <div className="flex items-center gap-2">
+                        {[1, 2, 3, 4].map((step) => (
+                          <div key={step} className="flex items-center gap-1.5">
+                            <span
+                              className={`h-6 w-6 rounded-full flex items-center justify-center text-xs font-bold transition-all ${
+                                wizardStep === step
+                                  ? "bg-mint text-black"
+                                  : wizardStep > step
+                                  ? "bg-mint/20 text-mint"
+                                  : "bg-white/5 text-muted-foreground border border-white/10"
+                              }`}
+                            >
+                              {step}
+                            </span>
+                            <span
+                              className={`text-[10px] uppercase font-bold tracking-wider hidden sm:inline ${
+                                wizardStep === step ? "text-white" : "text-muted-foreground"
+                              }`}
+                            >
+                              {step === 1 ? "Subject" : step === 2 ? "Topic" : step === 3 ? "Params" : "Launch"}
+                            </span>
+                            {step < 4 && <span className="h-px w-4 bg-white/10 mx-1 hidden sm:inline" />}
                           </div>
-                          <input
-                            type="range"
-                            min="0"
-                            max={100 - (Number(bpApplication) + Number(bpReasoning) + Number(bpMemory))}
-                            value={bpConceptual}
-                            onChange={(e) => setBpConceptual(Number(e.target.value))}
-                            className="w-full h-1 bg-white/10 accent-mint rounded"
-                          />
-                        </div>
-
-                        <div className="space-y-1">
-                          <div className="flex justify-between text-xs text-gray-300">
-                            <span>Application</span>
-                            <span>{bpApplication}%</span>
-                          </div>
-                          <input
-                            type="range"
-                            min="0"
-                            max={100 - (Number(bpConceptual) + Number(bpReasoning) + Number(bpMemory))}
-                            value={bpApplication}
-                            onChange={(e) => setBpApplication(Number(e.target.value))}
-                            className="w-full h-1 bg-white/10 accent-mint rounded"
-                          />
-                        </div>
-
-                        <div className="space-y-1">
-                          <div className="flex justify-between text-xs text-gray-300">
-                            <span>Reasoning</span>
-                            <span>{bpReasoning}%</span>
-                          </div>
-                          <input
-                            type="range"
-                            min="0"
-                            max={100 - (Number(bpConceptual) + Number(bpApplication) + Number(bpMemory))}
-                            value={bpReasoning}
-                            onChange={(e) => setBpReasoning(Number(e.target.value))}
-                            className="w-full h-1 bg-white/10 accent-mint rounded"
-                          />
-                        </div>
-
-                        <div className="space-y-1">
-                          <div className="flex justify-between text-xs text-gray-300">
-                            <span>Memory</span>
-                            <span>{bpMemory}%</span>
-                          </div>
-                          <input
-                            type="range"
-                            min="0"
-                            max={100 - (Number(bpConceptual) + Number(bpApplication) + Number(bpReasoning))}
-                            value={bpMemory}
-                            onChange={(e) => setBpMemory(Number(e.target.value))}
-                            className="w-full h-1 bg-white/10 accent-mint rounded"
-                          />
-                        </div>
+                        ))}
                       </div>
-
-                      <Button onClick={handleCreateBlueprint} className="bg-mint hover:bg-mint-glow text-black font-bold w-full">
-                        Create Blueprint Version
-                      </Button>
+                      <span className="text-[10px] uppercase font-bold text-mint tracking-wider">
+                        Assessment Builder
+                      </span>
                     </div>
+
+                    {/* Step 1: Choose Subject */}
+                    {wizardStep === 1 && (
+                      <div className="space-y-4">
+                        <div>
+                          <h4 className="text-base font-bold text-white uppercase tracking-wider font-display">CREATE YOUR TEST</h4>
+                          <p className="text-xs text-muted-foreground mt-0.5">Configure how Cognify evaluates thinking.</p>
+                        </div>
+                        <div className="grid gap-2 grid-cols-2">
+                          {Object.entries(SUBJECT_MAP).map(([key, val]) => (
+                            <button
+                              key={key}
+                              onClick={() => {
+                                handleSubjectChange(key);
+                                setWizardStep(2);
+                              }}
+                              className={`p-4 rounded-xl border text-left transition-all card-hover-lift btn-active-push ${
+                                bpSubject === key
+                                  ? "border-mint bg-mint/5 text-mint font-bold"
+                                  : "border-white/10 bg-black/40 text-gray-300 hover:border-white/20 hover:text-white"
+                              }`}
+                            >
+                              <span className="text-[9px] uppercase font-bold block opacity-75">Domain</span>
+                              <span className="text-sm font-bold block mt-1">{val.label}</span>
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Step 2: Choose Topic & Subtopic */}
+                    {wizardStep === 2 && (
+                      <div className="space-y-4">
+                        <div>
+                          <h4 className="text-base font-bold text-white uppercase tracking-wider font-display">SELECT TOPIC & SUBTOPIC</h4>
+                          <p className="text-xs text-muted-foreground mt-0.5">Choose diagnostic parameters.</p>
+                        </div>
+                        <div className="grid gap-2 max-h-[300px] overflow-y-auto pr-2">
+                          {SUBJECT_MAP[bpSubject] && Object.entries(SUBJECT_MAP[bpSubject].topics).map(([key, val]) => (
+                            <div
+                              key={key}
+                              className={`p-3 rounded-xl border transition-all ${
+                                bpTopic === key
+                                  ? "border-mint bg-mint/5"
+                                  : "border-white/10 bg-black/40"
+                              }`}
+                            >
+                              <div className="flex items-center justify-between border-b border-white/5 pb-2 mb-2">
+                                <span className="text-xs font-bold text-white">{val.label}</span>
+                                <button
+                                  onClick={() => handleTopicChange(key)}
+                                  className={`px-2 py-0.5 rounded text-[10px] font-bold transition-all ${
+                                    bpTopic === key ? "bg-mint text-black" : "bg-white/10 text-white"
+                                  }`}
+                                >
+                                  Select Topic
+                                </button>
+                              </div>
+                              
+                              <div className="flex flex-wrap gap-2 mt-2">
+                                {Object.entries(val.subtopics).map(([subKey, subVal]) => (
+                                  <button
+                                    key={subKey}
+                                    onClick={() => {
+                                      handleTopicChange(key);
+                                      setBpSubtopic(subKey);
+                                    }}
+                                    className={`px-3 py-1 rounded-lg border text-[11px] font-semibold transition-all ${
+                                      bpTopic === key && bpSubtopic === subKey
+                                        ? "border-orange-500 bg-orange-500/10 text-orange-400"
+                                        : "border-white/10 bg-black/20 text-gray-400 hover:text-white"
+                                    }`}
+                                  >
+                                    {subVal}
+                                  </button>
+                                ))}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                        <div className="flex justify-between pt-4 border-t border-white/5">
+                          <button onClick={() => setWizardStep(1)} className="px-4 py-2 rounded-lg bg-secondary border border-white/10 text-xs font-bold text-white btn-active-push">
+                            Back
+                          </button>
+                          <button
+                            onClick={() => setWizardStep(3)}
+                            className="px-4 py-2 rounded-lg bg-mint text-black text-xs font-bold btn-active-push"
+                          >
+                            Next
+                          </button>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Step 3: Configure Parameters */}
+                    {wizardStep === 3 && (
+                      <div className="space-y-4">
+                        <div>
+                          <h4 className="text-base font-bold text-white uppercase tracking-wider font-display">DIAGNOSTIC TARGETS</h4>
+                          <p className="text-xs text-muted-foreground mt-0.5">Control evaluation metrics.</p>
+                        </div>
+                        
+                        <div className="grid grid-cols-2 gap-3">
+                          <div className="space-y-1">
+                            <label className="text-[10px] uppercase text-muted-foreground font-bold">Purpose</label>
+                            <select
+                              value={bpPurpose}
+                              onChange={(e) => setBpPurpose(e.target.value)}
+                              className="p-2.5 rounded-xl bg-black border border-white/10 text-white w-full text-xs focus:outline-none focus:border-mint"
+                            >
+                              <option value="diagnosis">Diagnosis</option>
+                              <option value="practice">Practice</option>
+                              <option value="exam">Exam</option>
+                            </select>
+                          </div>
+
+                          <div className="space-y-1">
+                            <label className="text-[10px] uppercase text-muted-foreground font-bold">Difficulty</label>
+                            <select
+                              value={bpDifficulty}
+                              onChange={(e) => setBpDifficulty(e.target.value)}
+                              className="p-2.5 rounded-xl bg-black border border-white/10 text-white w-full text-xs focus:outline-none focus:border-mint"
+                            >
+                              <option value="easy">Easy</option>
+                              <option value="medium">Medium</option>
+                              <option value="hard">Hard</option>
+                              <option value="adaptive">Adaptive</option>
+                            </select>
+                          </div>
+                        </div>
+
+                        <div className="grid grid-cols-3 gap-2">
+                          <div className="space-y-1">
+                            <label className="text-[10px] uppercase text-muted-foreground font-bold">Duration (Min)</label>
+                            <input
+                              type="number"
+                              value={bpDuration}
+                              onChange={(e) => setBpDuration(Number(e.target.value))}
+                              className="p-2.5 rounded-xl bg-black border border-white/10 text-white w-full text-xs focus:outline-none focus:border-mint"
+                            />
+                          </div>
+
+                          <div className="space-y-1">
+                            <label className="text-[10px] uppercase text-muted-foreground font-bold">Questions</label>
+                            <input
+                              type="number"
+                              value={bpQuestionCount}
+                              onChange={(e) => setBpQuestionCount(Number(e.target.value))}
+                              className="p-2.5 rounded-xl bg-black border border-white/10 text-white w-full text-xs focus:outline-none focus:border-mint"
+                            />
+                          </div>
+
+                          <div className="space-y-1">
+                            <label className="text-[10px] uppercase text-muted-foreground font-bold">Strategy</label>
+                            <select
+                              value={bpStrategy}
+                              onChange={(e) => setBpStrategy(e.target.value)}
+                              className="p-2.5 rounded-xl bg-black border border-white/10 text-white w-full text-[10px] focus:outline-none focus:border-mint"
+                            >
+                              <option value="balanced">Balanced</option>
+                              <option value="random">Random</option>
+                              <option value="adaptive_mixed">Adaptive</option>
+                            </select>
+                          </div>
+                        </div>
+
+                        <div className="border border-white/5 rounded-2xl p-4 bg-black/40 space-y-3 text-[11px]">
+                          <div className="font-bold flex justify-between">
+                            <span>Cognitive Type Distribution</span>
+                            <span className={Number(bpConceptual)+Number(bpApplication)+Number(bpReasoning)+Number(bpMemory) !== 100 ? "text-rose-400 font-bold" : "text-mint font-bold"}>
+                              {Number(bpConceptual)+Number(bpApplication)+Number(bpReasoning)+Number(bpMemory)}% (Target: 100%)
+                            </span>
+                          </div>
+                          
+                          <div className="space-y-1">
+                            <div className="flex justify-between text-gray-300">
+                              <span>Conceptual</span>
+                              <span>{bpConceptual}%</span>
+                            </div>
+                            <input
+                              type="range"
+                              min="0"
+                              max={100 - (Number(bpApplication) + Number(bpReasoning) + Number(bpMemory))}
+                              value={bpConceptual}
+                              onChange={(e) => setBpConceptual(Number(e.target.value))}
+                              className="w-full h-1 bg-white/10 accent-mint rounded"
+                            />
+                          </div>
+                          
+                          <div className="space-y-1">
+                            <div className="flex justify-between text-gray-300">
+                              <span>Application</span>
+                              <span>{bpApplication}%</span>
+                            </div>
+                            <input
+                              type="range"
+                              min="0"
+                              max={100 - (Number(bpConceptual) + Number(bpReasoning) + Number(bpMemory))}
+                              value={bpApplication}
+                              onChange={(e) => setBpApplication(Number(e.target.value))}
+                              className="w-full h-1 bg-white/10 accent-mint rounded"
+                            />
+                          </div>
+
+                          <div className="space-y-1">
+                            <div className="flex justify-between text-gray-300">
+                              <span>Reasoning</span>
+                              <span>{bpReasoning}%</span>
+                            </div>
+                            <input
+                              type="range"
+                              min="0"
+                              max={100 - (Number(bpConceptual) + Number(bpApplication) + Number(bpMemory))}
+                              value={bpReasoning}
+                              onChange={(e) => setBpReasoning(Number(e.target.value))}
+                              className="w-full h-1 bg-white/10 accent-mint rounded"
+                            />
+                          </div>
+
+                          <div className="space-y-1">
+                            <div className="flex justify-between text-gray-300">
+                              <span>Memory</span>
+                              <span>{bpMemory}%</span>
+                            </div>
+                            <input
+                              type="range"
+                              min="0"
+                              max={100 - (Number(bpConceptual) + Number(bpApplication) + Number(bpReasoning))}
+                              value={bpMemory}
+                              onChange={(e) => setBpMemory(Number(e.target.value))}
+                              className="w-full h-1 bg-white/10 accent-mint rounded"
+                            />
+                          </div>
+                        </div>
+
+                        <div className="flex justify-between pt-4 border-t border-white/5">
+                          <button onClick={() => setWizardStep(2)} className="px-4 py-2 rounded-lg bg-secondary border border-white/10 text-xs font-bold text-white btn-active-push">
+                            Back
+                          </button>
+                          <button
+                            onClick={() => setWizardStep(4)}
+                            className="px-4 py-2 rounded-lg bg-mint text-black text-xs font-bold btn-active-push"
+                          >
+                            Next
+                          </button>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Step 4: Review & Launch */}
+                    {wizardStep === 4 && (
+                      <div className="space-y-4">
+                        <div>
+                          <h4 className="text-base font-bold text-white uppercase tracking-wider font-display">REVIEW & LAUNCH</h4>
+                          <p className="text-xs text-muted-foreground mt-0.5">Deploy diagnostic test room.</p>
+                        </div>
+                        
+                        <div className="rounded-xl border border-white/10 p-4 bg-black/40 space-y-2 text-xs">
+                          <div>
+                            <span className="text-muted-foreground uppercase text-[9px] font-bold">Selected Domain</span>
+                            <p className="text-sm font-bold text-white capitalize">{bpSubject} ➔ {bpTopic.replace(/_/g, ' ')} ➔ {bpSubtopic.replace(/_/g, ' ')}</p>
+                          </div>
+                          
+                          <div className="grid grid-cols-2 gap-2 mt-2 pt-2 border-t border-white/5">
+                            <div>
+                              <span className="text-muted-foreground uppercase text-[9px] font-bold">Assess Strategy</span>
+                              <p className="font-semibold text-white capitalize">{bpStrategy}</p>
+                            </div>
+                            <div>
+                              <span className="text-muted-foreground uppercase text-[9px] font-bold">Questions Count</span>
+                              <p className="font-semibold text-white">{bpQuestionCount} Items ({bpDuration} mins)</p>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="space-y-1">
+                          <label className="text-xs uppercase text-muted-foreground font-bold">Name this Blueprint</label>
+                          <input
+                            value={bpName}
+                            onChange={(e) => setBpName(e.target.value)}
+                            placeholder="e.g. Mid Semester Diagnostic"
+                            className="p-3 rounded-xl bg-black border border-white/10 text-white w-full text-sm focus:outline-none focus:border-mint"
+                          />
+                        </div>
+
+                        <div className="flex justify-between pt-4 border-t border-white/5">
+                          <button onClick={() => setWizardStep(3)} className="px-4 py-2 rounded-lg bg-secondary border border-white/10 text-xs font-bold text-white btn-active-push">
+                            Back
+                          </button>
+                          <Button
+                            onClick={async (e) => {
+                              if (!bpName.trim()) {
+                                toast({ title: "Please name this blueprint", variant: "destructive" });
+                                return;
+                              }
+                              await handleCreateBlueprint(e);
+                              setWizardStep(1); // Reset step on success
+                            }}
+                            className="bg-mint hover:bg-mint-glow text-black font-bold px-6 py-2 rounded-lg btn-active-push"
+                          >
+                            Launch Assessment Room
+                          </Button>
+                        </div>
+                      </div>
+                    )}
                   </div>
 
                   {/* Add Custom Question Builder */}

@@ -10,308 +10,399 @@ export default function Report() {
   const user = getCurrentUser();
 
   useEffect(() => {
-    document.documentElement.classList.add("theme-report");
-    return () => document.documentElement.classList.remove("theme-report");
+    document.documentElement.classList.add("theme-inside");
+    return () => document.documentElement.classList.remove("theme-inside");
   }, []);
 
   if (!user) return <Navigate to="/auth" replace />;
   const [report, setReport] = useState<any>(null);
+  const [activeReportTab, setActiveReportTab] = useState<string>("overview");
 
   useEffect(() => {
     const saved = getReport(id || "");
     if (saved) setReport(saved);
   }, [id]);
 
-  if (!report) return <div className="p-10">Loading report...</div>;
+  if (!report) return <div className="p-10 text-white">Loading report...</div>;
 
   const s = report.scores;
 
   const riskBadge =
-  s.fakeUnderstanding >= 45
-    ? "High Surface Familiarity Risk"
-    : s.hesitation >= 45
-    ? "Moderate Cognitive Distortion"
-    : "Stable Cognitive State";
+    s.fakeUnderstanding >= 45
+      ? "High Surface Familiarity Risk"
+      : s.hesitation >= 45
+      ? "Moderate Cognitive Distortion"
+      : "Stable Cognitive State";
 
-const teacherDiagnostic =
-  report.pattern === "Trial-based"
-    ? "Student exhibits recurring trial-resolution dependency under medium uncertainty prompts."
-    : report.pattern === "Concept-based"
-    ? "Student shows principle-led answer commitment with relatively lower recognition dependence."
-    : "Student displays alternating concept recall and option-verification dependency.";
+  const teacherDiagnostic =
+    report.pattern === "Trial-based"
+      ? "We observed that the learner exhibits recurring trial-resolution dependency under medium uncertainty prompts."
+      : report.pattern === "Concept-based"
+      ? "We observed that the learner shows principle-led answer commitment with relatively lower recognition dependence."
+      : "We observed that the learner displays alternating concept recall and option-verification dependency.";
 
-const vulnerability =
-  s.fakeUnderstanding >= 40
-    ? {
-        area: "Internal Concept Stability",
-        fail: "Indirect application questions",
-        remedy: "Deep why-based reinforcement required"
-      }
-    : s.hesitation >= 45
-    ? {
-        area: "Decision Commitment",
-        fail: "Timed multi-option pressure",
-        remedy: "Rapid confidence drills recommended"
-      }
-    : {
-        area: "Mixed Cognitive Consistency",
-        fail: "Difficulty spikes",
-        remedy: "Progressive layered practice advised"
-      };
+  const vulnerability =
+    s.fakeUnderstanding >= 40
+      ? {
+          area: "Internal Concept Stability",
+          fail: "Indirect application questions",
+          remedy: "Deep why-based reinforcement required"
+        }
+      : s.hesitation >= 45
+      ? {
+          area: "Decision Commitment",
+          fail: "Timed multi-option pressure",
+          remedy: "Rapid confidence drills recommended"
+        }
+      : {
+          area: "Mixed Cognitive Consistency",
+          fail: "Difficulty spikes",
+          remedy: "Progressive layered practice advised"
+        };
 
   const predictionText =
-  report.prediction === "Decline"
-    ? "Current answer behaviour suggests that deeper questions may continue to feel unstable unless conceptual reinforcement improves."
-    : report.prediction === "Stable"
-    ? "The learner shows a relatively steady response rhythm, but growth will depend on whether conceptual confidence rises beyond pattern familiarity."
-    : "There are visible signs that the learner can improve quickly once concept certainty becomes more consistent.";
+    report.prediction === "Decline"
+      ? "Current answer behaviour suggests that deeper questions may continue to feel unstable unless conceptual reinforcement improves."
+      : report.prediction === "Stable"
+      ? "The learner shows a relatively steady response rhythm, but growth will depend on whether conceptual confidence rises beyond pattern familiarity."
+      : "There are visible signs that the learner can improve quickly once concept certainty becomes more consistent.";
 
-const learningNarrative =
-  report.pattern === "Concept-based"
-    ? "Most answers appear to emerge from principle recognition first, which usually means the learner is relying on internal understanding rather than visible guess navigation."
-    : report.pattern === "Trial-based"
-    ? "The response stream shows repeated elimination behaviour, comparative checking, and delayed certainty — indicating that answers are often reached after internal negotiation rather than immediate clarity."
-    : "The learner shifts between partial intuition and concept recall. Some answers show clarity, while others reveal unstable dependence on option-level recognition.";
+  const learningNarrative =
+    report.pattern === "Concept-based"
+      ? "Most responses suggest answers emerge from principle recognition first, which usually means the learner is relying on internal understanding rather than visible guess navigation."
+      : report.pattern === "Trial-based"
+      ? "The response stream shows repeated elimination behaviour, comparative checking, and delayed certainty — indicating that answers are often reached after internal negotiation rather than immediate clarity."
+      : "The learner shifts between partial intuition and concept recall. Some answers show clarity, while others reveal unstable dependence on option-level recognition.";
 
-const finalConclusion =
-  s.conceptual >= 60
-    ? "Across the full session, Cognify observed a learner with reasonably strong conceptual anchoring and manageable hesitation. The dominant issue is not lack of understanding, but occasional certainty fluctuations under pressure."
-    : s.fakeUnderstanding >= 45 && s.overthinking >= 55
-    ? "Across the session, the learner showed repeated signs of visible familiarity without fully stable internal certainty. This usually appears when recognition is present, but deep recall remains inconsistent during pressure moments."
-    : s.hesitation >= 45
-    ? "The overall stream suggests that hesitation, not knowledge absence, is currently interfering with answer quality. The learner appears to know fragments of the concept but loses decisiveness while committing."
-    : "The complete cognitive stream indicates a mixed but recoverable understanding pattern, where some answers are concept-led while others still depend on surface verification.";
+  const finalConclusion =
+    s.conceptual >= 60
+      ? "Across the full session, we observed reasonably strong conceptual anchoring and manageable hesitation. The dominant issue is not lack of understanding, but occasional certainty fluctuations under pressure."
+      : s.fakeUnderstanding >= 45 && s.overthinking >= 55
+      ? "Across the session, we observed repeated signs of visible familiarity without fully stable internal certainty. This usually appears when recognition is present, but deep recall remains inconsistent during pressure moments."
+      : s.hesitation >= 45
+      ? "The overall stream suggests that hesitation, not knowledge absence, is currently interfering with answer quality. The learner appears to know fragments of the concept but loses decisiveness while committing."
+      : "The complete cognitive stream indicates a mixed but recoverable understanding pattern, where some answers are concept-led while others still depend on surface verification.";
+
   return (
     <div className="min-h-screen bg-background text-foreground relative overflow-hidden">
       <div
-        className="pointer-events-none absolute inset-0 opacity-[0.06]"
+        className="pointer-events-none absolute inset-0 opacity-[0.06] print:hidden"
         style={{
           backgroundImage:
             "repeating-linear-gradient(0deg, hsl(var(--foreground)) 0 1px, transparent 1px 4px)"
         }}
       />
 
-      <header className="container relative flex h-16 items-center justify-between border-b-2 border-foreground">
+      <header className="container relative flex h-16 items-center justify-between border-b border-white/5 print:hidden">
         <Link
           to="/dashboard"
-          className="inline-flex items-center gap-2 text-sm font-semibold hover:text-primary transition-colors"
+          className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-wider hover:text-mint transition-colors"
         >
           <ArrowLeft className="h-4 w-4" /> Back to dashboard
         </Link>
-        <div className="text-xs uppercase tracking-[0.3em] font-bold">
-          Cognitive Report · Vol.1
+        <div className="flex items-center gap-4">
+          <button
+            onClick={() => window.print()}
+            className="px-3 py-1.5 rounded-lg border border-white/10 hover:border-white/20 text-xs font-bold text-white transition-all bg-card btn-active-push"
+          >
+            Export to PDF
+          </button>
+          <div className="text-[10px] uppercase tracking-[0.3em] font-bold text-muted-foreground hidden sm:block">
+            Cognitive Report · Vol.1
+          </div>
         </div>
       </header>
 
-      <main className="container max-w-5xl py-10 lg:py-14 space-y-12 relative">
-        <motion.section
-          initial={{ opacity: 0, y: 12 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6 }}
-        >
-          <div className="text-xs uppercase tracking-[0.25em] font-semibold opacity-70">
-            {new Date(report.takenAt).toLocaleString()}
+      <main className="container max-w-6xl py-10 lg:py-14 space-y-8 relative">
+        {/* Cover Section (Always printed first) */}
+        <section className="border-b border-white/5 pb-6">
+          <div className="text-[10px] uppercase tracking-[0.25em] font-bold text-muted-foreground">
+            Session Analysis • {new Date(report.takenAt).toLocaleString()}
           </div>
 
-          <h1 className="mt-3 font-display text-5xl sm:text-7xl font-bold tracking-tight leading-[0.95]">
-            {user.name.split(" ")[0]},
+          <h1 className="mt-3 font-display text-5xl sm:text-6xl font-extrabold tracking-tight leading-[0.95] text-white">
+            {user.name},
             <br />
-            <span className="text-primary">here's how</span>
-            <br />
-            your mind moved.
+            <span className="text-mint">here's how</span> your mind moved.
           </h1>
 
-<div className="mt-5 inline-flex items-center gap-2 rounded-2xl border border-foreground/20 bg-foreground text-background px-4 py-2 text-sm font-semibold">
-  <Brain className="h-4 w-4" /> Pattern:
-  <span className="text-primary">{report.pattern}</span>
-</div>
-
-<div className="mt-4 inline-flex items-center gap-2 rounded-2xl border border-red-400/20 bg-red-400/10 px-4 py-2 text-sm font-semibold text-red-300">
-  <ShieldAlert className="h-4 w-4" /> {riskBadge}
-</div>
-        </motion.section>
-
- <Section
-  icon={<Brain className="h-4 w-4" />}
-  title="Understanding"
-  subtitle="How you actually grasp ideas"
->
-  <div className="grid gap-4 sm:grid-cols-3">
-    <Bar label="Conceptual" v={s.conceptual} accent />
-    <Bar label="Memorized" v={s.memorized} />
-    <Bar label="Fake understanding" v={s.fakeUnderstanding} accent />
-  </div>
-</Section>    
-
-<Section
-  icon={<Activity className="h-4 w-4" />}
-  title="Behavior"
-  subtitle="The signals you didn't notice you were sending"
->
-  <div className="grid gap-4 sm:grid-cols-3">
-    <Bar label="Hesitation" v={s.hesitation} accent />
-    <Bar label="Confidence" v={s.confidence} />
-    <Bar label="Overthinking" v={s.overthinking} accent />
-  </div>
-</Section>
-
-        <Section
-          icon={<Repeat className="h-4 w-4" />}
-          title="Learning pattern"
-          subtitle="How you reach answers"
-        >
-          <div className="rounded-2xl border border-foreground/20 bg-card p-6">
-            <div className="font-display text-3xl font-bold">{report.pattern}</div>
-
-            <p className="mt-3 max-w-3xl opacity-80 leading-8 text-lg">
-             {learningNarrative}
-            </p>
+          <div className="mt-5 flex flex-wrap gap-2 print:flex">
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-mint/10 border border-mint/20 text-mint px-3.5 py-1 text-xs font-bold uppercase">
+              <Brain className="h-3 w-3" /> Pattern: {report.pattern}
+            </span>
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-red-400/10 border border-red-400/20 text-red-300 px-3.5 py-1 text-xs font-bold uppercase">
+              <ShieldAlert className="h-3 w-3" /> {riskBadge}
+            </span>
           </div>
-        </Section>
+        </section>
 
-        <Section
-          icon={<TrendingUp className="h-4 w-4" />}
-          title="Prediction"
-          subtitle="Where you're heading"
-        >
-          <div className="rounded-2xl border border-foreground/20 bg-foreground text-background p-7">
-            <div className="font-display text-xl sm:text-2xl font-semibold leading-10">
-              {predictionText}
+        {/* Left Navigation Grid Layout */}
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+          {/* Left Sidebar Menu */}
+          <div className="lg:col-span-1 space-y-6 print:hidden">
+            <div className="rounded-2xl border border-white/10 p-5 bg-card relative overflow-hidden">
+              <span className="text-[10px] uppercase font-bold tracking-widest text-mint block">Cognitive Profile</span>
+              <h3 className="text-xs font-bold text-white mt-1 uppercase">100% Completed</h3>
+              <div className="flex items-center gap-2 mt-3">
+                <div className="h-1.5 w-full bg-white/5 rounded-full overflow-hidden">
+                  <div className="h-full bg-mint" style={{ width: "100%" }} />
+                </div>
+              </div>
             </div>
-          </div>
-        </Section>
 
-        <Section
-  icon={<Brain className="h-4 w-4" />}
-  title="Teacher Diagnostic"
-  subtitle="Professional classroom interpretation"
->
-  <div className="rounded-2xl border border-foreground/20 bg-card p-7 leading-8 text-lg">
-    {teacherDiagnostic}
-  </div>
-</Section>
-
-        <Section
-          icon={<Sparkles className="h-4 w-4" />}
-          title="Insights"
-          subtitle="Plain-language reflections"
-        >
-          <ul className="space-y-3">
-            {(report.insights || []).map((ins: string, i: number) => (
-              <motion.li
-                key={i}
-                initial={{ opacity: 0, x: -6 }}
-                whileInView={{ opacity: 1, x: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.4, delay: i * 0.06 }}
-                className="flex items-start gap-3 rounded-xl border-l-4 border-primary bg-card px-4 py-3"
-              >
-                <span className="text-base leading-7">
-                  • {ins}
-                </span>
-              </motion.li>
-            ))}
-          </ul>
-        </Section>
-
-        <Section
-          icon={<Activity className="h-4 w-4" />}
-          title="Question timeline"
-          subtitle="Your moment-by-moment cognition"
-        >
-          <div className="space-y-4">
-            {report.perQuestion && report.perQuestion.length > 0 ? (
-              (report.perQuestion || []).filter(Boolean).map((p: any, i: number) => (
-                <div
-                  key={i}
-                  className="rounded-2xl border border-foreground/20 bg-card px-5 py-4"
+            <nav className="space-y-1">
+              {[
+                { id: "overview", label: "Overview", icon: <Brain className="h-3.5 w-3.5" /> },
+                { id: "understanding", label: "Understanding", icon: <Activity className="h-3.5 w-3.5" /> },
+                { id: "behavior", label: "Behavior", icon: <TrendingUp className="h-3.5 w-3.5" /> },
+                { id: "prediction", label: "Prediction", icon: <Repeat className="h-3.5 w-3.5" /> },
+                { id: "recommendations", label: "Recommendations", icon: <Sparkles className="h-3.5 w-3.5" /> }
+              ].map((tab) => (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveReportTab(tab.id)}
+                  className={`w-full text-left px-4 py-3 rounded-lg text-xs font-bold uppercase tracking-wider transition-all flex items-center gap-2.5 relative btn-active-push ${
+                    activeReportTab === tab.id
+                      ? "bg-mint/5 text-mint font-bold"
+                      : "text-muted-foreground hover:text-white hover:bg-white/5"
+                  }`}
                 >
-                  <div className="font-semibold text-lg">
-                    Q{i + 1}: {p.question_text || p.question || "No question"}
-                  </div>
+                  {tab.icon}
+                  {tab.label}
+                  {activeReportTab === tab.id && (
+                    <span className="absolute left-0 top-1/4 bottom-1/4 w-1 bg-mint rounded" />
+                  )}
+                </button>
+              ))}
+            </nav>
+          </div>
 
-                  <div className="mt-2 text-sm opacity-80">
-                    {p.cognitive_flag || "No cognitive flag"}
-                  </div>
+          {/* Right Content Panel */}
+          <div className="lg:col-span-3 space-y-10 print-content">
+            
+            {/* 1. OVERVIEW VIEW */}
+            <div className={`${activeReportTab === "overview" ? "block" : "hidden"} print:block space-y-6`}>
+              <div className="flex items-center justify-between border-b border-white/5 pb-2">
+                <h2 className="text-lg font-bold uppercase tracking-wider text-white font-display">Session Overview</h2>
+                <span className="text-[10px] text-muted-foreground hidden print:inline">Section 1.0</span>
+              </div>
+              
+              <div className="rounded-2xl border border-white/10 bg-card p-6 leading-relaxed text-sm text-gray-300">
+                <h3 className="font-bold text-white mb-2 uppercase text-xs tracking-wider text-mint">Final System Conclusion</h3>
+                {finalConclusion}
+              </div>
 
-                  <div className="mt-3 text-sm leading-7 opacity-75">
-                    {p.cognitive_flag?.includes("Measured")
-  ? "This response arrived with comparatively stable certainty and lower visible friction than the surrounding questions."
-  : p.cognitive_flag?.includes("Recovered")
-  ? "The learner appears to have reached the answer after comparative elimination, but eventually regained directional control."
-  : p.cognitive_flag?.includes("Surface")
-  ? "Topic familiarity was visible here, though the internal reasoning depth did not appear fully secure."
-  : p.cognitive_flag?.includes("iteration")
-  ? "Repeated option scanning and delayed commitment suggest the answer was assembled through elimination."
-  : p.cognitive_flag?.includes("turbulence")
-  ? "This question triggered visible internal instability, with confidence shifting during commitment."
-  : p.cognitive_flag?.includes("drag")
-  ? "The learner stayed cognitively engaged but showed prolonged internal resistance before settling."
-  : "The response markers indicate a fluctuating certainty profile during this answer."}
-                  </div>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div className="rounded-2xl border border-white/10 bg-card p-6 space-y-2">
+                  <h4 className="text-xs uppercase font-bold text-white tracking-wider">Teacher Diagnostic Interpretation</h4>
+                  <p className="text-xs text-gray-400 leading-relaxed">{teacherDiagnostic}</p>
+                </div>
+                <div className="rounded-2xl border border-white/10 bg-card p-6 space-y-2">
+                  <h4 className="text-xs uppercase font-bold text-white tracking-wider">Decision Assembly Narrative</h4>
+                  <p className="text-xs text-gray-400 leading-relaxed">{learningNarrative}</p>
+                </div>
+              </div>
+            </div>
 
-                  <div className="mt-2 text-xs opacity-60">
-                    Time: {p.response_time?.toFixed?.(1) || p.responseTimeMs / 1000 || 0}s
-                    {" • "}
-                    Confidence: {Math.round((p.confidence || 0) * 100)}%
-                    {" • "}
-                    {p.correct ? "Correct" : "Wrong"}
+            {/* 2. UNDERSTANDING VIEW */}
+            <div className={`${activeReportTab === "understanding" ? "block" : "hidden"} print:block space-y-6`}>
+              <div className="flex items-center justify-between border-b border-white/5 pb-2">
+                <h2 className="text-lg font-bold uppercase tracking-wider text-white font-display">Conceptual Understanding Profile</h2>
+                <span className="text-[10px] text-muted-foreground hidden print:inline">Section 2.0</span>
+              </div>
+              <p className="text-xs text-muted-foreground leading-relaxed">
+                Calculated metrics mapping depth of grasp, memorization bias, and surface-level familiarity risks.
+              </p>
+
+              <div className="grid gap-4 sm:grid-cols-3">
+                {/* Conceptual Bar */}
+                <div className="rounded-2xl border border-white/10 bg-card p-6 space-y-3">
+                  <div className="flex justify-between items-center text-xs font-bold">
+                    <span className="text-white">Conceptual Depth</span>
+                    <span className="text-mint">{s.conceptual}%</span>
+                  </div>
+                  <div className="h-1.5 bg-white/5 rounded-full overflow-hidden">
+                    <div className="h-full bg-mint" style={{ width: `${s.conceptual}%` }} />
+                  </div>
+                  <div className="pt-2 border-t border-white/5 space-y-1 text-[11px] text-gray-400 font-mono">
+                    <span className="font-bold text-white block uppercase text-[9px] tracking-wider mb-1">Evidence Summary</span>
+                    <p>✓ Low decision latency</p>
+                    <p>✓ Stable response rhythm</p>
+                    <p>✓ High correctness on applications</p>
                   </div>
                 </div>
-              ))
-            ) : (
-              <div className="text-sm opacity-70">No per-question timeline data found.</div>
-            )}
+
+                {/* Memorized Bar */}
+                <div className="rounded-2xl border border-white/10 bg-card p-6 space-y-3">
+                  <div className="flex justify-between items-center text-xs font-bold">
+                    <span className="text-white">Memory Dependency</span>
+                    <span className="text-white">{s.memorized}%</span>
+                  </div>
+                  <div className="h-1.5 bg-white/5 rounded-full overflow-hidden">
+                    <div className="h-full bg-white" style={{ width: `${s.memorized}%` }} />
+                  </div>
+                  <div className="pt-2 border-t border-white/5 space-y-1 text-[11px] text-gray-400 font-mono">
+                    <span className="font-bold text-white block uppercase text-[9px] tracking-wider mb-1">Evidence Summary</span>
+                    <p>✓ Rapid immediate recall</p>
+                    <p>✓ Minimal option switching</p>
+                    <p>✓ Terms recognition matches</p>
+                  </div>
+                </div>
+
+                {/* Fake Understanding Bar */}
+                <div className="rounded-2xl border border-white/10 bg-card p-6 space-y-3">
+                  <div className="flex justify-between items-center text-xs font-bold">
+                    <span className="text-white">Surface Familiarity</span>
+                    <span className="text-orange-400">{s.fakeUnderstanding}%</span>
+                  </div>
+                  <div className="h-1.5 bg-white/5 rounded-full overflow-hidden">
+                    <div className="h-full bg-orange-500" style={{ width: `${s.fakeUnderstanding}%` }} />
+                  </div>
+                  <div className="pt-2 border-t border-white/5 space-y-1 text-[11px] text-gray-400 font-mono">
+                    <span className="font-bold text-white block uppercase text-[9px] tracking-wider mb-1">Evidence Summary</span>
+                    <p>✓ High hover times</p>
+                    <p>✓ Multi-option scans</p>
+                    <p>✓ Drop-off on deep prompts</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* 3. BEHAVIOR VIEW */}
+            <div className={`${activeReportTab === "behavior" ? "block" : "hidden"} print:block space-y-6`}>
+              <div className="flex items-center justify-between border-b border-white/5 pb-2">
+                <h2 className="text-lg font-bold uppercase tracking-wider text-white font-display">Decision-Making Behavior</h2>
+                <span className="text-[10px] text-muted-foreground hidden print:inline">Section 3.0</span>
+              </div>
+              <p className="text-xs text-muted-foreground leading-relaxed">
+                Biometric behavioral signatures tracked transparently during question evaluation.
+              </p>
+
+              <div className="grid gap-4 sm:grid-cols-3">
+                <div className="rounded-2xl border border-white/10 bg-card p-5 space-y-3">
+                  <div className="flex justify-between items-center text-xs font-bold text-white">
+                    <span>Hesitation Index</span>
+                    <span className="text-orange-400">{s.hesitation}%</span>
+                  </div>
+                  <div className="h-1.5 bg-white/5 rounded-full overflow-hidden">
+                    <div className="h-full bg-orange-500" style={{ width: `${s.hesitation}%` }} />
+                  </div>
+                </div>
+
+                <div className="rounded-2xl border border-white/10 bg-card p-5 space-y-3">
+                  <div className="flex justify-between items-center text-xs font-bold text-white">
+                    <span>Confidence Score</span>
+                    <span className="text-mint">{s.confidence}%</span>
+                  </div>
+                  <div className="h-1.5 bg-white/5 rounded-full overflow-hidden">
+                    <div className="h-full bg-mint" style={{ width: `${s.confidence}%` }} />
+                  </div>
+                </div>
+
+                <div className="rounded-2xl border border-white/10 bg-card p-5 space-y-3">
+                  <div className="flex justify-between items-center text-xs font-bold text-white">
+                    <span>Overthinking Rate</span>
+                    <span className="text-yellow-400">{s.overthinking}%</span>
+                  </div>
+                  <div className="h-1.5 bg-white/5 rounded-full overflow-hidden">
+                    <div className="h-full bg-yellow-500" style={{ width: `${s.overthinking}%` }} />
+                  </div>
+                </div>
+              </div>
+
+              {/* Question Timeline */}
+              <div className="mt-8 space-y-4">
+                <h3 className="text-sm font-bold uppercase tracking-wider text-white font-display">Moment-by-Moment Question Timeline</h3>
+                <div className="space-y-3">
+                  {report.perQuestion && report.perQuestion.length > 0 ? (
+                    report.perQuestion.filter(Boolean).map((p: any, i: number) => (
+                      <div key={i} className="rounded-2xl border border-white/10 bg-card p-5 space-y-2">
+                        <div className="flex items-center justify-between border-b border-white/5 pb-2">
+                          <span className="text-xs font-bold text-white">Q{i + 1}: {p.question_text || p.question || "No prompt available"}</span>
+                          <span className={`text-[10px] font-bold px-2 py-0.5 rounded ${p.correct ? "bg-mint/10 text-mint" : "bg-red-400/10 text-red-300"}`}>
+                            {p.correct ? "CORRECT" : "WRONG"}
+                          </span>
+                        </div>
+                        <p className="text-[11px] text-gray-400 leading-relaxed font-mono">
+                          {p.cognitive_flag || "No detailed cognitive flag"}
+                        </p>
+                        <div className="text-[10px] text-muted-foreground flex gap-4">
+                          <span>Decision Latency: <strong>{p.response_time?.toFixed(1) || 0}s</strong></span>
+                          <span>Confidence Level: <strong>{Math.round((p.confidence || 0) * 100)}%</strong></span>
+                        </div>
+                      </div>
+                    ))
+                  ) : (
+                    <p className="text-xs text-muted-foreground">No per-question timeline items recorded.</p>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* 4. PREDICTION VIEW */}
+            <div className={`${activeReportTab === "prediction" ? "block" : "hidden"} print:block space-y-6`}>
+              <div className="flex items-center justify-between border-b border-white/5 pb-2">
+                <h2 className="text-lg font-bold uppercase tracking-wider text-white font-display">Cognitive Stability Forecast</h2>
+                <span className="text-[10px] text-muted-foreground hidden print:inline">Section 4.0</span>
+              </div>
+
+              <div className="rounded-2xl border border-white/10 bg-card p-6 space-y-3">
+                <h3 className="text-xs uppercase font-bold text-white tracking-wider text-mint">Long-Term Growth Predictor</h3>
+                <p className="text-sm text-gray-300 leading-relaxed">{predictionText}</p>
+              </div>
+
+              <div className="grid gap-4 sm:grid-cols-3">
+                <div className="rounded-2xl border border-white/10 bg-card p-5 space-y-1">
+                  <span className="text-[9px] uppercase tracking-wider text-muted-foreground block font-bold">Vulnerability Area</span>
+                  <span className="text-sm font-bold text-white block capitalize">{vulnerability.area}</span>
+                </div>
+                <div className="rounded-2xl border border-white/10 bg-card p-5 space-y-1">
+                  <span className="text-[9px] uppercase tracking-wider text-muted-foreground block font-bold">Breakdown Trigger</span>
+                  <span className="text-sm font-bold text-white block capitalize">{vulnerability.fail}</span>
+                </div>
+                <div className="rounded-2xl border border-white/10 bg-card p-5 space-y-1">
+                  <span className="text-[9px] uppercase tracking-wider text-muted-foreground block font-bold">Targeted Remedy</span>
+                  <span className="text-sm font-bold text-white block capitalize">{vulnerability.remedy}</span>
+                </div>
+              </div>
+            </div>
+
+            {/* 5. RECOMMENDATIONS VIEW */}
+            <div className={`${activeReportTab === "recommendations" ? "block" : "hidden"} print:block space-y-6`}>
+              <div className="flex items-center justify-between border-b border-white/5 pb-2">
+                <h2 className="text-lg font-bold uppercase tracking-wider text-white font-display">Clinical Action Plan & Recommendations</h2>
+                <span className="text-[10px] text-muted-foreground hidden print:inline">Section 5.0</span>
+              </div>
+
+              {/* Insights List */}
+              <div className="space-y-3">
+                <h3 className="text-xs uppercase font-bold text-white tracking-wider">Investigator Telemetry Insights</h3>
+                <ul className="space-y-2">
+                  {(report.insights || []).map((ins: string, i: number) => (
+                    <li key={i} className="rounded-xl border-l-2 border-mint bg-card px-4 py-3 text-xs leading-relaxed text-gray-300 font-mono">
+                      {ins}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+
           </div>
-        </Section>
+        </div>
 
-        <Section
-  icon={<ShieldAlert className="h-4 w-4" />}
-  title="Cognitive Vulnerability"
-  subtitle="Where this learner is most likely to break"
->
-  <div className="grid sm:grid-cols-3 gap-4">
-    <div className="rounded-2xl border p-5 bg-card">
-      <div className="text-xs uppercase opacity-60">Main Weakness Area</div>
-      <div className="mt-2 text-lg font-bold">{vulnerability.area}</div>
-    </div>
-
-    <div className="rounded-2xl border p-5 bg-card">
-      <div className="text-xs uppercase opacity-60">Likely Failure Under</div>
-      <div className="mt-2 text-lg font-bold">{vulnerability.fail}</div>
-    </div>
-
-    <div className="rounded-2xl border p-5 bg-card">
-      <div className="text-xs uppercase opacity-60">Recommended Intervention</div>
-      <div className="mt-2 text-lg font-bold">{vulnerability.remedy}</div>
-    </div>
-  </div>
-</Section>
-
-        <Section
-          icon={<Brain className="h-4 w-4" />} 
-          title="System conclusion"
-          subtitle="Cognify final psychological interpretation"
-        >
-          <div className="rounded-2xl border border-foreground/20 bg-card p-7 leading-8 text-lg">
-          {finalConclusion}
-          </div>
-        </Section>
-
-        <div className="flex flex-wrap gap-3 pt-4">
+        {/* Navigation CTAs footer (Screen only) */}
+        <div className="flex flex-wrap gap-3 pt-6 border-t border-white/5 print:hidden">
           <Button
             asChild
-            size="lg"
-            className="h-12 rounded-xl bg-primary text-primary-foreground hover:bg-primary-glow px-6 font-semibold"
+            className="rounded-xl bg-mint text-black hover:bg-mint-glow px-6 font-bold text-xs btn-active-push"
           >
             <Link to="/dashboard">Run another analysis</Link>
           </Button>
 
           <Button
             asChild
-            size="lg"
             variant="ghost"
-            className="h-12 rounded-xl border border-foreground/30 hover:bg-foreground hover:text-background px-6 font-semibold"
+            className="rounded-xl border border-white/10 hover:bg-white/5 text-xs font-bold text-white px-6 btn-active-push"
           >
             <Link to="/dashboard">Back to dashboard</Link>
           </Button>

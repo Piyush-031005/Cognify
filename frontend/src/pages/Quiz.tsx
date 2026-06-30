@@ -44,9 +44,9 @@ export default function Quiz() {
   useEffect(() => {
     if (!isLoading) return;
     const stages = [
-      "Analyzing cognitive memory history...",
-      "Compiling adaptive item response blueprint...",
-      "Selecting calibrated questions..."
+      "Analyzing response patterns...",
+      "Building your cognitive profile...",
+      "Preparing personalized insights..."
     ];
     let step = 0;
     const interval = setInterval(() => {
@@ -164,11 +164,6 @@ export default function Quiz() {
   };
 
   const submit = async () => {
-    if (idx === total - 1 && reflection.trim() === "") {
-      toast({ title: "Please write your reflection (2-3 lines)", variant: "destructive" });
-      return;
-    }
-
     if (selected === null) return;
     setIsSubmitting(true);
 
@@ -354,7 +349,9 @@ export default function Quiz() {
     return (
       <InsideLayout>
         <div className="flex flex-col items-center justify-center min-h-[60vh] text-white space-y-6">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-500"></div>
+          <div className="h-1 w-64 bg-white/10 rounded-full overflow-hidden relative">
+            <div className="h-full bg-mint loader-progress-bar rounded-full absolute left-0 top-0" style={{ width: "100%" }} />
+          </div>
           <div className="text-lg font-medium text-green-400 text-center transition-all duration-300">
             {loadingState}
           </div>
@@ -380,37 +377,43 @@ export default function Quiz() {
         ) : (
           <motion.div
             key={idx}
-            initial={{ opacity: 0, y: 10 }}
+            initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -10 }}
-            transition={{ duration: 0.35 }}
+            exit={{ opacity: 0, y: -8 }}
+            transition={{ duration: 0.15, ease: [0.16, 1, 0.3, 1] }}
             className="container max-w-3xl py-12 lg:py-16"
           >
-            <div className="flex items-center justify-between text-xs text-muted-foreground">
-              <span>Analyzing cognitive signals</span>
-              <span>Question {idx + 1} of {total}</span>
+            {/* Dynamic Context Header */}
+            <div className="flex flex-col md:flex-row md:items-center justify-between border-b border-white/5 pb-4 gap-2">
+              <div>
+                <span className="text-[10px] font-mono bg-white/5 border border-white/10 px-2 py-0.5 rounded-md text-muted-foreground uppercase font-bold">
+                  Question {idx + 1 < 10 ? `0${idx + 1}` : idx + 1}
+                </span>
+                <span className="text-xs font-bold text-mint uppercase tracking-wider ml-3">
+                  {q.subtopic ? q.subtopic.replace(/_/g, ' ') : (user?.assignedSubtopic || 'General')}
+                </span>
+              </div>
+              <div className="flex flex-wrap items-center gap-4 text-xs text-muted-foreground font-semibold">
+                <span>Difficulty • <strong className="text-white capitalize">{q.difficulty || 'medium'}</strong></span>
+                <span>Estimated Time • <strong className="text-white">40 sec</strong></span>
+                <span className="text-rose-400 font-mono font-bold">
+                  {formatTime(timeLeft)}
+                </span>
+              </div>
             </div>
 
-            <div className="mt-3 h-1 w-full bg-gray-700 rounded">
+            <div className="mt-3 h-1 w-full bg-white/5 rounded overflow-hidden">
               <div
-                className="h-full bg-green-400"
+                className="h-full bg-mint transition-all duration-300"
                 style={{ width: `${progress}%` }}
               />
             </div>
 
-            <div className="mt-8 bg-gray-900 p-8 rounded-xl space-y-6">
-              <div className="flex justify-between items-center pb-2 border-b border-white/5">
-                <span className="px-2.5 py-1 text-xs rounded bg-white/5 border border-white/10 uppercase font-semibold text-gray-300">
-                  Difficulty: {q.difficulty ? q.difficulty : "medium"}
-                </span>
-                <span className="text-sm font-mono text-rose-400 font-bold">
-                  Time Remaining: {formatTime(timeLeft)}
-                </span>
-              </div>
+            {/* Question Hero Card */}
+            <div className="mt-8 bg-card border border-white/10 p-8 rounded-2xl space-y-6">
+              <h2 className="text-2xl font-bold font-display text-white leading-relaxed">{q.prompt}</h2>
 
-              <h2 className="text-xl font-semibold leading-relaxed">{q.prompt}</h2>
-
-              <div className="mt-5 space-y-3">
+              <div className="mt-6 space-y-3">
                 {q.options.map((opt: string, i: number) => (
                   <button
                     key={i}
@@ -422,20 +425,21 @@ export default function Quiz() {
                       lastInteract.current = Date.now();
                     }}
                     onClick={() => choose(i)}
-                    className={`w-full text-left p-4 rounded-xl border transition-all duration-200 ${
+                    className={`w-full text-left p-4 rounded-xl border transition-all duration-150 card-hover-lift btn-active-push ${
                       selected === i 
-                        ? "bg-green-500/20 text-green-300 border-green-500 font-medium shadow-lg shadow-green-500/5" 
-                        : "bg-gray-800 border-white/5 text-gray-300 hover:bg-gray-700/80 hover:border-white/10"
+                        ? "bg-mint/5 text-mint border-mint font-bold" 
+                        : "bg-black/40 border-white/5 text-gray-300 hover:bg-black/20 hover:border-white/10"
                     }`}
                   >
+                    <span className="inline-block w-6 text-xs text-muted-foreground font-mono mr-2">{["A", "B", "C", "D"][i]}.</span>
                     {opt}
                   </button>
                 ))}
               </div>
 
-              {/* Confidence Selector */}
+              {/* Confidence Certainty Selector */}
               <div className="mt-6 border-t border-white/5 pt-4 space-y-2">
-                <label className="text-xs uppercase text-muted-foreground font-semibold block">
+                <label className="text-xs uppercase text-muted-foreground font-bold block">
                   How certain are you before submitting?
                 </label>
                 <div className="flex gap-2">
@@ -448,9 +452,9 @@ export default function Quiz() {
                       key={item.value}
                       type="button"
                       onClick={() => setManualConfidence(item.value)}
-                      className={`flex-1 py-2.5 text-xs rounded-xl border transition-all duration-200 ${
+                      className={`flex-1 py-2.5 text-xs rounded-xl border transition-all duration-150 btn-active-push ${
                         manualConfidence === item.value
-                          ? "bg-green-500/10 text-green-300 border-green-500 shadow-md shadow-green-500/5 font-semibold"
+                          ? "bg-mint/5 text-mint border-mint font-bold"
                           : "bg-black/40 border-white/10 text-muted-foreground hover:border-white/20 hover:text-white"
                       }`}
                     >
@@ -460,10 +464,11 @@ export default function Quiz() {
                 </div>
               </div>
 
+              {/* Optional Reflection Box */}
               {idx === total - 1 && (
                 <div className="mt-6 border-t border-white/5 pt-4">
-                  <label className="text-sm text-gray-400 font-medium">
-                    In 2–3 lines, explain the concept you found most difficult:
+                  <label className="text-xs uppercase text-muted-foreground font-bold block mb-2">
+                    Help Cognify understand your thinking (Optional)
                   </label>
 
                   <textarea
@@ -475,9 +480,12 @@ export default function Quiz() {
                         backspaceRef.current += 1;
                       }
                     }}
-                    className="w-full mt-2 p-4 rounded-xl bg-black text-white border border-white/10 focus:border-green-500 focus:outline-none transition-colors"
-                    rows={3}
-                    placeholder="Provide your cognitive reflection to enable deep insight extraction..."
+                    className="w-full p-4 rounded-xl bg-black text-white border border-white/10 focus:border-mint focus:outline-none transition-colors text-xs font-mono"
+                    rows={4}
+                    placeholder="Example:
+• I remembered the formula but wasn't sure.
+• I guessed between two options.
+• I forgot the time complexity."
                   />
                 </div>
               )}
@@ -485,8 +493,8 @@ export default function Quiz() {
               <div className="mt-6 flex justify-end">
                 <Button
                   onClick={submit}
-                  disabled={selected === null || isSubmitting || (idx === total - 1 && reflection.trim() === "")}
-                  className="bg-green-500 hover:bg-green-600 text-black font-semibold rounded-xl px-6 py-2.5 transition-colors disabled:opacity-50"
+                  disabled={selected === null || isSubmitting}
+                  className="bg-mint hover:bg-mint-glow text-black font-bold rounded-xl px-6 py-2.5 transition-all btn-active-push disabled:opacity-30"
                 >
                   {isSubmitting 
                     ? "Submitting..." 

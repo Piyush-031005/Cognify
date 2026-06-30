@@ -84,42 +84,46 @@
     --ease-out-soft: cubic-bezier(0.22, 1, 0.36, 1);
   }
 
-  /* ---- INSIDE APP THEME (Dashboard / Quiz) — light, airy, calm ---- */
+  /* ---- INSIDE APP THEME (Dashboard / Quiz) — Warm Charcoal & Mint/Orange Accents ---- */
   .theme-inside {
-    --background: 170 30% 18%;         /* lighter muted teal */
-    --foreground: 160 30% 94%;
+    --background: 220 15% 7%;          /* Rich dark warm charcoal */
+    --foreground: 210 20% 98%;          /* Crisp off-white */
 
-    --card: 170 25% 22%;
-    --card-foreground: 160 30% 94%;
+    --card: 220 15% 10%;                /* Soft elevated surface card */
+    --card-foreground: 210 20% 98%;
 
-    --popover: 170 25% 22%;
-    --popover-foreground: 160 30% 94%;
+    --popover: 220 15% 10%;
+    --popover-foreground: 210 20% 98%;
 
-    --primary: 152 45% 62%;            /* normal soft green, not neon */
-    --primary-foreground: 170 35% 12%;
-    --primary-glow: 152 50% 72%;
+    --primary: 154 99% 44%;            /* Classic Mint Green Primary */
+    --primary-foreground: 220 15% 5%;
+    --primary-glow: 154 99% 50%;
 
-    --secondary: 170 22% 26%;
-    --secondary-foreground: 160 30% 94%;
+    --secondary: 220 10% 16%;           /* Muted warm grey secondary surface */
+    --secondary-foreground: 210 20% 98%;
 
-    --muted: 170 20% 28%;
-    --muted-foreground: 160 18% 75%;
+    --muted: 220 12% 14%;
+    --muted-foreground: 218 11% 65%;   /* Soft readable secondary text */
 
-    --accent: 152 45% 62%;
-    --accent-foreground: 170 35% 12%;
+    --accent: 24 95% 53%;               /* Premium Orange Accent */
+    --accent-foreground: 220 15% 5%;
 
-    --destructive: 0 60% 60%;
+    --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 170 22% 30%;
-    --input: 170 20% 28%;
-    --ring: 152 45% 62%;
+    --border: 220 13% 15%;              /* Very subtle border */
+    --input: 220 13% 13%;
+    --ring: 154 99% 44%;
 
-    /* override brand tokens inside for softer feel */
-    --cyan-deep: 170 30% 18%;
-    --cyan-deep-2: 170 25% 22%;
-    --mint: 152 45% 62%;
-    --mint-glow: 152 50% 72%;
+    --radius-sm: 4px;
+    --radius-md: 8px;
+    --radius-lg: 12px;
+
+    --transition-fast: 120ms cubic-bezier(0.16, 1, 0.3, 1);
+    --transition-normal: 200ms cubic-bezier(0.16, 1, 0.3, 1);
+
+    --shadow-soft: 0 4px 20px -2px rgba(0, 0, 0, 0.4);
+    --shadow-card: 0 8px 30px -4px rgba(0, 0, 0, 0.5);
   }
 
   /* ---- REPORT THEME — softer, more editorial Tarantino yellow/red ---- */
@@ -236,3 +240,67 @@
   50%      { transform: translateY(-8px); }
 }
 .float-soft { animation: floatSoft 6s ease-in-out infinite; }
+
+/* ---- Custom Design System Utilities ---- */
+.transition-fast {
+  transition: all var(--transition-fast);
+}
+
+.transition-normal {
+  transition: all var(--transition-normal);
+}
+
+/* Apple/Notion style card hover lift */
+.card-hover-lift {
+  transition: transform 150ms cubic-bezier(0.16, 1, 0.3, 1), border-color 150ms ease, box-shadow 150ms ease;
+}
+.card-hover-lift:hover {
+  transform: translateY(-2px);
+  border-color: rgba(16, 185, 129, 0.3);
+  box-shadow: var(--shadow-card);
+}
+
+/* Button active push */
+.btn-active-push:active {
+  transform: scale(0.96);
+}
+
+/* Custom horizontal progress loader animation */
+@keyframes loadingProgress {
+  0% { transform: translateX(-100%); }
+  50% { transform: translateX(-20%); }
+  100% { transform: translateX(0%); }
+}
+
+.loader-progress-bar {
+  animation: loadingProgress 3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* Print Overrides for Clean Scientific Research Paper style */
+@media print {
+  body, html {
+    background: #fff !important;
+    color: #000 !important;
+  }
+  .no-print, header, nav, button, aside, .no-print * {
+    display: none !important;
+  }
+  .print-content {
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    background: transparent !important;
+    border: none !important;
+  }
+}
+
+/* Skeleton Loading Pulse */
+@keyframes skeletonPulse {
+  0%, 100% { opacity: 0.6; }
+  50% { opacity: 0.35; }
+}
+.skeleton-pulse {
+  animation: skeletonPulse 1.5s ease-in-out infinite;
+  background-color: rgba(255, 255, 255, 0.05);
+}
+

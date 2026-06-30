@@ -293,11 +293,11 @@ def generate_report(student_email, attempt_id, reflection=""):
     low_eng_q = min(question_sessions, key=lambda x: x["engagement_score"])
 
     insights = [
-        f"Strongest hesitation surfaced on '{high_hes_q['question_text']}' where decision latency noticeably increased.",
-        f"Engagement dipped most on '{low_eng_q['question_text']}', suggesting weaker cognitive anchoring.",
-        f"Reflection writing showed {reflection_score.lower()} conceptual articulation after the quiz.",
-        f"Option scanning stayed active throughout the session (avg {avg_hover}), indicating visible internal checking.",
-        f"Self-doubt reclick behavior remained {avg_same_click} on average across questions."
+        f"We observed the strongest hesitation on '{high_hes_q['question_text']}' where decision latency noticeably increased.",
+        f"Our analysis indicates engagement dipped most on '{low_eng_q['question_text']}', suggesting weaker cognitive anchoring.",
+        f"We noticed that reflection writing showed {reflection_score.lower()} conceptual articulation after the quiz.",
+        f"We tracked active option scanning throughout the session (avg {avg_hover}), indicating visible internal checking.",
+        f"We measured self-doubt reclick behavior at {avg_same_click} on average across questions."
     ]
 
     # Invoke the Evidence Fusion Layer (Layer 5)
