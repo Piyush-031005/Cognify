@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import InsideLayout from "@/components/InsideLayout";
 import { Button } from "@/components/ui/button";
+import TextScrambler from "@/components/TextScrambler";
 
 const SUBJECT_MAP: Record<string, { label: string; topics: Record<string, { label: string; subtopics: Record<string, string> }> }> = {
   math: {
@@ -1324,7 +1325,7 @@ export default function Dashboard() {
                   <div className="grid gap-4 sm:grid-cols-4">
                     {/* Assessments Count */}
                     <div className="rounded-2xl border border-white/10 p-5 bg-card flex flex-col justify-between card-hover-lift">
-                      <div className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">Assessments</div>
+                      <div className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold"><TextScrambler text="Assessments" /></div>
                       <div className="mt-3">
                         {loadingStats ? (
                           <div className="h-9 w-16 skeleton-pulse rounded-md" />
@@ -1337,7 +1338,7 @@ export default function Dashboard() {
 
                     {/* Enrolled Students */}
                     <div className="rounded-2xl border border-white/10 p-5 bg-card flex flex-col justify-between card-hover-lift">
-                      <div className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">Students Enrolled</div>
+                      <div className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold"><TextScrambler text="Students Enrolled" /></div>
                       <div className="mt-3">
                         {loadingStats ? (
                           <div className="h-9 w-16 skeleton-pulse rounded-md" />
@@ -1350,7 +1351,7 @@ export default function Dashboard() {
 
                     {/* Cognitive Reports */}
                     <div className="rounded-2xl border border-white/10 p-5 bg-card flex flex-col justify-between card-hover-lift">
-                      <div className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">Reports Compiled</div>
+                      <div className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold"><TextScrambler text="Reports Compiled" /></div>
                       <div className="mt-3">
                         {loadingStats ? (
                           <div className="h-9 w-16 skeleton-pulse rounded-md" />
@@ -1363,7 +1364,7 @@ export default function Dashboard() {
 
                     {/* Average Cognitive Health */}
                     <div className="rounded-2xl border border-white/10 p-5 bg-card flex flex-col justify-between card-hover-lift">
-                      <div className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">Avg Cognitive Health</div>
+                      <div className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold"><TextScrambler text="Avg Cognitive Health" /></div>
                       <div className="mt-3">
                         {loadingStats ? (
                           <div className="h-9 w-16 skeleton-pulse rounded-md" />
@@ -1380,12 +1381,12 @@ export default function Dashboard() {
                     {/* Left 2 Columns: Recent Assessments Cards */}
                     <div className="lg:col-span-2 space-y-6">
                       <div className="flex items-center justify-between border-b border-white/5 pb-3">
-                        <h2 className="text-lg font-bold tracking-tight uppercase text-white font-display">Recent Assessments</h2>
+                        <h2 className="text-lg font-bold tracking-tight uppercase text-white font-display"><TextScrambler text="Recent Assessments" /></h2>
                         <button
                           onClick={() => setActiveMode("designer")}
                           className="text-xs font-bold text-mint hover:text-mint-glow flex items-center gap-1 transition-fast btn-active-push"
                         >
-                          + Create Assessment
+                          + <TextScrambler text="Create Assessment" />
                         </button>
                       </div>
 

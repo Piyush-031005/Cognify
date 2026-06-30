@@ -3,6 +3,8 @@ import { motion } from "framer-motion";
 import { ArrowRight, Brain, Activity, Eye, Sparkles } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import { Button } from "@/components/ui/button";
+import InteractiveCanvas from "@/components/InteractiveCanvas";
+import TextScrambler from "@/components/TextScrambler";
 
 const features = [
   { icon: Brain, title: "Cognitive Mapping", desc: "We measure how you think — conceptual vs memorized vs applied." },
@@ -22,49 +24,60 @@ export default function Landing() {
 
       {/* HERO */}
       <section className="relative overflow-hidden grid-bg">
-        <div className="container relative grid lg:grid-cols-12 gap-10 py-24 lg:py-32">
+        <div className="absolute inset-0 z-0 pointer-events-auto opacity-30">
+          <InteractiveCanvas />
+        </div>
+        <div className="container relative z-10 grid lg:grid-cols-12 gap-10 py-24 lg:py-32">
           <div className="lg:col-span-7 flex flex-col gap-8">
             <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }}
               className="inline-flex items-center gap-2 self-start rounded-full border border-border bg-card px-4 py-1.5 text-sm font-medium">
               <span className="h-2 w-2 rounded-full bg-primary shadow-[0_0_12px_hsl(var(--lime))]" />
-              Cognitive Analysis System · v1
+              <TextScrambler text="Cognitive Analysis System · v1" />
             </motion.div>
 
-            <motion.h1 initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.7, delay: 0.05 }}
-              className="font-display text-5xl sm:text-6xl lg:text-7xl font-bold leading-[1.02] tracking-tight">
-              Understand <span className="relative inline-block">
-                <span className="relative z-10">how</span>
-                <span className="absolute inset-x-0 bottom-2 h-4 bg-primary -z-0" />
-              </span> you think.
-              <br />
-              Not just what you answer.
-            </motion.h1>
+            <h1 className="font-display text-5xl sm:text-6xl lg:text-7xl font-bold leading-[1.02] tracking-tight">
+              <div className="overflow-hidden py-1">
+                <motion.div initial={{ y: "100%" }} animate={{ y: 0 }} transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1], delay: 0.05 }}>
+                  Understand <span className="relative inline-block">
+                    <span className="relative z-10">how</span>
+                    <span className="absolute inset-x-0 bottom-2 h-4 bg-primary -z-0" />
+                  </span> you think.
+                </motion.div>
+              </div>
+              <div className="overflow-hidden py-1">
+                <motion.div initial={{ y: "100%" }} animate={{ y: 0 }} transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1], delay: 0.15 }}>
+                  Not just what you answer.
+                </motion.div>
+              </div>
+            </h1>
 
-            <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.7, delay: 0.15 }}
+            <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.7, delay: 0.25 }}
               className="max-w-xl text-lg text-muted-foreground">
               Cognify silently observes your reasoning patterns — hesitation, confidence, conceptual depth — and turns them into a report that actually understands you.
             </motion.p>
 
-            <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, delay: 0.25 }}
+            <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, delay: 0.35 }}
               className="flex flex-wrap items-center gap-3">
               <Button asChild size="lg"
                 className="group h-14 rounded-2xl bg-primary text-primary-foreground px-7 text-base font-semibold shadow-lime hover:scale-[1.03] hover:bg-primary-glow transition-all">
                 <Link to="/auth">
-                  Start Analysis
+                  <TextScrambler text="Start Analysis" />
                   <ArrowRight className="ml-1 h-5 w-5 transition-transform group-hover:translate-x-1" />
                 </Link>
               </Button>
               <Button asChild variant="ghost" size="lg" className="h-14 rounded-2xl px-6 text-base">
-                <a href="#how">How it works</a>
+                <a href="#how">
+                  <TextScrambler text="How it works" />
+                </a>
               </Button>
             </motion.div>
 
             <div className="flex flex-wrap items-center gap-6 pt-4 text-sm text-muted-foreground font-mono uppercase tracking-wider">
-              <div><span className="font-display text-lg font-bold text-foreground block">Adaptive</span> assessment</div>
+              <div><span className="font-display text-lg font-bold text-foreground block"><TextScrambler text="Adaptive" /></span> assessment</div>
               <div className="h-8 w-px bg-border hidden sm:block" />
-              <div><span className="font-display text-lg font-bold text-foreground block">Behavioral</span> telemetry</div>
+              <div><span className="font-display text-lg font-bold text-foreground block"><TextScrambler text="Behavioral" /></span> telemetry</div>
               <div className="h-8 w-px bg-border hidden sm:block" />
-              <div><span className="font-display text-lg font-bold text-foreground block">Personalized</span> insights</div>
+              <div><span className="font-display text-lg font-bold text-foreground block"><TextScrambler text="Personalized" /></span> insights</div>
             </div>
           </div>
 
