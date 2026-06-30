@@ -95,9 +95,9 @@
     --popover: 220 12% 9%;
     --popover-foreground: 210 20% 98%;
 
-    --primary: 24 95% 53%;              /* Premium Cool Bright Orange Accent (#F97316) */
-    --primary-foreground: 0 0% 100%;
-    --primary-glow: 24 95% 53%;
+    --primary: 47 100% 50%;              /* Awwwards Gold Yellow Accent (#FFC000) */
+    --primary-foreground: 220 15% 5%;
+    --primary-glow: 47 100% 50%;
 
     --secondary: 220 10% 14%;           /* Neutral grey secondary */
     --secondary-foreground: 210 20% 98%;
@@ -105,15 +105,18 @@
     --muted: 220 12% 12%;
     --muted-foreground: 218 11% 75%;   /* Highly readable light grey secondary text (no hidden text!) */
 
-    --accent: 24 95% 53%;               /* Premium Cool Bright Orange Accent (#F97316) */
-    --accent-foreground: 0 0% 100%;
+    --accent: 47 100% 50%;               /* Awwwards Gold Yellow Accent (#FFC000) */
+    --accent-foreground: 220 15% 5%;
 
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
 
     --border: 220 13% 13%;              /* Very clean subtle border */
     --input: 220 13% 11%;
-    --ring: 24 95% 53%;                 /* Cool bright orange focus ring */
+    --ring: 47 100% 50%;                 /* Gold Yellow focus ring */
+
+    --mint: 47 100% 50%;                /* Map green elements to gold yellow in dark mode! */
+    --mint-glow: 47 100% 50%;
 
     --radius-sm: 8px;
     --radius-md: 12px;
