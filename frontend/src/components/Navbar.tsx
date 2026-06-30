@@ -13,14 +13,24 @@ export default function Navbar({ variant = "outside" }: { variant?: "outside" | 
   const [theme, setTheme] = useState(() => localStorage.getItem("theme") || "dark");
 
   useEffect(() => {
-    if (theme === "light") {
-      document.documentElement.classList.remove("theme-inside");
-      document.documentElement.classList.add("theme-light-pop");
+    const isLanding = location.pathname === "/";
+    if (isLanding) {
+      if (theme === "light") {
+        document.documentElement.classList.remove("theme-inside", "theme-light-pop");
+      } else {
+        document.documentElement.classList.remove("theme-light-pop");
+        document.documentElement.classList.add("theme-inside");
+      }
     } else {
-      document.documentElement.classList.remove("theme-light-pop");
-      document.documentElement.classList.add("theme-inside");
+      if (theme === "light") {
+        document.documentElement.classList.remove("theme-inside");
+        document.documentElement.classList.add("theme-light-pop");
+      } else {
+        document.documentElement.classList.remove("theme-light-pop");
+        document.documentElement.classList.add("theme-inside");
+      }
     }
-  }, [theme]);
+  }, [theme, location.pathname]);
 
   const toggleTheme = () => {
     const nextTheme = theme === "dark" ? "light" : "dark";
