@@ -16,10 +16,6 @@ const features = [
 export default function Landing() {
   return (
     <div className="min-h-screen bg-background text-foreground relative overflow-hidden">
-      {/* ambient lime glows for more lime presence */}
-      <div className="pointer-events-none absolute -top-32 -left-32 h-[480px] w-[480px] rounded-full bg-primary/10 blur-[160px]" />
-      <div className="pointer-events-none absolute top-[40%] -right-40 h-[520px] w-[520px] rounded-full bg-primary/8 blur-[160px]" />
-      <div className="pointer-events-none absolute bottom-0 left-1/3 h-[360px] w-[360px] rounded-full bg-primary-glow/8 blur-[160px]" />
       <Navbar />
 
       {/* HERO */}

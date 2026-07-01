@@ -3,7 +3,7 @@ import Navbar from "./Navbar";
 
 export default function InsideLayout({ children, showNav = true }: { children: React.ReactNode; showNav?: boolean }) {
   useEffect(() => {
-    const currentTheme = localStorage.getItem("theme") || "dark";
+    const currentTheme = localStorage.getItem("theme") || "light";
     const themeClass = currentTheme === "light" ? "theme-light-pop" : "theme-inside";
     document.documentElement.classList.add(themeClass);
     return () => {

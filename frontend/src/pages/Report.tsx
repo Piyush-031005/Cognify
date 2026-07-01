@@ -10,7 +10,7 @@ export default function Report() {
   const user = getCurrentUser();
 
   useEffect(() => {
-    const currentTheme = localStorage.getItem("theme") || "dark";
+    const currentTheme = localStorage.getItem("theme") || "light";
     const themeClass = currentTheme === "light" ? "theme-light-report" : "theme-inside";
     document.documentElement.classList.add(themeClass);
     return () => {

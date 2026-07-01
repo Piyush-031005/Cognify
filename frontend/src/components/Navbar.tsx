@@ -10,7 +10,7 @@ export default function Navbar({ variant = "outside" }: { variant?: "outside" | 
   const user = getCurrentUser();
   const inside = variant === "inside";
 
-  const [theme, setTheme] = useState(() => localStorage.getItem("theme") || "dark");
+  const [theme, setTheme] = useState(() => localStorage.getItem("theme") || "light");
 
   useEffect(() => {
     const isLandingOrAuth = location.pathname === "/" || location.pathname === "/auth";

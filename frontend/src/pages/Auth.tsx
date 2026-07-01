@@ -148,10 +148,6 @@ const onSignin = async (e: React.FormEvent) => {
 
   return (
     <div className="min-h-screen bg-background text-foreground relative overflow-hidden grid-bg">
-      {/* ambient lime glows */}
-      <div className="pointer-events-none absolute -top-32 -left-32 h-[480px] w-[480px] rounded-full bg-primary/10 blur-[160px]" />
-      <div className="pointer-events-none absolute top-[50%] -right-40 h-[480px] w-[480px] rounded-full bg-primary/8 blur-[160px]" />
-      
       <Navbar />
 
       <div className="container grid lg:grid-cols-2 gap-12 py-14 lg:py-20 relative">
