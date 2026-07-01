@@ -4215,6 +4215,8 @@ export default function Dashboard() {
             </div>
           </div>
         )}
+            </div>
+          </div>
       </InsideLayout>
     );
   }
@@ -4307,8 +4309,6 @@ export default function Dashboard() {
               ))}
             </div>
           )}
-            </div>
-          </div>
         </div>
       </div>
     </InsideLayout>
