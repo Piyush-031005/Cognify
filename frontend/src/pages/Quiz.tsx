@@ -19,6 +19,7 @@ export default function Quiz() {
   const [isLoading, setIsLoading] = useState(true);
   const [loadingState, setLoadingState] = useState("Analyzing cognitive memory history...");
   const [manualConfidence, setManualConfidence] = useState<number>(0.7);
+  const [textAnswer, setTextAnswer] = useState<string>(""); // for numerical / short_text questions
   const user = getCurrentUser();
   const navigate = useNavigate();
 
@@ -118,6 +119,7 @@ export default function Quiz() {
     sameOptionClicksRef.current = 0;
     hoveredOptionsRef.current = new Set();
     setSelected(null);
+    setTextAnswer("");
     setManualConfidence(0.7); // reset manual confidence
   }, [idx]);
 
@@ -164,12 +166,29 @@ export default function Quiz() {
   };
 
   const submit = async () => {
-    if (selected === null) return;
+    const qType = q?.question_type || "mcq";
+    const isMCQ = qType === "mcq" || qType === "image_mcq";
+    if (isMCQ && selected === null) return;
+    if (!isMCQ && textAnswer.trim() === "") return;
     setIsSubmitting(true);
 
     try {
       const responseTimeMs = Date.now() - startedAt.current;
-      const correct = selected === q.correctIndex;
+      const qType = q?.question_type || "mcq";
+      const isMCQ = qType === "mcq" || qType === "image_mcq";
+
+      let correct: boolean;
+      if (isMCQ) {
+        correct = selected === q.correctIndex;
+      } else if (qType === "numerical") {
+        // Tolerance ±0.001 for numerical answers
+        const studentNum = parseFloat(textAnswer.trim());
+        const correctNum = parseFloat(String(q.correct_answer ?? q.correctIndex ?? ""));
+        correct = !isNaN(studentNum) && !isNaN(correctNum) && Math.abs(studentNum - correctNum) <= 0.001;
+      } else {
+        // short_text — case-insensitive trimmed comparison
+        correct = textAnswer.trim().toLowerCase() === String(q.correct_answer ?? "").trim().toLowerCase();
+      }
 
       const dynamicConfidence = Math.max(
         0.35,
@@ -350,9 +369,9 @@ export default function Quiz() {
       <InsideLayout>
         <div className="flex flex-col items-center justify-center min-h-[60vh] text-white space-y-6">
           <div className="h-1 w-64 bg-white/10 rounded-full overflow-hidden relative">
-            <div className="h-full bg-mint loader-progress-bar rounded-full absolute left-0 top-0" style={{ width: "100%" }} />
+            <div className="h-full bg-white/60 loader-progress-bar rounded-full absolute left-0 top-0" style={{ width: "100%" }} />
           </div>
-          <div className="text-lg font-medium text-green-400 text-center transition-all duration-300">
+          <div className="text-lg font-medium text-white text-center transition-all duration-300">
             {loadingState}
           </div>
           <p className="text-xs text-muted-foreground">Configuring AI cognitive analytics environment...</p>
@@ -413,6 +432,19 @@ export default function Quiz() {
             <div className="mt-8 bg-card border border-white/10 p-8 rounded-2xl space-y-6">
               <h2 className="text-2xl font-bold font-display text-white leading-relaxed">{q.prompt}</h2>
 
+              {/* Question Image (for image_mcq or any question with image_url) */}
+              {q.image_url && (
+                <div className="mt-4">
+                  <img
+                    src={q.image_url}
+                    alt="Question diagram"
+                    className="max-w-full rounded-xl border border-white/10 object-contain max-h-72 w-auto mx-auto block"
+                  />
+                </div>
+              )}
+
+              {/* MCQ / Image-MCQ: option buttons */}
+              {(!q.question_type || q.question_type === "mcq" || q.question_type === "image_mcq") && (
               <div className="mt-6 space-y-3">
                 {q.options.map((opt: string, i: number) => (
                   <button
@@ -436,6 +468,51 @@ export default function Quiz() {
                   </button>
                 ))}
               </div>
+              )}
+
+              {/* Numerical input */}
+              {q.question_type === "numerical" && (
+                <div className="mt-6 space-y-2">
+                  <label className="text-xs uppercase text-muted-foreground font-bold block">Enter your numerical answer</label>
+                  <input
+                    type="number"
+                    step="any"
+                    value={textAnswer}
+                    onChange={(e) => {
+                      setTextAnswer(e.target.value);
+                      changes.current += 1;
+                      lastInteract.current = Date.now();
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === "Backspace") backspaceRef.current += 1;
+                    }}
+                    placeholder="Type a number, e.g. 2.5"
+                    className="w-full p-4 rounded-xl bg-black border border-white/10 text-white text-lg font-mono focus:border-mint focus:outline-none transition-colors"
+                  />
+                  <p className="text-[10px] text-muted-foreground">Decimal answers are accepted. E.g. 2.5 or 2.50 are the same.</p>
+                </div>
+              )}
+
+              {/* Short Text input */}
+              {q.question_type === "short_text" && (
+                <div className="mt-6 space-y-2">
+                  <label className="text-xs uppercase text-muted-foreground font-bold block">Enter your answer</label>
+                  <input
+                    type="text"
+                    value={textAnswer}
+                    onChange={(e) => {
+                      setTextAnswer(e.target.value);
+                      changes.current += 1;
+                      lastInteract.current = Date.now();
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === "Backspace") backspaceRef.current += 1;
+                    }}
+                    placeholder="Type your answer here..."
+                    className="w-full p-4 rounded-xl bg-black border border-white/10 text-white text-base focus:border-mint focus:outline-none transition-colors"
+                  />
+                </div>
+              )}
 
               {/* Confidence Certainty Selector */}
               <div className="mt-6 border-t border-white/5 pt-4 space-y-2">
@@ -493,7 +570,7 @@ export default function Quiz() {
               <div className="mt-6 flex justify-end">
                 <Button
                   onClick={submit}
-                  disabled={selected === null || isSubmitting}
+                  disabled={(q?.question_type === "mcq" || q?.question_type === "image_mcq" || !q?.question_type ? selected === null : textAnswer.trim() === "") || isSubmitting}
                   className="bg-mint hover:bg-mint-glow text-black font-bold rounded-xl px-6 py-2.5 transition-all btn-active-push disabled:opacity-30"
                 >
                   {isSubmitting 
@@ -533,43 +610,42 @@ function Processing() {
   return (
     <div className="min-h-[85vh] flex items-center justify-center px-6 relative overflow-hidden">
       <div className="absolute inset-0 bg-black" />
-      <div className="absolute w-[500px] h-[500px] rounded-full bg-green-500/10 blur-3xl animate-pulse" />
 
       <div className="relative text-center max-w-3xl">
-        <div className="text-[11px] uppercase tracking-[0.45em] text-green-400 mb-6">
-          Cognify Neural Engine v2
+        <div className="text-[11px] uppercase tracking-[0.45em] text-muted-foreground mb-6">
+          Cognify Neural Engine · Analysis in Progress
         </div>
 
         <h2 className="text-3xl sm:text-5xl font-bold text-white leading-tight">
           Building your
-          <span className="text-green-400"> cognitive fingerprint</span>
+          <span className="text-white opacity-70"> cognitive fingerprint</span>
         </h2>
 
-        <p className="mt-5 text-gray-400 text-lg leading-8">
-          We are not evaluating correctness alone.  
+        <p className="mt-5 text-muted-foreground text-lg leading-8">
+          We are not evaluating correctness alone.<br />
           The system is reconstructing how decisions were formed beneath your answers.
         </p>
 
-        <div className="mt-12 space-y-4 text-left">
+        <div className="mt-12 space-y-3 text-left">
           {stages.map((s, i) => (
             <motion.div
               key={i}
-              initial={{ opacity: 0.25 }}
-              animate={{ opacity: i <= stage ? 1 : 0.25 }}
-              className={`rounded-xl border px-5 py-4 ${
+              initial={{ opacity: 0.2 }}
+              animate={{ opacity: i <= stage ? 1 : 0.2 }}
+              className={`rounded-xl border px-5 py-3.5 text-sm ${
                 i <= stage
-                  ? "border-green-400/40 bg-green-400/5 text-green-300"
-                  : "border-gray-800 bg-gray-900 text-gray-600"
+                  ? "border-white/20 bg-white/5 text-white"
+                  : "border-white/5 bg-white/[0.02] text-muted-foreground"
               }`}
             >
-              {i <= stage ? "✓ " : "• "} {s}
+              <span className="mr-2 text-muted-foreground">{i <= stage ? "✓" : "·"}</span> {s}
             </motion.div>
           ))}
         </div>
 
-        <div className="mt-10 h-1 w-full bg-gray-800 rounded-full overflow-hidden">
+        <div className="mt-10 h-0.5 w-full bg-white/10 rounded-full overflow-hidden">
           <motion.div
-            className="h-full bg-green-400"
+            className="h-full bg-white"
             initial={{ width: "0%" }}
             animate={{ width: "100%" }}
             transition={{ duration: 4, ease: "easeInOut" }}

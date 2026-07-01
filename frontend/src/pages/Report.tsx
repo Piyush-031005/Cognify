@@ -127,12 +127,12 @@ export default function Report() {
           <h1 className="mt-3 font-display text-5xl sm:text-6xl font-extrabold tracking-tight leading-[0.95] text-white">
             {user.name},
             <br />
-            <span className="text-mint">here's how</span> your mind moved.
+            <span className="opacity-70">here's how</span> your mind moved.
           </h1>
 
           <div className="mt-5 flex flex-wrap gap-2 print:flex">
             <span className="inline-flex items-center gap-1.5 rounded-full bg-white/5 border border-white/10 text-white px-3.5 py-1 text-xs font-bold uppercase">
-              <Brain className="h-3 w-3 text-mint" /> Pattern: <span className="text-mint">{report.pattern}</span>
+              <Brain className="h-3 w-3 text-muted-foreground" /> Pattern: <span className="text-white font-bold">{report.pattern}</span>
             </span>
             <span className="inline-flex items-center gap-1.5 rounded-full bg-white/5 border border-white/10 text-white px-3.5 py-1 text-xs font-bold uppercase">
               <ShieldAlert className="h-3 w-3 text-rose-400" /> {riskBadge}
@@ -145,11 +145,11 @@ export default function Report() {
           {/* Left Sidebar Menu */}
           <div className="lg:col-span-1 space-y-6 print:hidden">
             <div className="rounded-2xl border border-white/10 p-5 bg-card relative overflow-hidden">
-              <span className="text-[10px] uppercase font-bold tracking-widest text-mint block">Cognitive Profile</span>
+              <span className="text-[10px] uppercase font-bold tracking-widest text-muted-foreground block">Cognitive Profile</span>
               <h3 className="text-xs font-bold text-white mt-1 uppercase">100% Completed</h3>
               <div className="flex items-center gap-2 mt-3">
                 <div className="h-1.5 w-full bg-white/5 rounded-full overflow-hidden">
-                  <div className="h-full bg-mint" style={{ width: "100%" }} />
+                  <div className="h-full bg-white/60" style={{ width: "100%" }} />
                 </div>
               </div>
             </div>
@@ -174,7 +174,7 @@ export default function Report() {
                   {tab.icon}
                   {tab.label}
                   {activeReportTab === tab.id && (
-                    <span className="absolute left-0 top-1/4 bottom-1/4 w-1 bg-mint rounded" />
+                    <span className="absolute left-0 top-1/4 bottom-1/4 w-0.5 bg-white rounded" />
                   )}
                 </button>
               ))}
@@ -192,7 +192,7 @@ export default function Report() {
               </div>
               
               <div className="rounded-2xl border border-white/10 bg-card p-6 leading-relaxed text-sm text-gray-300">
-                <h3 className="font-bold text-white mb-2 uppercase text-xs tracking-wider text-mint">Final System Conclusion</h3>
+                <h3 className="font-bold text-white mb-2 uppercase text-xs tracking-wider">Final System Conclusion</h3>
                 {finalConclusion}
               </div>
 
@@ -223,10 +223,10 @@ export default function Report() {
                 <div className="rounded-2xl border border-white/10 bg-card p-6 space-y-3">
                   <div className="flex justify-between items-center text-xs font-bold">
                     <span className="text-white">Conceptual Depth</span>
-                    <span className="text-mint">{s.conceptual}%</span>
+                    <span className="text-white font-bold">{s.conceptual}%</span>
                   </div>
                   <div className="h-1.5 bg-white/5 rounded-full overflow-hidden">
-                    <div className="h-full bg-mint" style={{ width: `${s.conceptual}%` }} />
+                    <div className="h-full bg-white/70" style={{ width: `${s.conceptual}%` }} />
                   </div>
                   <div className="pt-2 border-t border-white/5 space-y-1 text-[11px] text-gray-400 font-mono">
                     <span className="font-bold text-white block uppercase text-[9px] tracking-wider mb-1">Evidence Summary</span>
@@ -296,10 +296,10 @@ export default function Report() {
                 <div className="rounded-2xl border border-white/10 bg-card p-5 space-y-3">
                   <div className="flex justify-between items-center text-xs font-bold text-white">
                     <span>Confidence Score</span>
-                    <span className="text-mint">{s.confidence}%</span>
+                    <span className="text-white font-bold">{s.confidence}%</span>
                   </div>
                   <div className="h-1.5 bg-white/5 rounded-full overflow-hidden">
-                    <div className="h-full bg-mint" style={{ width: `${s.confidence}%` }} />
+                    <div className="h-full bg-white/70" style={{ width: `${s.confidence}%` }} />
                   </div>
                 </div>
 
@@ -323,7 +323,7 @@ export default function Report() {
                       <div key={i} className="rounded-2xl border border-white/10 bg-card p-5 space-y-2">
                         <div className="flex items-center justify-between border-b border-white/5 pb-2">
                           <span className="text-xs font-bold text-white">Q{i + 1}: {p.question_text || p.question || "No prompt available"}</span>
-                          <span className={`text-[10px] font-bold px-2 py-0.5 rounded ${p.correct ? "bg-mint/10 text-mint" : "bg-red-400/10 text-red-300"}`}>
+                          <span className={`text-[10px] font-bold px-2 py-0.5 rounded ${p.correct ? "bg-white/10 text-white" : "bg-red-400/10 text-red-300"}`}>
                             {p.correct ? "CORRECT" : "WRONG"}
                           </span>
                         </div>
@@ -351,7 +351,7 @@ export default function Report() {
               </div>
 
               <div className="rounded-2xl border border-white/10 bg-card p-6 space-y-3">
-                <h3 className="text-xs uppercase font-bold text-white tracking-wider text-mint">Long-Term Growth Predictor</h3>
+                <h3 className="text-xs uppercase font-bold text-white tracking-wider">Long-Term Growth Predictor</h3>
                 <p className="text-sm text-gray-300 leading-relaxed">{predictionText}</p>
               </div>
 
@@ -383,7 +383,7 @@ export default function Report() {
                 <h3 className="text-xs uppercase font-bold text-white tracking-wider">Investigator Telemetry Insights</h3>
                 <ul className="space-y-2">
                   {(report.insights || []).map((ins: string, i: number) => (
-                    <li key={i} className="rounded-xl border-l-2 border-mint bg-card px-4 py-3 text-xs leading-relaxed text-gray-300 font-mono">
+                    <li key={i} className="rounded-xl border-l-2 border-white/20 bg-card px-4 py-3 text-xs leading-relaxed text-gray-300 font-mono">
                       {ins}
                     </li>
                   ))}
@@ -398,7 +398,7 @@ export default function Report() {
         <div className="flex flex-wrap gap-3 pt-6 border-t border-white/5 print:hidden">
           <Button
             asChild
-            className="rounded-xl bg-mint text-black hover:bg-mint-glow px-6 font-bold text-xs btn-active-push"
+            className="rounded-xl bg-white text-black hover:bg-white/90 px-6 font-bold text-xs btn-active-push"
           >
             <Link to="/dashboard">Run another analysis</Link>
           </Button>

@@ -202,6 +202,7 @@ export default function Dashboard() {
   // Navigation tabs for Teacher Workspace
   const [activeMode, setActiveMode] = useState<"observe" | "assess" | "intervene" | "improve" | "designer" | "lifecycle" | "explorer" | "validation">("observe");
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [showAdvancedQuestionMetrics, setShowAdvancedQuestionMetrics] = useState(false);
 
   // State
   const [reports, setReports] = useState<any[]>([]);
@@ -1186,29 +1187,24 @@ export default function Dashboard() {
                   </button>
                 </div>
 
-                {/* Sidebar Navigation Links */}
+                {/* Sidebar Navigation Links — role-based */}
                 <nav className="p-4 space-y-1.5">
                   {[
-                    { id: "overview", label: "Overview", icon: Layers, mode: "observe" },
-                    { id: "assessments", label: "Assessments", icon: Plus, mode: "designer" },
-                    { id: "students", label: "Students", icon: Users, mode: "assess" },
-                    { id: "question-bank", label: "Question Bank", icon: FileText, mode: "lifecycle" },
-                    { id: "analytics", label: "Analytics", icon: Activity, mode: "intervene" },
-                    { id: "kg", label: "Knowledge Graph", icon: Brain, mode: "explorer" },
-                    { id: "research", label: "Pilot Research", icon: Award, mode: "validation" },
-                  ].map((item) => {
-                    const isActive = activeMode === item.mode || 
-                      (item.id === "analytics" && ["observe", "assess", "intervene", "improve"].includes(activeMode));
+                    { id: "overview",      label: "Overview",          icon: Layers,   mode: "observe",    roles: ["teacher","researcher","admin"] },
+                    { id: "assessments",   label: "Assessment Studio", icon: Plus,     mode: "designer",   roles: ["teacher","researcher","admin"] },
+                    { id: "students",      label: "Students",          icon: Users,    mode: "assess",     roles: ["teacher","researcher","admin"] },
+                    { id: "question-bank", label: "Question Studio",   icon: FileText, mode: "lifecycle",  roles: ["teacher","researcher","admin"] },
+                    { id: "kg",            label: "Learning Graph",    icon: Brain,    mode: "explorer",   roles: ["teacher","researcher","admin"] },
+                    { id: "analytics",     label: "Insights",          icon: Activity, mode: "intervene",  roles: ["researcher","admin"] },
+                    { id: "research",      label: "Research Lab",      icon: Award,    mode: "validation", roles: ["researcher","admin"] },
+                  ]
+                  .filter(item => item.roles.includes(user.role || "teacher"))
+                  .map((item) => {
+                    const isActive = activeMode === item.mode;
                     return (
                       <button
                         key={item.id}
-                        onClick={() => {
-                          if (item.id === "analytics") {
-                            setActiveMode("intervene");
-                          } else {
-                            setActiveMode(item.mode as any);
-                          }
-                        }}
+                        onClick={() => setActiveMode(item.mode as any)}
                         className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold transition-all ${
                           isActive
                             ? "bg-primary/10 text-primary border-l-2 border-primary"
@@ -1315,14 +1311,13 @@ export default function Dashboard() {
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -10 }}
                   className="space-y-8"
-                >
-                  {/* Welcome Banner */}
+                                {/* Welcome Banner */}
                   <div className="py-6 border-b border-white/5 mb-4">
-                    <h1 className="font-display text-5xl font-extrabold tracking-tight">
-                      Good Afternoon, <span className="text-mint">{user.name}</span>
+                    <h1 className="font-display text-4xl font-extrabold tracking-tight text-white">
+                      Today's Classroom Overview
                     </h1>
                     <p className="text-muted-foreground text-xs mt-1.5 tracking-wider uppercase">
-                      Understand how you think. • Beyond scores.
+                      Cognitive diagnostics and student understanding profiles
                     </p>
                   </div>
 
@@ -1335,7 +1330,7 @@ export default function Dashboard() {
                         {loadingStats ? (
                           <div className="h-9 w-16 skeleton-pulse rounded-md" />
                         ) : (
-                          <span className="text-4xl font-bold font-display text-mint">{stats.total_assessments}</span>
+                          <span className="text-4xl font-bold font-display text-white">{stats.total_assessments}</span>
                         )}
                       </div>
                       <p className="mt-2 text-[10px] text-muted-foreground">Total diagnostic test rooms.</p>
@@ -2598,13 +2593,13 @@ export default function Dashboard() {
                           })
                         )}
                       </div>
-                    </div>
-
-                    {/* 2. MIDDLE WORKSPACE PANEL: INTERACTIVE EDITOR & PREVIEW (col-span-5) */}
-                    <div className="lg:col-span-5 rounded-3xl border border-white/10 p-6 bg-card flex flex-col gap-4 max-h-[750px] overflow-y-auto">
+                                      {/* 2. MIDDLE WORKSPACE PANEL: INTERACTIVE EDITOR & PREVIEW */}
+                    <div className={`rounded-3xl border border-white/10 p-6 bg-card flex flex-col gap-4 max-h-[750px] overflow-y-auto transition-all ${
+                      showAdvancedQuestionMetrics ? "lg:col-span-5" : "lg:col-span-9"
+                    }`}>
                       {!selectedQuestionId || !questionDetail ? (
                         <div className="flex-1 flex flex-col items-center justify-center text-center py-20 text-muted-foreground gap-3">
-                          <Brain className="h-10 w-10 text-mint/30 animate-pulse" />
+                           <Brain className="h-10 w-10 text-mint/30 animate-pulse" />
                           <div>
                             <div className="font-semibold text-white">Question Intelligence Workspace</div>
                             <div className="text-[10px] mt-1 max-w-[250px]">
@@ -2619,7 +2614,7 @@ export default function Dashboard() {
                         </div>
                       ) : (
                         <>
-                          <div className="flex items-center justify-between border-b border-white/10 pb-3">
+                          <div className="flex flex-wrap items-center justify-between border-b border-white/10 pb-3 gap-2">
                             <div>
                               <h3 className="text-sm font-bold text-white flex items-center gap-1.5">
                                 {isPreviewMode ? <Eye className="h-4 w-4 text-mint" /> : <Layers className="h-4 w-4 text-mint" />}
@@ -2630,12 +2625,23 @@ export default function Dashboard() {
                               </p>
                             </div>
                             
-                            <button
-                              onClick={() => setIsPreviewMode(!isPreviewMode)}
-                              className="px-3 py-1.5 rounded-lg border border-white/10 bg-black hover:bg-black/80 hover:text-white transition text-[10px] font-semibold text-muted-foreground flex items-center gap-1"
-                            >
-                              {isPreviewMode ? "Open Editor Mode" : "Switch to Student View"}
-                            </button>
+                            <div className="flex gap-2">
+                              <button
+                                onClick={() => setShowAdvancedQuestionMetrics(!showAdvancedQuestionMetrics)}
+                                className={`px-3 py-1.5 rounded-lg border text-[10px] font-semibold transition flex items-center gap-1 ${
+                                  showAdvancedQuestionMetrics
+                                    ? "bg-primary text-primary-foreground border-primary"
+                                    : "border-white/10 bg-black hover:bg-black/80 text-muted-foreground hover:text-white"
+                                }`}
+                              >
+                                {showAdvancedQuestionMetrics ? "Hide Advanced Metrics" : "Show Advanced Metrics"}
+                              </button>
+                              <button
+                                onClick={() => setIsPreviewMode(!isPreviewMode)}
+                                className="px-3 py-1.5 rounded-lg border border-white/10 bg-black hover:bg-black/80 hover:text-white transition text-[10px] font-semibold text-muted-foreground flex items-center gap-1"
+                              >
+                                {isPreviewMode ? "Open Editor Mode" : "Switch to Student View"}
+                              </button>
                           </div>
 
                           {/* Render Student Preview Mode */}
@@ -2908,69 +2914,50 @@ export default function Dashboard() {
                     </div>
 
                     {/* 3. RIGHT SIDEBAR PANEL: DETAILED ANALYTICS DASHBOARD (col-span-4) */}
-                    <div className="lg:col-span-4 rounded-3xl border border-white/10 p-4 bg-card flex flex-col gap-4 max-h-[750px] overflow-y-auto">
-                      {!selectedQuestionId || !questionDetail ? (
-                        <div className="flex-1 flex items-center justify-center text-center text-muted-foreground py-20">
-                          Select a question to view telemetry and analytics.
-                        </div>
-                      ) : (
-                        <>
-                          <div className="flex border-b border-white/10 pb-1 text-[9px] font-bold text-gray-400 uppercase tracking-wider justify-between gap-1 overflow-x-auto">
-                            <button
-                              onClick={() => setActiveAnalyticsTab("qqi")}
-                              className={`pb-2 px-1 border-b-2 transition ${
-                                activeAnalyticsTab === "qqi" ? "border-mint text-white" : "border-transparent hover:text-white"
-                              }`}
-                            >
-                              QQI Score
-                            </button>
-                            <button
-                              onClick={() => setActiveAnalyticsTab("telemetry")}
-                              className={`pb-2 px-1 border-b-2 transition ${
-                                activeAnalyticsTab === "telemetry" ? "border-mint text-white" : "border-transparent hover:text-white"
-                              }`}
-                            >
-                              Telemetry Cues
-                            </button>
-                            <button
-                              onClick={() => setActiveAnalyticsTab("versions")}
-                              className={`pb-2 px-1 border-b-2 transition ${
-                                activeAnalyticsTab === "versions" ? "border-mint text-white" : "border-transparent hover:text-white"
-                              }`}
-                            >
-                              Versions
-                            </button>
-                            <button
-                              onClick={() => setActiveAnalyticsTab("concepts")}
-                              className={`pb-2 px-1 border-b-2 transition ${
-                                activeAnalyticsTab === "concepts" ? "border-mint text-white" : "border-transparent hover:text-white"
-                              }`}
-                            >
-                              Graph & Reviews
-                            </button>
-                            <button
-                              onClick={() => setActiveAnalyticsTab("audit")}
-                              className={`pb-2 px-1 border-b-2 transition ${
-                                activeAnalyticsTab === "audit" ? "border-mint text-white" : "border-transparent hover:text-white"
-                              }`}
-                            >
-                              Audit
-                            </button>
+                    {showAdvancedQuestionMetrics && (
+                      <div className="lg:col-span-4 rounded-3xl border border-white/10 p-4 bg-card flex flex-col gap-4 max-h-[750px] overflow-y-auto">
+                        {!selectedQuestionId || !questionDetail ? (
+                          <div className="flex-1 flex items-center justify-center text-center text-muted-foreground py-20">
+                            Select a question to view telemetry and analytics.
                           </div>
+                        ) : (
+                          <>
+                            {/* Analytics Tab Strip */}
+                            <div className="flex gap-3 border-b border-white/10 pb-2 text-[10px] text-muted-foreground font-semibold overflow-x-auto">
+                              {[
+                                { id: "qqi", label: "QQI" },
+                                { id: "telemetry", label: "Telemetry Cues" },
+                                { id: "versions", label: "Versions" },
+                                { id: "concepts", label: "Graph & Reviews" },
+                                { id: "audit", label: "Audit" },
+                              ].map((tab) => (
+                                <button
+                                  key={tab.id}
+                                  onClick={() => setActiveAnalyticsTab(tab.id)}
+                                  className={`pb-1.5 px-1 border-b-2 transition whitespace-nowrap ${
+                                    activeAnalyticsTab === tab.id
+                                      ? "border-white text-white"
+                                      : "border-transparent hover:text-white"
+                                  }`}
+                                >
+                                  {tab.label}
+                                </button>
+                              ))}
+                            </div>
 
-                          <div className="flex-1 text-[11px]">
-                            
-                            {/* Tab 1: QQI Explainability Panel */}
-                            {activeAnalyticsTab === "qqi" && (
-                              <div className="space-y-4">
-                                {/* Health Card (Change 8) */}
-                                <div className={`p-3 rounded-2xl border flex items-center justify-between ${
-                                  questionDetail.health.color === "emerald" 
-                                    ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20" 
-                                    : questionDetail.health.color === "rose" 
-                                    ? "bg-rose-500/10 text-rose-400 border-rose-500/20" 
-                                    : "bg-amber-500/10 text-amber-400 border-amber-500/20"
-                                }`}>
+                            <div className="flex-1 text-[11px]">
+
+                              {/* Tab 1: QQI Explainability Panel */}
+                              {activeAnalyticsTab === "qqi" && (
+                                <div className="space-y-4">
+                                  {/* Health Status Card */}
+                                  <div className={`p-3 rounded-2xl border flex items-center justify-between ${
+                                    questionDetail.health.color === "emerald"
+                                      ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20"
+                                      : questionDetail.health.color === "rose"
+                                      ? "bg-rose-500/10 text-rose-400 border-rose-500/20"
+                                      : "bg-amber-500/10 text-amber-400 border-amber-500/20"
+                                  }`}>
                                   <div>
                                     <div className="text-[8px] uppercase tracking-wider text-muted-foreground">MCQ Asset Health</div>
                                     <div className="text-sm font-bold flex items-center gap-1 mt-0.5">
@@ -3379,22 +3366,21 @@ export default function Dashboard() {
                             <div className="text-sm font-bold flex items-center gap-1 mt-0.5">
                               <Brain className="h-4 w-4" />
                               {kgHealth.healthy_status}
-                            </div>
-                            <div className="grid grid-cols-2 gap-2 mt-3 pt-2.5 border-t border-white/5 text-[9px] text-gray-300">
-                              <div>Coverage: <span className="text-white font-bold">{kgHealth.coverage_pct}%</span></div>
-                              <div>Weighted: <span className="text-sky-400 font-bold">{kgHealth.coverage_score}%</span></div>
+                                 <div className="grid grid-cols-2 gap-2 mt-3 pt-2.5 border-t border-white/5 text-[9px] text-gray-300">
+                              <div>Curriculum Coverage: <span className="text-white font-bold">{kgHealth.coverage_pct}%</span></div>
+                              <div>Weighted Mastery: <span className="text-sky-400 font-bold">{kgHealth.coverage_score}%</span></div>
                               <div>Active MCQs: <span className="text-white font-bold">{kgHealth.total_questions} items</span></div>
-                              <div>Student Mastery: <span className="text-mint font-bold">{kgHealth.student_mastery}%</span></div>
+                              <div>Student Mastery: <span className="text-white font-bold">{kgHealth.student_mastery}%</span></div>
                             </div>
                           </div>
 
                           <div className="p-3 bg-black/40 border border-white/5 rounded-2xl space-y-2">
                             <div className="text-[9px] uppercase font-bold text-white flex items-center gap-1">
-                              <ShieldAlert className="h-3.5 w-3.5 text-rose-400" /> Gap Audit Metrics
+                              <ShieldAlert className="h-3.5 w-3.5 text-rose-400" /> Missing Topics Metrics
                             </div>
                             <div className="grid grid-cols-3 gap-1.5 text-center text-[10px]">
                               <div className="p-2 rounded bg-black/60 border border-white/5">
-                                <div className="text-[8px] text-muted-foreground uppercase">Dead</div>
+                                <div className="text-[8px] text-muted-foreground uppercase">Missing</div>
                                 <div className="font-bold text-rose-400 mt-0.5">{kgHealth.dead_nodes_count}</div>
                               </div>
                               <div className="p-2 rounded bg-black/60 border border-white/5">
@@ -3410,11 +3396,11 @@ export default function Dashboard() {
 
                           <div className="p-3 bg-black/40 border border-white/5 rounded-2xl space-y-2">
                             <div className="text-[9px] uppercase font-bold text-white flex items-center gap-1">
-                              <Activity className="h-3.5 w-3.5 text-emerald-400" /> Advanced Topology Metrics
+                              <Activity className="h-3.5 w-3.5 text-emerald-400" /> Knowledge Health
                             </div>
                             <div className="grid grid-cols-2 gap-2 text-[9px] text-gray-300">
                               <div>Avg Depth: <span className="text-white font-bold">{kgHealth.average_depth || 0}</span></div>
-                              <div>Branching Factor: <span className="text-white font-bold">{kgHealth.average_branching || 0}</span></div>
+                              <div>Concept Connections: <span className="text-white font-bold">{kgHealth.average_branching || 0}</span></div>
                               <div className="col-span-2">Longest Chain: <span className="text-white font-bold">{kgHealth.longest_dependency_chain || 0} nodes</span></div>
                               <div className="col-span-2">Weakest Topic: <span className="text-amber-400 font-bold">{kgHealth.weakest_topic || "None"}</span></div>
                               <div className="col-span-2">Most Active: <span className="text-sky-400 font-bold">{kgHealth.most_active_topic || "None"}</span></div>
@@ -3431,7 +3417,7 @@ export default function Dashboard() {
                       {/* Dead Nodes List (No active questions) (Change 6) */}
                       <div className="border border-white/5 rounded-2xl p-3 bg-black/40 flex-1 flex flex-col gap-2 min-h-[220px]">
                         <div className="text-[9px] uppercase font-bold text-white tracking-wider flex items-center justify-between">
-                          <span>Node Sourcing Gaps ({kgDeadNodes.length})</span>
+                          <span>Topic Sourcing Gaps ({kgDeadNodes.length})</span>
                           <span className="text-[8px] text-rose-400 border border-rose-500/20 bg-rose-500/5 px-1 py-0.5 rounded">Authoring Needed</span>
                         </div>
                         
@@ -4227,18 +4213,17 @@ export default function Dashboard() {
         <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
           <div className="text-sm text-muted-foreground">Welcome back</div>
           <h1 className="mt-1 font-display text-4xl sm:text-5xl font-bold tracking-tight">
-            Hello, <span className="text-mint">{user.name.split(" ")[0]}</span>.
+            Hello, <span className="text-white">{user.name.split(" ")[0]}</span>.
           </h1>
           <p className="mt-2 text-muted-foreground max-w-xl">Ready to meet your mind again? Each session sharpens the picture.</p>
         </motion.div>
 
         {/* Join room card */}
         <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, delay: 0.05 }}
-          className="mt-10 relative overflow-hidden rounded-3xl border border-mint/20 bg-card p-8 lg:p-10 shadow-mint">
-          <div className="absolute -right-24 -top-24 h-72 w-72 rounded-full bg-mint/30 blur-3xl" />
+          className="mt-10 relative overflow-hidden rounded-3xl border border-white/10 bg-card p-8 lg:p-10 shadow-soft">
           <div className="relative flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
             <div className="max-w-xl">
-              <div className="inline-flex items-center gap-2 rounded-full border border-mint/30 bg-mint/10 px-3 py-1 text-xs text-mint">
+              <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-muted-foreground">
                 <Brain className="h-3.5 w-3.5" /> 7 questions · ~3 min
               </div>
               <h2 className="mt-3 font-display text-3xl sm:text-4xl font-bold tracking-tight">Start a new analysis</h2>
@@ -4249,12 +4234,12 @@ export default function Dashboard() {
                 value={roomCode}
                 onChange={(e) => setRoomCode(e.target.value.toUpperCase())}
                 placeholder="Enter Teacher Room Code"
-                className="px-5 h-14 rounded-2xl bg-cyan-deep border border-mint/30 text-white outline-none"
+                className="px-5 h-14 rounded-2xl bg-black/60 border border-white/10 text-white outline-none placeholder:text-muted-foreground focus:border-white/30 transition-colors"
               />
 
               <button
                 onClick={handleJoinRoom}
-                className="group h-14 rounded-2xl bg-mint text-cyan-deep hover:bg-mint-glow shadow-mint px-7 text-base font-semibold transition-all hover:scale-[1.03] flex items-center"
+                className="group h-14 rounded-2xl bg-white text-black hover:bg-white/90 px-7 text-base font-semibold transition-all hover:scale-[1.02] btn-active-push flex items-center"
               >
                 Join Analysis
                 <ArrowRight className="ml-1 h-5 w-5 transition-transform group-hover:translate-x-1" />
@@ -4271,21 +4256,21 @@ export default function Dashboard() {
           </div>
 
           {reports.length === 0 ? (
-            <div className="mt-6 rounded-2xl border border-dashed border-mint/20 p-10 text-center text-muted-foreground">
+            <div className="mt-6 rounded-2xl border border-dashed border-white/10 p-10 text-center text-muted-foreground">
               No reports yet. Your first analysis will appear here.
             </div>
           ) : (
             <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
               {reports.map(r => (
                 <Link key={r.id} to={`/report/${r.id}`}
-                  className="group glass-mint rounded-2xl p-5 transition-all hover:-translate-y-1 hover:shadow-mint">
+                  className="group bg-card border border-white/10 rounded-2xl p-5 transition-all card-hover-lift">
                   <div className="flex items-center justify-between text-xs text-muted-foreground">
                     <span className="inline-flex items-center gap-1.5"><Clock className="h-3.5 w-3.5" />{new Date(r.takenAt).toLocaleString()}</span>
-                    <FileText className="h-4 w-4 text-mint" />
+                    <FileText className="h-4 w-4 text-muted-foreground" />
                   </div>
                   <div className="mt-3 font-display text-lg font-semibold">{r.pattern}</div>
 
-                  <div className="mt-2 inline-flex rounded-full border border-mint/20 px-2 py-1 text-[10px] uppercase tracking-[0.2em] text-mint">
+                  <div className="mt-2 inline-flex rounded-full border border-white/10 px-2 py-1 text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
                     {r.scores.conceptual >= 60
                       ? "High Concept"
                       : r.scores.fakeUnderstanding >= 40
@@ -4317,9 +4302,9 @@ export default function Dashboard() {
 
 function Mini({ label, v }: { label: string; v: number }) {
   return (
-    <div className="rounded-lg bg-cyan-deep/60 p-2">
+    <div className="rounded-lg bg-black/40 border border-white/5 p-2">
       <div className="text-[10px] uppercase tracking-wider text-muted-foreground">{label}</div>
-      <div className="font-display text-base font-bold text-mint">{v}%</div>
+      <div className="font-display text-base font-bold text-white">{v}%</div>
     </div>
   );
 }
