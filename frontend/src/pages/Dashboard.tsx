@@ -201,6 +201,7 @@ export default function Dashboard() {
   
   // Navigation tabs for Teacher Workspace
   const [activeMode, setActiveMode] = useState<"observe" | "assess" | "intervene" | "improve" | "designer" | "lifecycle" | "explorer" | "validation">("observe");
+  const [sidebarOpen, setSidebarOpen] = useState(true);
 
   // State
   const [reports, setReports] = useState<any[]>([]);
@@ -1165,141 +1166,145 @@ export default function Dashboard() {
 
   if (user.role === "teacher") {
     return (
-      <InsideLayout>
-        <div className="container py-8 lg:py-12">
-          {/* Header */}
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-white/10 pb-6">
-            <div>
-              <div className="text-xs uppercase tracking-[0.25em] text-mint font-bold flex items-center gap-1.5">
-                <Brain className="h-4 w-4 text-mint animate-pulse" /> Cognitive Intelligence Workspace
-              </div>
-              <h1 className="mt-1 font-display text-4xl font-bold tracking-tight">
-                Welcome, <span className="text-mint">{user.name}</span>
-              </h1>
-            </div>
+      <InsideLayout showNav={false}>
+        <div className="flex min-h-screen text-foreground relative">
+          {/* Collapsible Left Sidebar */}
+          {sidebarOpen && (
+            <aside className="w-64 border-r border-white/10 bg-card/60 backdrop-blur-md flex flex-col justify-between shrink-0 h-screen sticky top-0 z-50">
+              <div className="flex flex-col">
+                {/* Logo Area */}
+                <div className="h-16 border-b border-white/5 flex items-center justify-between px-6">
+                  <div className="flex items-center gap-2">
+                    <Brain className="h-6 w-6 text-primary animate-pulse" />
+                    <span className="font-display font-bold text-lg text-white">Cognify</span>
+                  </div>
+                  <button 
+                    onClick={() => setSidebarOpen(false)}
+                    className="p-1.5 hover:bg-white/5 rounded-lg text-muted-foreground hover:text-white transition-fast"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                </div>
 
-            {/* Launch Room Button from Selected Blueprint */}
-            <div className="flex flex-wrap items-center gap-3">
-              {/* SIH Demo Mode Trigger (Refinement 4) */}
-              <div className="flex items-center gap-2 bg-black/40 border border-white/10 rounded-2xl px-3 py-2 text-xs">
-                <span className="font-bold text-gray-300">SIH Demo Mode:</span>
-                <button
-                  onClick={async () => {
-                    const nextMode = !demoMode;
-                    setDemoMode(nextMode);
-                    try {
-                      const res = await fetch(`${API}/demo-mode`, {
-                        method: "POST",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({ enable: nextMode })
-                      });
-                      if (res.ok) {
-                        toast({ title: `SIH Demo Mode ${nextMode ? "Enabled" : "Disabled"}` });
-                        window.location.reload();
+                {/* Sidebar Navigation Links */}
+                <nav className="p-4 space-y-1.5">
+                  {[
+                    { id: "overview", label: "Overview", icon: Layers, mode: "observe" },
+                    { id: "assessments", label: "Assessments", icon: Plus, mode: "designer" },
+                    { id: "students", label: "Students", icon: Users, mode: "assess" },
+                    { id: "question-bank", label: "Question Bank", icon: FileText, mode: "lifecycle" },
+                    { id: "analytics", label: "Analytics", icon: Activity, mode: "intervene" },
+                    { id: "kg", label: "Knowledge Graph", icon: Brain, mode: "explorer" },
+                    { id: "research", label: "Pilot Research", icon: Award, mode: "validation" },
+                  ].map((item) => {
+                    const isActive = activeMode === item.mode || 
+                      (item.id === "analytics" && ["observe", "assess", "intervene", "improve"].includes(activeMode));
+                    return (
+                      <button
+                        key={item.id}
+                        onClick={() => {
+                          if (item.id === "analytics") {
+                            setActiveMode("intervene");
+                          } else {
+                            setActiveMode(item.mode as any);
+                          }
+                        }}
+                        className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold transition-all ${
+                          isActive
+                            ? "bg-primary/10 text-primary border-l-2 border-primary"
+                            : "text-muted-foreground hover:bg-white/5 hover:text-white"
+                        }`}
+                      >
+                        <item.icon className="h-4 w-4" />
+                        <span>{item.label}</span>
+                      </button>
+                    );
+                  })}
+                </nav>
+              </div>
+
+              {/* Sidebar Footer */}
+              <div className="p-6 border-t border-white/5 text-xs text-muted-foreground flex flex-col gap-2">
+                <a href="#docs" className="hover:text-white flex items-center gap-1.5 font-semibold font-sans">
+                  <HelpCircle className="h-4 w-4" /> Documentation
+                </a>
+                <div>v1.0.0 • Connected</div>
+              </div>
+            </aside>
+          )}
+
+          {/* Main workspace */}
+          <div className="flex-1 flex flex-col min-w-0 min-h-screen">
+            {/* Top Workspace Header */}
+            <header className="h-16 border-b border-white/5 flex items-center justify-between px-8 bg-card/25 backdrop-blur-md sticky top-0 z-40">
+              <div className="flex items-center gap-4">
+                {!sidebarOpen && (
+                  <button
+                    onClick={() => setSidebarOpen(true)}
+                    className="p-2 hover:bg-white/5 rounded-xl border border-white/10 transition-fast"
+                  >
+                    <Plus className="h-4 w-4 rotate-45" /> {/* Hamburger simulation */}
+                  </button>
+                )}
+                <div className="text-xs uppercase tracking-[0.2em] text-muted-foreground font-mono">
+                  Teacher Workspace
+                </div>
+              </div>
+
+              <div className="flex items-center gap-4">
+                {/* SIH Demo Mode Trigger */}
+                <div className="flex items-center gap-2 bg-black/40 border border-white/10 rounded-2xl px-3 py-1.5 text-xs">
+                  <span className="font-bold text-gray-300">SIH Demo Mode:</span>
+                  <button
+                    onClick={async () => {
+                      const nextMode = !demoMode;
+                      setDemoMode(nextMode);
+                      try {
+                        const res = await fetch(`${API}/demo-mode`, {
+                          method: "POST",
+                          headers: { "Content-Type": "application/json" },
+                          body: JSON.stringify({ enable: nextMode })
+                        });
+                        if (res.ok) {
+                          toast({ title: `SIH Demo Mode ${nextMode ? "Enabled" : "Disabled"}` });
+                          window.location.reload();
+                        }
+                      } catch (err) {
+                        console.error(err);
                       }
-                    } catch (err) {
-                      console.error(err);
-                    }
-                  }}
-                  className={`px-2.5 py-0.5 rounded-full font-bold text-[10px] tracking-wider transition-all ${
-                    demoMode ? "bg-emerald-500 text-black shadow-lg shadow-emerald-500/25 animate-pulse" : "bg-white/10 text-white/50"
-                  }`}
-                >
-                  {demoMode ? "ACTIVE" : "OFF"}
-                </button>
+                    }}
+                    className={`px-2 py-0.5 rounded-full font-bold text-[10px] tracking-wider transition-all ${
+                      demoMode ? "bg-emerald-500 text-black shadow-lg shadow-emerald-500/25 animate-pulse" : "bg-white/10 text-white/50"
+                    }`}
+                  >
+                    {demoMode ? "ACTIVE" : "OFF"}
+                  </button>
+                </div>
+
+                <div className="flex items-center gap-3 bg-white/5 border border-white/10 rounded-2xl p-2 shadow-inner">
+                  <select
+                    value={selectedBlueprintId}
+                    onChange={(e) => setSelectedBlueprintId(e.target.value)}
+                    className="p-1 rounded-xl bg-black border text-white text-xs"
+                  >
+                    <option value="">Select Blueprint</option>
+                    {blueprints.map((bp) => (
+                      <option key={bp.id} value={bp.id}>
+                        {bp.name} (v{bp.version})
+                      </option>
+                    ))}
+                  </select>
+                  <Button onClick={handleLaunchRoom} size="xs" className="bg-mint hover:bg-mint-glow text-black font-bold h-7 text-[10px]">
+                    Launch Room
+                  </Button>
+                </div>
               </div>
+            </header>
 
-              <div className="flex items-center gap-3 bg-white/5 border border-white/10 rounded-2xl p-3 shadow-inner">
-                <select
-                  value={selectedBlueprintId}
-                  onChange={(e) => setSelectedBlueprintId(e.target.value)}
-                  className="p-2 rounded-xl bg-black border text-white text-sm"
-                >
-                  <option value="">Select Assessment Blueprint</option>
-                  {blueprints.map((bp) => (
-                    <option key={bp.id} value={bp.id}>
-                      {bp.name} (v{bp.version})
-                    </option>
-                  ))}
-                </select>
-                <Button onClick={handleLaunchRoom} size="sm" className="bg-mint hover:bg-mint-glow text-black font-bold">
-                  Launch Live Room
-                </Button>
-              </div>
-            </div>
-          </div>
-
-          {/* Navigation Pipeline Modes */}
-          <div className="flex flex-wrap items-center gap-2 mt-6">
-            <button
-              onClick={() => setActiveMode("observe")}
-              className={`px-5 py-3 rounded-xl border text-sm font-semibold transition-all flex items-center gap-2 ${
-                activeMode === "observe" ? "bg-mint text-black border-mint" : "bg-card text-muted-foreground border-white/10 hover:text-white"
-              }`}
-            >
-              <TrendingUp className="h-4 w-4" /> Observe (Class State)
-            </button>
-            <button
-              onClick={() => setActiveMode("assess")}
-              className={`px-5 py-3 rounded-xl border text-sm font-semibold transition-all flex items-center gap-2 ${
-                activeMode === "assess" ? "bg-mint text-black border-mint" : "bg-card text-muted-foreground border-white/10 hover:text-white"
-              }`}
-            >
-              <Users className="h-4 w-4" /> Assess (Live monitor)
-            </button>
-            <button
-              onClick={() => setActiveMode("intervene")}
-              className={`px-5 py-3 rounded-xl border text-sm font-semibold transition-all flex items-center gap-2 ${
-                activeMode === "intervene" ? "bg-mint text-black border-mint" : "bg-card text-muted-foreground border-white/10 hover:text-white"
-              }`}
-            >
-              <Sparkles className="h-4 w-4" /> Intervene (AI Copilot)
-            </button>
-            <button
-              onClick={() => setActiveMode("improve")}
-              className={`px-5 py-3 rounded-xl border text-sm font-semibold transition-all flex items-center gap-2 ${
-                activeMode === "improve" ? "bg-mint text-black border-mint" : "bg-card text-muted-foreground border-white/10 hover:text-white"
-              }`}
-            >
-              <Layers className="h-4 w-4" /> Improve (Analytics)
-            </button>
-            <span className="h-6 w-px bg-white/20 mx-2 hidden sm:inline" />
-            <button
-              onClick={() => setActiveMode("designer")}
-              className={`px-5 py-3 rounded-xl border text-sm font-semibold transition-all flex items-center gap-2 ${
-                activeMode === "designer" ? "border-dashed border-mint text-mint hover:bg-mint/10" : "bg-card text-muted-foreground border-white/10 hover:text-white"
-              }`}
-            >
-              <Plus className="h-4 w-4" /> Blueprint Designer
-            </button>
-            <button
-              onClick={() => setActiveMode("lifecycle")}
-              className={`px-5 py-3 rounded-xl border text-sm font-semibold transition-all flex items-center gap-2 ${
-                activeMode === "lifecycle" ? "border-dashed border-yellow-400 text-yellow-400 hover:bg-yellow-400/10" : "bg-card text-muted-foreground border-white/10 hover:text-white"
-              }`}
-            >
-              <Settings className="h-4 w-4" /> Question Lifecycle
-            </button>
-            <button
-              onClick={() => setActiveMode("explorer")}
-              className={`px-5 py-3 rounded-xl border text-sm font-semibold transition-all flex items-center gap-2 ${
-                activeMode === "explorer" ? "border-dashed border-sky-400 text-sky-400 hover:bg-sky-400/10" : "bg-card text-muted-foreground border-white/10 hover:text-white"
-              }`}
-            >
-              <Activity className="h-4 w-4" /> Graph Explorer
-            </button>
-            <button
-              onClick={() => setActiveMode("validation")}
-              className={`px-5 py-3 rounded-xl border text-sm font-semibold transition-all flex items-center gap-2 ${
-                activeMode === "validation" ? "border-dashed border-emerald-400 text-emerald-400 hover:bg-emerald-400/10" : "bg-card text-muted-foreground border-white/10 hover:text-white"
-              }`}
-            >
-              <Award className="h-4 w-4" /> Pilot Validation
-            </button>
-          </div>
-
-          {/* Primary View */}
-          <div className="mt-8">
+            {/* Content area */}
+            <div className="flex-1 overflow-y-auto px-8 py-6">
+              {/* Primary View */}
+              <div className="mt-2">
             <AnimatePresence mode="wait">
               
               {/* Observe View (Redesigned Dashboard Home) */}
@@ -4302,6 +4307,8 @@ export default function Dashboard() {
               ))}
             </div>
           )}
+            </div>
+          </div>
         </div>
       </div>
     </InsideLayout>

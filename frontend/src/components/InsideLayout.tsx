@@ -11,9 +11,17 @@ export default function InsideLayout({ children, showNav = true }: { children: R
     };
   }, []);
   return (
-    <div className="min-h-screen bg-background grid-bg-subtle relative overflow-hidden">
+    <div className="min-h-screen bg-background text-foreground relative overflow-hidden">
       {showNav && <Navbar variant="inside" />}
-      {children}
+      {showNav ? (
+        <main className="container py-8 relative z-10">
+          {children}
+        </main>
+      ) : (
+        <main className="relative z-10 min-h-screen w-full">
+          {children}
+        </main>
+      )}
     </div>
   );
 }
