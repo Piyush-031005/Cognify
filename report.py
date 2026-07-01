@@ -161,11 +161,11 @@ def generate_recommendations(fused_vector):
             "id": 101,
             "concept": "Roots & Quadratic Functions",
             "priority": "HIGH",
-            "reason": "Weak conceptual grounding paired with high rote memory dependence",
+            "reason": "You are memorizing answers instead of understanding the concepts",
             "evidence": f"Memory reliance is {fused_vector['memory_dependence']*100:.1f}%, conceptual depth is {fused_vector['conceptual_depth']*100:.1f}%",
             "confidence": rec_confidence,
-            "suggestedAction": "Run interactive comparative concept-mapping drills to separate algebraic formulas from graphical behaviors.",
-            "expectedGain": "+20% transfer precision in application-based tasks",
+            "suggestedAction": "Practice linking math formulas directly to graphs so you can see how they relate.",
+            "expectedGain": "+20% gain in solving new problems",
             "estimatedTime": "15 minutes",
             "validationExercise": "Parabola vertex translation challenge (map algebraic forms to graphs)"
         })
@@ -176,11 +176,11 @@ def generate_recommendations(fused_vector):
             "id": 102,
             "concept": "Discriminant Calculation Speed",
             "priority": "HIGH",
-            "reason": "Significant decision latency and overthinking with unstable option commit confidence",
-            "evidence": f"Overthinking ratio detected, confidence stability index is low at {fused_vector['confidence_stability']:.2f}",
+            "reason": "You are spending too much time overthinking and double-checking your options",
+            "evidence": f"Unstable option commit confidence at {fused_vector['confidence_stability']:.2f}",
             "confidence": rec_confidence,
-            "suggestedAction": "Conduct rapid 5-second assertion drills on simple discriminant signs (D > 0, D = 0, D < 0) to bypass analytical paralysis.",
-            "expectedGain": "-35% reduction in option hover scan counts and search time",
+            "suggestedAction": "Try doing quick 5-second practice rounds on discriminant signs (D > 0, D = 0, D < 0) to trust your first instinct.",
+            "expectedGain": "-35% reduction in hover time",
             "estimatedTime": "10 minutes",
             "validationExercise": "Real-time sign flashcard round (10 cards, timed completion)"
         })
@@ -191,11 +191,11 @@ def generate_recommendations(fused_vector):
             "id": 103,
             "concept": "Quadratic Applications",
             "priority": "MEDIUM",
-            "reason": "Knowledge strain when transitioning from recall questions to multi-step application scenarios",
-            "evidence": f"Transfer ability index is low ({fused_vector['transfer_ability']:.2f}) despite stable recall features",
+            "reason": "You understand the basics, but struggle with longer, multi-step word problems",
+            "evidence": f"Transfer ability score is low ({fused_vector['transfer_ability']:.2f}) despite good recall features",
             "confidence": rec_confidence,
-            "suggestedAction": "Provide structured visual walk-throughs of real-world projectile paths followed by a collaborative mini-quiz.",
-            "expectedGain": "+25% increase in first-attempt correctness on multi-step problems",
+            "suggestedAction": "Read through real-life examples step-by-step and then try a mini-quiz to practice.",
+            "expectedGain": "+25% increase in first-attempt accuracy on multi-step problems",
             "estimatedTime": "20 minutes",
             "validationExercise": "Staging launch height optimization scenario calculation"
         })
@@ -206,11 +206,11 @@ def generate_recommendations(fused_vector):
             "id": 104,
             "concept": "Advanced Polynomials",
             "priority": "LOW",
-            "reason": "Strong balanced performance across all three prediction heads",
+            "reason": "Excellent work! You showed a solid understanding of all the quiz questions.",
             "evidence": f"Conceptual depth is {fused_vector['conceptual_depth']*100:.1f}%, transfer ability is {fused_vector['transfer_ability']*100:.1f}%",
             "confidence": "95%",
-            "suggestedAction": "Deploy non-linear extensions like cubic equations and graphical transformations to push limits.",
-            "expectedGain": "Elevate learning velocity to peak capacity",
+            "suggestedAction": "Try challenging yourself with harder problems like cubic equations to keep learning.",
+            "expectedGain": "Reach peak learning speed",
             "estimatedTime": "25 minutes",
             "validationExercise": "Visual inflection point mapping challenge"
         })
@@ -271,11 +271,11 @@ def generate_report(student_email, attempt_id, reflection=""):
     })
 
     if conceptual > 0.55 and confidence_meter > 0.55:
-        future = "Growth likely with strong conceptual adaptation"
+        future = "You are doing great! Keep building your understanding of the topics and stay confident."
     elif fake > 0.55 and confidence_meter < 0.4:
-        future = "Risk of academic decline unless conceptual correction happens"
+        future = "You might struggle with harder questions soon. Try focusing more on understanding the concepts rather than memorizing."
     elif overthinking_meter > 0.45:  
-        future = "Potential slowed performance due to internal decision friction"
+        future = "You are thinking too much before answering. Try to trust your first instinct and build speed."
 
     trial_ratio = sc.get("trial-based", 0) + sc.get("trial", 0)
     concept_ratio = sc.get("concept-based", 0)
@@ -293,11 +293,11 @@ def generate_report(student_email, attempt_id, reflection=""):
     low_eng_q = min(question_sessions, key=lambda x: x["engagement_score"])
 
     insights = [
-        f"We observed the strongest hesitation on '{high_hes_q['question_text']}' where decision latency noticeably increased.",
-        f"Our analysis indicates engagement dipped most on '{low_eng_q['question_text']}', suggesting weaker cognitive anchoring.",
-        f"We noticed that reflection writing showed {reflection_score.lower()} conceptual articulation after the quiz.",
-        f"We tracked active option scanning throughout the session (avg {avg_hover}), indicating visible internal checking.",
-        f"We measured self-doubt reclick behavior at {avg_same_click} on average across questions."
+        f"You took the longest time thinking on the question: '{high_hes_q['question_text']}'.",
+        f"You seemed to lose interest or focus on the question: '{low_eng_q['question_text']}'.",
+        f"Your explanation at the end showed {reflection_score.lower()} understanding of the topics.",
+        f"You looked back and forth between options quite a bit (avg {avg_hover} times), which shows you were double-checking your work.",
+        f"You clicked the same option multiple times (avg {avg_same_click}), which shows some uncertainty."
     ]
 
     # Invoke the Evidence Fusion Layer (Layer 5)
